@@ -11,7 +11,7 @@ class Projection:
         self._client = client
         self._shortcut = "tem.Projection"
         self._err_msg = "Microscope is not in diffraction mode"
-        self._magnifications: List[int] = []
+        self._magnifications = []
         self.__find_magnifications()
 
     def __find_magnifications(self) -> None:

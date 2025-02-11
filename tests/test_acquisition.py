@@ -5,14 +5,24 @@ import matplotlib.pyplot as plt
 
 from pytemscript.microscope import Microscope
 from pytemscript.utils.enums import *
+from pytemscript.modules.extras import Image
 
 
-def print_stats(cam_name, image, binning, time):
+def print_stats(cam_name: str,
+                image: Image,
+                binning: int,
+                exp_time: float) -> None:
+    """ Calculate statistics about the image and display it.
+    :param cam_name: Camera / detector name
+    :param image: Image object
+    :param binning: Input binning
+    :param exp_time: Input exposure time
+    """
     metadata = image.metadata
     if metadata is not None:
         print("\tTimestamp: ", metadata['TimeStamp'])
         assert int(metadata['Binning.Width']) == binning
-        assert math.isclose(float(metadata['ExposureTime']), time, abs_tol=0.01)
+        assert math.isclose(float(metadata['ExposureTime']), exp_time, abs_tol=0.01)
 
     print("\tBit depth: ", image.bit_depth)
     print("\tSize: ", image.data.shape[1], image.data.shape[0])
@@ -30,18 +40,40 @@ def print_stats(cam_name, image, binning, time):
     plt.pause(1.0)
 
 
-def camera_acquire(microscope, cam_name, exp_time, binning, **kwargs):
-    """ Acquire a test image and check output metadata. """
+def camera_acquire(microscope: Microscope,
+                   cam_name: str,
+                   exp_time: float,
+                   binning: int,
+                   **kwargs) -> None:
+    """ Acquire a test TEM image and check output metadata.
+    :param microscope: Microscope object
+    :param cam_name: Camera / detector name
+    :param exp_time: Exposure time
+    :param binning: Input binning
+    :param kwargs: Keyword arguments
+    """
 
     image = microscope.acquisition.acquire_tem_image(cam_name,
                                                      size=AcqImageSize.FULL,
                                                      exp_time=exp_time,
                                                      binning=binning,
                                                      **kwargs)
-    print_stats("TEM camera: " + cam_name, image, binning, exp_time)
+    if image is not None:
+        print_stats("TEM camera: " + cam_name, image, binning, exp_time)
 
 
-def detector_acquire(microscope, cam_name, dwell_time, binning, **kwargs):
+def detector_acquire(microscope: Microscope,
+                     cam_name: str,
+                     dwell_time: float,
+                     binning: int,
+                     **kwargs) -> None:
+    """ Acquire a test STEM image.
+    :param microscope: Microscope object
+    :param cam_name: Camera / detector name
+    :param dwell_time: Dwell time
+    :param binning: Input binning
+    :param kwargs: Keyword arguments
+    """
     image = microscope.acquisition.acquire_stem_image(cam_name,
                                                       size=AcqImageSize.FULL,
                                                       dwell_time=dwell_time,

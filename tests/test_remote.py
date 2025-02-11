@@ -1,25 +1,25 @@
-import threading
+from threading import Thread, Event
 import time
-from typing import List
+from typing import List, Tuple
 
 from pytemscript.microscope import Microscope
 from pytemscript.server.run import main as server_run
 
 
-def server_thread(argv: List):
+def server_thread(argv: List) -> Tuple[Thread, Event]:
     """ Start server process in a separate thread. """
-    stop_event = threading.Event()
-    thread = threading.Thread(target=server_run, args=(argv, stop_event))
+    stop_event = Event()
+    thread = Thread(target=server_run, args=(argv, stop_event))
     thread.start()
     return thread, stop_event
 
-def test_interface(microscope):
+def test_interface(microscope: Microscope) -> None:
     """ Test remote interface. """
     stage = microscope.stage
     print(stage.position)
     stage.go_to(x=1, y=-1)
 
-def test_connection(connection_type: str = "socket"):
+def test_connection(connection_type: str = "socket") -> None:
     """ Create server and client, then test the connection. """
     print("Testing %s connection" % connection_type)
     if connection_type == "socket":
@@ -48,7 +48,7 @@ def test_connection(connection_type: str = "socket"):
     stop_event.set()
     thread.join()
 
-def main():
+def main() -> None:
     """ Basic test to check server-client connection on localhost. """
     test_connection(connection_type="socket")
     test_connection(connection_type="grpc")

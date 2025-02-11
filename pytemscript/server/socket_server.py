@@ -70,7 +70,7 @@ class SocketServer:
                 self.server_com._scope._close()
                 self.server_com = None
 
-    def handle_request(self, method_name, *args, **kwargs):
+    def handle_request(self, method_name: str, *args, **kwargs):
         """ Process a socket message: pass method to the COM server
          and return result to the client. """
         method = getattr(self.server_com, method_name, None)

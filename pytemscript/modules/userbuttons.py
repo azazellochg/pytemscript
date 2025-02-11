@@ -22,9 +22,16 @@ class UserButtons:
     def __init__(self, client):
         self._client = client
 
-    @property
     def show(self) -> Dict:
         """ Returns a dict with assigned hand panels buttons. """
         return self._client.call("tem.UserButtons", obj=ButtonsObj, func="show")
 
-    #TODO: add events - buttons assignment
+    def __getattr__(self, name):
+        if name in self.valid_buttons:
+            getattr(self._client, name)
+
+    def __setattr__(self, name, value):
+        if name in self.valid_buttons:
+            setattr(self._client, name, value)
+        else:
+            super().__setattr__(name, value)

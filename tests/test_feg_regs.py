@@ -6,6 +6,7 @@ from pytemscript.utils.constants import FEG_REGISTERS
 
 
 def test_fegs():
+    """ Parse existing FEG registers entries. """
     try:
         comtypes.CoInitialize()
         obj = comtypes.client.CreateObject(FEG_REGISTERS)
