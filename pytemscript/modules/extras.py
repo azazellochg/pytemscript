@@ -229,7 +229,7 @@ class StagePosition(SpecialObj):
         """ Returns a dict with stage move limits. """
         limits = {}
         for axis in 'xyzab':
-            data = self.com_object.AxisData(StageAxes[axis.upper()])
+            data = self.com_object.AxisData(StageAxes[axis.upper()].value)
             limits[axis] = {
                 'min': data.MinPos,
                 'max': data.MaxPos,

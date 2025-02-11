@@ -3,6 +3,7 @@ from typing import Optional, List
 from time import sleep
 
 from pytemscript.microscope import Microscope
+from pytemscript.modules import stem
 from pytemscript.utils.enums import *
 
 
@@ -202,14 +203,19 @@ def test_stage(microscope: Microscope,
 
 
 def test_detectors(microscope: Microscope) -> None:
-    """ Test STEM detectors.
+    """ Test all cameras / detectors.
     :param microscope: Microscope object
     """
     print("\nTesting cameras...")
     dets = microscope.detectors
     print("\tFilm settings:", dets.film_settings)
     print("\tCameras:", dets.cameras)
-    print("\tSTEM detectors:", dets.stem_detectors)
+
+    stem = microscope.stem
+    if stem.is_available:
+        stem.enable()
+        print("\tSTEM detectors:", dets.stem_detectors)
+        stem.disable()
 
 
 def test_optics(microscope: Microscope) -> None:

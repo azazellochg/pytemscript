@@ -110,9 +110,8 @@ class Stage:
     @property
     def position(self) -> Dict:
         """ The current position of the stage (x,y,z in um and a,b in degrees). """
-        b = True if self._beta_available else False
         return self._client.call("tem.Stage.Position", obj=StagePosition,
-                                   func="get", a=True, b=b)
+                                   func="get", a=True, b=self._beta_available)
 
     def go_to(self, relative=False, **kwargs) -> None:
         """ Makes the holder directly go to the new position by moving all axes
@@ -138,7 +137,6 @@ class Stage:
     def limits(self) -> Dict:
         """ Returns a dict with stage move limits. """
         if not self._limits:
-            return self._client.call("tem.Stage", obj=StagePosition,
-                                     func="limits")
-        else:
-            return self._limits
+            self._limits = self._client.call("tem.Stage", obj=StagePosition,
+                                             func="limits")
+        return self._limits

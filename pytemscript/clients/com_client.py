@@ -159,10 +159,10 @@ class COMClient:
 
     def call(self, attrname, *args, **kwargs):
         attrname = attrname.rstrip("()")
-        obj = kwargs.pop("obj")
-        if obj is not None:
+        obj = kwargs.pop("obj", None)
+        if obj is not None and callable(obj):
             attr = rgetattr(self._scope, attrname)
-            obj(attr, *args, **kwargs).execute()
+            return obj(attr, *args, **kwargs).execute()
         else:
             return rgetattr(self._scope, attrname, *args, **kwargs)
 

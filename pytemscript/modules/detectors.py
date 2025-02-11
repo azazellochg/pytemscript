@@ -35,7 +35,6 @@ class DetectorsObj(SpecialObj):
     def show_cameras(self) -> Dict:
         """ Returns a dict with parameters for all TEM cameras. """
         tem_cameras = dict()
-
         for cam in self.com_object:
             info = cam.Info
             param = cam.AcqParams
@@ -57,7 +56,6 @@ class DetectorsObj(SpecialObj):
     def show_cameras_csa(self) -> Dict:
         """ Returns a dict with parameters for all TEM cameras that support CSA. """
         csa_cameras = dict()
-
         for cam in self.com_object.SupportedCameras:
             self.com_object.Camera = cam
             param = self.com_object.CameraSettings.Capabilities
@@ -116,7 +114,7 @@ class Detectors:
         """ Returns a dict with parameters for all TEM cameras. """
         tem_cameras = self._client.call("tem.Acquisition.Cameras", 
                                         obj=DetectorsObj,
-                                        method="show_cameras")
+                                        func="show_cameras")
 
         if not self._client.has_advanced_iface:
             return tem_cameras
