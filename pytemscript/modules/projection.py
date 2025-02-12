@@ -1,4 +1,4 @@
-from typing import List
+from typing import Dict
 import logging
 
 from ..utils.enums import ProjectionMode, ProjectionSubMode, ProjDetectorShiftMode, ProjectionDetectorShift, LensProg
@@ -11,7 +11,7 @@ class Projection:
         self._client = client
         self._shortcut = "tem.Projection"
         self._err_msg = "Microscope is not in diffraction mode"
-        self._magnifications = []
+        self._magnifications = {}
         self.__find_magnifications()
 
     def __find_magnifications(self) -> None:
@@ -26,13 +26,18 @@ class Projection:
                 index = self.magnification_index
                 if index == previous_index:  # failed to set new index
                     break
-                self._magnifications.append(self.magnification)
+                self._magnifications[self.magnification] = (index, self.magnification_range)
                 previous_index = index
                 index += 1
             # restore initial mag
             self.magnification_index = saved_index
             self._client.set("tem.AutoNormalizeEnabled", True)
-            logging.debug("Available magnifications: %s" % self._magnifications)
+            logging.info("Available magnifications: %s" % self._magnifications)
+
+    @property
+    def list_magnifications(self) -> Dict:
+        """ List of available magnifications: mag -> (mag_index, submode). """
+        return self._magnifications
 
     @property
     def focus(self) -> float:
@@ -60,7 +65,7 @@ class Projection:
             self.__find_magnifications()
             if value not in self._magnifications:
                 raise ValueError("Magnification %s not found in the table" % value)
-            index = self._magnifications.index(value)
+            index = self._magnifications[value](0)
             self.magnification_index = index
         else:
             raise RuntimeError(self._err_msg)

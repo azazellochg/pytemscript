@@ -25,8 +25,13 @@ def test_projection(microscope: Microscope,
     projection.defocus = orig_def
 
     print("\tMagnification:", projection.magnification)
-    #TODO: avoid LM, since there it has no diffraction stigmator available
     print("\tMagnificationIndex:", projection.magnification_index)
+
+    # set first SA mag
+    for key, value in projection.list_magnifications.items():
+        if value[1] == ProjectionSubMode.SA.name:
+            projection.magnification = key
+            break
 
     projection.mode = ProjectionMode.DIFFRACTION
     print("\tCameraLength:", projection.camera_length)
@@ -413,7 +418,7 @@ def main(argv: Optional[List] = None) -> None:
 
     print("Starting %s microscope tests..." % mode)
 
-    full_test = False
+    full_test = True
     test_projection(microscope, has_eftem=False)
     test_detectors(microscope)
     test_vacuum(microscope, buffer_cycle=full_test)

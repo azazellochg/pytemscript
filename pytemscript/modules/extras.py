@@ -200,7 +200,7 @@ class StagePosition(SpecialObj):
             method: str = "MoveTo",
             **kwargs) -> None:
         """ Execute stage move to a new position. """
-        if method not in ["MoveTo", "Goto", "GoToWithSpeed"]:
+        if method not in ["MoveTo", "GoTo", "GoToWithSpeed"]:
             raise NotImplementedError("Method %s is not implemented" % method)
 
         pos = self.com_object.Position

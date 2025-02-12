@@ -312,7 +312,7 @@ class Acquisition:
         # CSA is supported by Ceta 1, Ceta 2, Falcon 3, Falcon 4
         self._has_csa = self._client.has_advanced_iface and self._client.has("tem_adv.Acquisitions.CameraSingleAcquisition")
         # CCA is supported by Ceta 2
-        self._has_cca = self._client.has("tem_adv.Acquisitions.CameraContinuousAcquisition")
+        self._has_cca = self._client.has_advanced_iface and self._client.has("tem_adv.Acquisitions.CameraContinuousAcquisition")
         self._camera_type = "std"
 
     @property
@@ -411,6 +411,7 @@ class Acquisition:
             # update camera type
             self._camera_type = self._client.call("tem_adv.Acquisitions",
                                                   func="find_camera_type",
+                                                  obj=AcquisitionObj,
                                                   cameraName=cameraName,
                                                   has_cca=self._has_cca)
 

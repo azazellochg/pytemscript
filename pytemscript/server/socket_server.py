@@ -29,6 +29,7 @@ class SocketServer:
         try:
             from ..clients.com_client import COMClient
             self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.server_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
             self.server_socket.bind((self.host, self.port))
             self.server_socket.listen(5)
             logging.info("Socket server listening on %s:%d" % (self.host, self.port))
