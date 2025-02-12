@@ -1,3 +1,4 @@
+import threading
 from argparse import Namespace
 import pickle
 try:
@@ -7,7 +8,7 @@ except ImportError:
 
 
 class ZMQServer:
-    def __init__(self, args: Namespace):
+    def __init__(self, args: Namespace, stop_event: threading.Event):
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.REP)  # Reply pattern
         host = args.host or "localhost"

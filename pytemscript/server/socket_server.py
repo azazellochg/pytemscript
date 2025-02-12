@@ -1,3 +1,4 @@
+import threading
 from argparse import Namespace
 import socket
 import pickle
@@ -6,7 +7,7 @@ import logging
 
 class SocketServer:
     """ Simple UNIX socket server. Not secure at all. """
-    def __init__(self, args: Namespace):
+    def __init__(self, args: Namespace, stop_event: threading.Event):
         """ Initialize the basic variables and logging. """
         self.server_socket = None
         self.server_com = None
@@ -14,6 +15,7 @@ class SocketServer:
         self.port = args.port or 39000
         self.useLD = args.useLD
         self.useTecnaiCCD = args.useTecnaiCCD
+        self.stop_event = stop_event
 
         logging.basicConfig(level=logging.DEBUG if args.debug else logging.INFO,
                             datefmt='%d/%b/%Y %H:%M:%S',
@@ -31,7 +33,7 @@ class SocketServer:
             self.server_socket.listen(5)
             logging.info("Socket server listening on %s:%d" % (self.host, self.port))
 
-            while True:
+            while not self.stop_event.is_set():
                 try:
                     # start COM client as a server
                     self.server_com = COMClient(useTecnaiCCD = self.useTecnaiCCD,

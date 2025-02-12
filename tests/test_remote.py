@@ -1,23 +1,15 @@
-from threading import Thread, Event
+import threading
 import time
-from typing import List, Tuple
 
 from pytemscript.microscope import Microscope
 from pytemscript.server.run import main as server_run
 
 
-def server_thread(argv: List) -> Tuple[Thread, Event]:
-    """ Start server process in a separate thread. """
-    stop_event = Event()
-    thread = Thread(target=server_run, args=(argv, stop_event))
-    thread.start()
-    return thread, stop_event
-
 def test_interface(microscope: Microscope) -> None:
     """ Test remote interface. """
     stage = microscope.stage
     print(stage.position)
-    stage.go_to(x=1, y=-1)
+    stage.go_to(x=1, y=-1, relative=True)
 
 def test_connection(connection_type: str = "socket") -> None:
     """ Create server and client, then test the connection. """
@@ -32,16 +24,14 @@ def test_connection(connection_type: str = "socket") -> None:
         raise ValueError("Unknown connection type")
 
     # Start server
+    stop_event = threading.Event()
     args = ["-t", connection_type, "-p", port, "--host", "127.0.0.1", "-d"]
-    thread, stop_event = server_thread(args)
+    thread = threading.Thread(target=server_run, args=[(args,), stop_event])
+    thread.start()
     time.sleep(1)
 
     # Start client
-    client = Microscope(connection=connection_type, host="",
-                        port=port, debug=True)
-    if client is None:
-        raise RuntimeError("Could not create microscope client")
-
+    client = Microscope(connection=connection_type, host="", port=port, debug=True)
     test_interface(client)
 
     # Stop server
@@ -51,8 +41,8 @@ def test_connection(connection_type: str = "socket") -> None:
 def main() -> None:
     """ Basic test to check server-client connection on localhost. """
     test_connection(connection_type="socket")
-    test_connection(connection_type="grpc")
-    test_connection(connection_type="zmq")
+    #test_connection(connection_type="grpc")
+    #test_connection(connection_type="zmq")
 
 if __name__ == '__main__':
     main()

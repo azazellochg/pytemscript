@@ -38,8 +38,8 @@ class COMBase:
             obj = comtypes.client.CreateObject(progId)
             logging.info("Connected to %s" % progId)
             return obj
-        except:
-            logging.info("Could not connect to %s" % progId)
+        except Exception as e:
+            logging.info("Could not connect to %s: %s" % (progId, str(e)))
             return None
 
     def _initialize(self, useLD: bool, useTecnaiCCD: bool):
@@ -63,6 +63,9 @@ class COMBase:
                 self.tecnai_ccd = self._createCOMObject(SCRIPTING_TECNAI_CCD2)
             import comtypes.gen.TECNAICCDLib
 
+        if self.tem is None:
+            raise RuntimeError("Failed to create COM object.")
+
     @staticmethod
     def handle_com_error(com_error):
         """ Try catching COM error. """
@@ -73,8 +76,13 @@ class COMBase:
         except ValueError:
             logging.error('Exception : %s' % sys.exc_info()[1])
 
-    @staticmethod
-    def _close():
+    def _close(self):
+        """ Release COM objects. """
+        self.tem = None
+        self.tem_adv = None
+        self.tem_lowdose = None
+        self.tecnai_ccd = None
+
         com_module.CoUninitialize()
 
 
