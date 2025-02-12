@@ -82,7 +82,7 @@ def detector_acquire(microscope: Microscope,
     print_stats("STEM detector: " + cam_name, image, binning, dwell_time)
 
 
-if __name__ == '__main__':
+def main():
     print("Starting acquisition test...")
 
     microscope = Microscope()
@@ -103,3 +103,7 @@ if __name__ == '__main__':
         if "BF" in detectors:
             detector_acquire(microscope, "BF", dwell_time=1e-5, binning=2)
         microscope.stem.disable()
+
+
+if __name__ == '__main__':
+    main()

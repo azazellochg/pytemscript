@@ -65,7 +65,7 @@ class Projection:
             self.__find_magnifications()
             if value not in self._magnifications:
                 raise ValueError("Magnification %s not found in the table" % value)
-            index = self._magnifications[value](0)
+            index = self._magnifications[value][0]
             self.magnification_index = index
         else:
             raise RuntimeError(self._err_msg)

@@ -1,4 +1,3 @@
-import threading
 from argparse import Namespace
 import socket
 import pickle
@@ -7,7 +6,7 @@ import logging
 
 class SocketServer:
     """ Simple UNIX socket server. Not secure at all. """
-    def __init__(self, args: Namespace, stop_event: threading.Event):
+    def __init__(self, args: Namespace):
         """ Initialize the basic variables and logging. """
         self.server_socket = None
         self.server_com = None
@@ -15,7 +14,6 @@ class SocketServer:
         self.port = args.port or 39000
         self.useLD = args.useLD
         self.useTecnaiCCD = args.useTecnaiCCD
-        self.stop_event = stop_event
 
         logging.basicConfig(level=logging.DEBUG if args.debug else logging.INFO,
                             datefmt='%d/%b/%Y %H:%M:%S',
@@ -26,52 +24,71 @@ class SocketServer:
 
     def start(self):
         """ Start both the COM client (as a server) and the socket server. """
+        from ..clients.com_client import COMClient
+        self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.server_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+        self.server_socket.bind((self.host, self.port))
+        self.server_socket.listen(5)
+
+        # start COM client as a server
+        self.server_com = COMClient(useTecnaiCCD = self.useTecnaiCCD,
+                                    useLD=self.useLD,
+                                    as_server=True)
+        logging.info("Socket server listening on %s:%d" % (self.host, self.port))
         try:
-            from ..clients.com_client import COMClient
-            self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.server_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-            self.server_socket.bind((self.host, self.port))
-            self.server_socket.listen(5)
-            logging.info("Socket server listening on %s:%d" % (self.host, self.port))
-
-            while not self.stop_event.is_set():
-                try:
-                    # start COM client as a server
-                    self.server_com = COMClient(useTecnaiCCD = self.useTecnaiCCD,
-                                                useLD=self.useLD,
-                                                as_server=True)
-                    client_socket, client_address = self.server_socket.accept()
-                    logging.info("Connection received from: " + str(client_address))
-                    with client_socket:
-                        data_length = client_socket.recv(4)
-                        if not data_length:
-                            break
-                        data_length = int.from_bytes(data_length, byteorder="big")
-                        data = client_socket.recv(data_length)
-                        message = pickle.loads(data)
-                        method_name = message['method']
-                        args = message['args']
-                        kwargs = message['kwargs']
-                        logging.debug("Received request: %s, args: %s, kwargs: %s" % (
-                            method_name, args, kwargs))
-
-                        # Call the appropriate method and send back the result
-                        result = self.handle_request(method_name, *args, **kwargs)
-                        response = pickle.dumps(result)
-
-                        logging.debug("Sending response: %s" % response)
-                        client_socket.sendall(len(response).to_bytes(4, byteorder="big") + response)
-                except socket.error as e:
-                    logging.error(e)
+            while True:
+                client_socket, client_address = self.server_socket.accept()
+                logging.info("Connection received from: " + str(client_address))
+                client_socket.settimeout(None)  # Remove timeout for persistent connection
+                self.handle_client(client_socket)
 
         except KeyboardInterrupt:
             logging.info("Ctrl+C received. Server shutting down..")
+
         finally:
-            if self.server_socket:
-                self.server_socket.close()
-                # explicitly stop the COM server
-                self.server_com._scope._close()
-                self.server_com = None
+            self.server_socket.close()
+            # explicitly stop the COM server
+            self.server_com._scope._close()
+            self.server_com = None
+
+    def handle_client(self, client_socket):
+        """ Handle client requests in a loop until the client disconnects. """
+        try:
+            while True:
+                data_length = client_socket.recv(4)
+                if not data_length:
+                    logging.error("Data length is None")
+                    break
+
+                data_length = int.from_bytes(data_length, byteorder="big")
+                data = client_socket.recv(data_length)
+                if not data:
+                    logging.error("Data is None")
+                    break
+
+                message = pickle.loads(data)
+                method_name = message['method']
+                args = message['args']
+                kwargs = message['kwargs']
+                logging.debug("Received request: %s bytes, %s, args: %s, kwargs: %s" % (
+                    data_length, method_name, args, kwargs))
+
+                # Call the appropriate method and send back the result
+                result = self.handle_request(method_name, *args, **kwargs)
+                response = pickle.dumps(result)
+                length = len(response)
+                logging.debug("Sending response: %s bytes, %s" % (length, result))
+                client_socket.sendall(length.to_bytes(4, byteorder="big") + response)
+
+        except socket.error as e:
+            logging.error(e)
+
+        except KeyboardInterrupt:
+            raise
+
+        finally:
+            client_socket.close()
+            logging.info("Client connection closed.")
 
     def handle_request(self, method_name: str, *args, **kwargs):
         """ Process a socket message: pass method to the COM server

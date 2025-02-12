@@ -5,7 +5,7 @@ import comtypes.client
 from pytemscript.utils.constants import FEG_REGISTERS
 
 
-def test_fegs():
+def main():
     """ Parse existing FEG registers entries. """
     try:
         comtypes.CoInitialize()
@@ -48,4 +48,4 @@ def test_fegs():
 
 if __name__ == '__main__':
     print("Checking FEG registers...")
-    test_fegs()
+    main()

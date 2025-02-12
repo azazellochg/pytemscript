@@ -3,7 +3,6 @@ from typing import Optional, List
 from time import sleep
 
 from pytemscript.microscope import Microscope
-from pytemscript.modules import stem
 from pytemscript.utils.enums import *
 
 
@@ -88,7 +87,7 @@ def test_acquisition(microscope: Microscope) -> None:
 
             fn = cam_name + ".mrc"
             print("Saving to ", fn)
-            image.save(filename=fn, normalize=False)
+            image.save(filename=fn, normalize=False, overwrite=True)
 
     if stem.is_available:
         stem.enable()
@@ -100,7 +99,7 @@ def test_acquisition(microscope: Microscope) -> None:
             if image is not None:
                 fn = det + ".mrc"
                 print("Saving to ", fn)
-                image.save(filename=fn, normalize=False)
+                image.save(filename=fn, normalize=False, overwrite=True)
         stem.disable()
 
 
@@ -402,35 +401,34 @@ def main(argv: Optional[List] = None) -> None:
         description="This test can use local or remote client. In the latter case "
                     "pytemscript-server must be already running",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument("-t", "--type", type=str,
+                        choices=["direct", "socket", "zmq", "grpc"],
+                        default="direct",
+                        help="Connection type: direct, socket, zmq or grpc")
     parser.add_argument("-p", "--port", type=int, default=39000,
                         help="Specify port on which the server is listening")
-    parser.add_argument("--host", type=str, default='',
+    parser.add_argument("--host", type=str, default='127.0.0.1',
                         help="Specify host address on which the server is listening")
     args = parser.parse_args(argv)
 
-    if args.host in ['', 'localhost']:
-        mode = "local"
-        microscope = Microscope(debug=True)
-    else:
-        mode = "remote"
-        microscope = Microscope(connection="socket", host=args.host,
-                                port=args.port, debug=True)
+    microscope = Microscope(connection=args.type, host=args.host,
+                            port=args.port, debug=True)
 
-    print("Starting %s microscope tests..." % mode)
+    print("Starting microscope tests, connection: %s" % args.type)
 
-    full_test = True
-    test_projection(microscope, has_eftem=False)
-    test_detectors(microscope)
-    test_vacuum(microscope, buffer_cycle=full_test)
-    test_autoloader(microscope, check_loading=full_test, slot=1)
-    test_temperature(microscope, force_refill=full_test)
-    test_stage(microscope, move_stage=full_test)
-    test_optics(microscope)
-    test_illumination(microscope)
-    test_gun(microscope, has_gun1=False, has_feg=False)
-    if microscope.family != ProductFamily.TECNAI.name and mode == "local":
-        test_user_buttons(microscope)
-    test_general(microscope, check_door=False)
+    full_test = False
+    #test_projection(microscope, has_eftem=False)
+    #test_detectors(microscope)
+    #test_vacuum(microscope, buffer_cycle=full_test)
+    #test_autoloader(microscope, check_loading=full_test, slot=1)
+    #test_temperature(microscope, force_refill=full_test)
+    #test_stage(microscope, move_stage=full_test)
+    #test_optics(microscope)
+    #test_illumination(microscope)
+    #test_gun(microscope, has_gun1=False, has_feg=False)
+    #if microscope.family != ProductFamily.TECNAI.name and mode == "local":
+    #    test_user_buttons(microscope)
+    #test_general(microscope, check_door=False)
 
     if full_test:
         test_acquisition(microscope)

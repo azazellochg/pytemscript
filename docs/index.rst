@@ -146,12 +146,12 @@ Take an image:
 Testing
 -------
 
-The package provides a few scripts to test the microscope interface connection and image acquisition:
+The package provides a few command-line scripts to test the microscope interface connection and image acquisition:
 
 .. code-block:: python
 
-    python -m pytemscript.tests.test_microscope
-    python -m pytemscript.tests.test_acquisition
+    pytemscript-test -h
+    pytemscript-test-acquisition
 
 Disclaimer
 ----------

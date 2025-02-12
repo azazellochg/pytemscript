@@ -1,10 +1,9 @@
-import threading
-from typing import List
+from typing import List, Optional
 import argparse
 import platform
 
 
-def main(argv: List, stop_event: threading.Event):
+def main(argv: Optional[List] = None) -> None:
     parser = argparse.ArgumentParser(
         description="This server should be started on the microscope PC",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -15,7 +14,7 @@ def main(argv: List, stop_event: threading.Event):
     parser.add_argument("-p", "--port", type=int,
                         default=39000,
                         help="Specify port on which the server is listening")
-    parser.add_argument("--host", type=str, default='127.0.0.1',
+    parser.add_argument("--host", type=str, default='',
                         help="Specify host address on which the server is listening")
     parser.add_argument("--useLD", dest="useLD",
                         default=True, action='store_true',
@@ -34,12 +33,12 @@ def main(argv: List, stop_event: threading.Event):
 
     if args.type == 'grpc':
         from .grpc_server import serve
-        serve(args, stop_event)
+        serve(args)
     elif args.type == 'zmq':
         from .zmq_server import ZMQServer
-        server = ZMQServer(args, stop_event)
+        server = ZMQServer(args)
         server.start()
     elif args.type == 'socket':
         from .socket_server import SocketServer
-        server = SocketServer(args, stop_event)
+        server = SocketServer(args)
         server.start()

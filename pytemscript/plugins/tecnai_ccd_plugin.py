@@ -48,19 +48,24 @@ class Image(BaseImage):
 
         return data
 
-    def save(self, filename: Path, normalize: bool = False) -> None:
+    def save(self,
+             filename: Path,
+             normalize: bool = False,
+             overwrite: bool = False) -> None:
         """ Save acquired image to a file.
 
         :param filename: File path
         :type filename: str
         :param normalize: Normalize image, only for non-MRC format
         :type normalize: bool
+        :param overwrite: Overwrite existing file
+        :type overwrite: bool
         """
         fmt = os.path.splitext(filename)[1].upper().lstrip(".")
         if fmt == "MRC":
             logging.info("Convert to int16 since MRC does not support int32")
             import mrcfile
-            with mrcfile.new(filename) as mrc:
+            with mrcfile.new(filename, overwrite=overwrite) as mrc:
                 mrc.set_data(self.data.astype("int16"))
         else:
             raise NotImplementedError("Only mrc format is supported")

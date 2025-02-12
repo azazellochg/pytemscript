@@ -57,3 +57,8 @@ class Microscope:
         """ Returns the type of condenser lens system: two or three lenses. """
         value = self.client.get_from_cache("tem.Configuration.CondenserLensSystem")
         return CondenserLensSystem(value).name
+
+    def disconnect(self) -> None:
+        """ Disconnects the remote client. """
+        if self._communication_type != "direct":
+            self.client.disconnect()

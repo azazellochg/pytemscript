@@ -103,7 +103,8 @@ class COMClient:
                  useLD: bool = False,
                  useTecnaiCCD: bool = False,
                  debug: bool = False,
-                 as_server: bool = False):
+                 as_server: bool = False,
+                 **kwargs):
         if not as_server:
             logging.basicConfig(level=logging.DEBUG if debug else logging.INFO,
                                 datefmt='%d/%b/%Y %H:%M:%S',

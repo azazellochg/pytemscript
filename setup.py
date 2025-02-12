@@ -42,7 +42,9 @@ setup(name='pytemscript',
           "extra": ["matplotlib", "mypy"]
       },
       entry_points={'console_scripts': [
-          'pytemscript-server = pytemscript.server.run:main'
+          'pytemscript-server = pytemscript.server.run:main',
+          'pytemscript-test = tests.test_microscope:main',
+          'pytemscript-test-acquisition = tests.test_acquisition:main'
       ]},
       url="https://github.com/azazellochg/pytemscript",
       project_urls={

@@ -1,4 +1,3 @@
-import threading
 from argparse import Namespace
 from concurrent import futures
 try:
@@ -18,10 +17,10 @@ class GRPCServer(my_grpc_pb2_grpc.MyServiceServicer):
         result = call_method_on_server_object(method_name, *args, **kwargs)
         return my_grpc_pb2.MyResponse(result=result)
 
-def serve(args: Namespace, stop_event: threading.Event):
+def serve(args: Namespace):
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     my_grpc_pb2_grpc.add_MyServiceServicer_to_server(GRPCServer(), server)
-    host = args.host or "::"
+    host = args.host or "127.0.0.1"
     port = args.port or 50051
     useLD = args.useLD
     useTecnaiCCD = args.useTecnaiCCD

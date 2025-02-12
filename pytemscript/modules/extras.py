@@ -147,19 +147,24 @@ class Image(BaseImage):
             data = self._img.AsSafeArray
         return data
 
-    def save(self, filename: Path, normalize: bool = False) -> None:
+    def save(self,
+             filename: Path,
+             normalize: bool = False,
+             overwrite: bool = False) -> None:
         """ Save acquired image to a file.
 
         :param filename: File path
         :type filename: str
         :param normalize: Normalize image, only for non-MRC format
         :type normalize: bool
+        :param overwrite: Overwrite existing file
+        :type overwrite: bool
         """
         fmt = os.path.splitext(filename)[1].upper().replace(".", "")
         if fmt == "MRC":
             logging.info("Convert to int16 since MRC does not support int32")
             import mrcfile
-            with mrcfile.new(filename) as mrc:
+            with mrcfile.new(filename, overwrite=overwrite) as mrc:
                 if self.metadata is not None:
                     mrc.voxel_size = float(self.metadata['PixelSize.Width']) * 1e10
                 mrc.set_data(self.data.astype("int16"))
@@ -216,7 +221,7 @@ class StagePosition(SpecialObj):
         """ The current position or speed of the stage/piezo stage (x,y,z in um).
         Set a and b to True if you want to retrieve them as well.
         """
-        pos = {key: getattr(self.com_object, key) * 1e6 for key in 'XYZ'}
+        pos = {key: getattr(self.com_object, key.upper()) * 1e6 for key in 'xyz'}
         if a:
             pos['a'] = math.degrees(self.com_object.A)
             pos['b'] = None
