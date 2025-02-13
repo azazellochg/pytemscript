@@ -26,8 +26,7 @@ class SocketClient:
 
         setup_logging("socket_client.log", prefix="[CLIENT]", debug=debug)
         try:
-            self.socket = socket.create_connection((self.host, self.port),
-                                                   timeout=5)
+            self.socket = socket.create_connection((self.host, self.port), timeout=5)
             self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
         except Exception as e:
             raise RuntimeError("Error communicating with server: %s" % e)
