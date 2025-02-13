@@ -3,6 +3,8 @@ import socket
 import pickle
 from typing import Dict
 
+from pytemscript.utils.misc import setup_logging, send_data, receive_data
+
 
 class SocketClient:
     """ Remote socket client interface for the microscope.
@@ -20,17 +22,13 @@ class SocketClient:
                  debug: bool = False):
         self.host = host
         self.port = port
-        self.client_socket = None
+        self.socket = None
 
-        logging.basicConfig(level=logging.DEBUG if debug else logging.INFO,
-                            datefmt='%d/%b/%Y %H:%M:%S',
-                            format='[CLIENT] [%(asctime)s] %(message)s',
-                            handlers=[
-                                logging.FileHandler("socket_client.log", "w", "utf-8"),
-                                logging.StreamHandler()])
+        setup_logging("socket_client.log", prefix="[CLIENT]", debug=debug)
         try:
-            self.client_socket = socket.create_connection((self.host, self.port),
-                                                          timeout=5)
+            self.socket = socket.create_connection((self.host, self.port),
+                                                   timeout=5)
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
         except Exception as e:
             raise RuntimeError("Error communicating with server: %s" % e)
 
@@ -55,21 +53,15 @@ class SocketClient:
 
     def __send_request(self, payload: Dict):
         """ Send data to the remote server and return response. """
-        serialized_data = pickle.dumps(payload)
-        length = len(serialized_data)
-        logging.debug("Sending request: %s bytes, %s" % (length, payload))
-        self.client_socket.sendall(length.to_bytes(4, byteorder="big") + serialized_data)
+        data = pickle.dumps(payload)
+        logging.debug("Sending request: %s" % payload)
+        send_data(self.socket, data)
 
-        length_bytes = self.client_socket.recv(4)
-        length = int.from_bytes(length_bytes, byteorder='big')
+        response = receive_data(self.socket)
 
-        response_data = self.client_socket.recv(length)
-        if not response_data:
-            raise ConnectionError("No response received from server")
-
-        return pickle.loads(response_data)
+        return pickle.loads(response)
 
     def disconnect(self):
         """ Disconnect from the remote server. """
-        self.client_socket.close()
-        self.client_socket = None
+        self.socket.close()
+        self.socket = None

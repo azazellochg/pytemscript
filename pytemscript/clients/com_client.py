@@ -7,7 +7,7 @@ import comtypes
 import comtypes.client
 
 from ..modules.extras import Vector
-from ..utils.misc import rgetattr, rsetattr
+from ..utils.misc import rgetattr, rsetattr, setup_logging
 from ..utils.constants import *
 from ..utils.enums import TEMScriptingError
 
@@ -106,12 +106,7 @@ class COMClient:
                  as_server: bool = False,
                  **kwargs):
         if not as_server:
-            logging.basicConfig(level=logging.DEBUG if debug else logging.INFO,
-                                datefmt='%d/%b/%Y %H:%M:%S',
-                                format='[%(asctime)s] %(message)s',
-                                handlers=[
-                                    logging.FileHandler("com_client.log", "w", "utf-8"),
-                                    logging.StreamHandler()])
+            setup_logging("com_client.log", debug=debug)
 
         # Create all COM interfaces
         self._scope = COMBase(useLD, useTecnaiCCD)
