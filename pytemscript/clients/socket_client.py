@@ -41,7 +41,7 @@ class SocketClient:
                 "kwargs": kwargs
             }
             response = self.__send_request(payload)
-            logging.debug("Received response: %s" % response)
+            logging.debug("Received response: %s", response)
             return response
 
         if method_name in ["cache", "has_advanced_iface",
@@ -54,7 +54,7 @@ class SocketClient:
     def __send_request(self, payload: Dict):
         """ Send data to the remote server and return response. """
         data = pickle.dumps(payload)
-        logging.debug("Sending request: %s" % payload)
+        logging.debug("Sending request: %s", payload)
         send_data(self.socket, data)
 
         response = receive_data(self.socket)

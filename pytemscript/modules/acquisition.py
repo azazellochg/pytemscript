@@ -252,8 +252,8 @@ class AcquisitionObj(SpecialObj):
             settings.SubPathPattern = cameraName + "_" + now.strftime("%d%m%Y_%H%M%S")
             output = settings.PathToImageStorage + settings.SubPathPattern
 
-            logging.info("Movie of %s frames will be saved to: %s.mrc" % (
-                settings.CalculateNumberOfFrames(), output))
+            logging.info("Movie of %s frames will be saved to: %s.mrc",
+                         settings.CalculateNumberOfFrames(), output)
             if eer is False:
                 logging.info("MRC format can only contain images of up to "
                              "16-bits per pixel, to get true CameraCounts "
@@ -290,9 +290,9 @@ class AcquisitionObj(SpecialObj):
 
         settings.DwellTime = dwell_time
 
-        logging.info("Max resolution: %s, %s" % (
-            settings.MaxResolution.X,
-            settings.MaxResolution.Y))
+        logging.info("Max resolution: %s, %s",
+                     settings.MaxResolution.X,
+                     settings.MaxResolution.Y)
 
 
 class Acquisition:

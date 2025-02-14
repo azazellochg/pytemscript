@@ -1,5 +1,6 @@
 from argparse import Namespace
 import socket
+import threading
 import pickle
 import logging
 
@@ -36,13 +37,15 @@ class SocketServer:
         self.server_com = COMClient(useTecnaiCCD = self.useTecnaiCCD,
                                     useLD=self.useLD,
                                     as_server=True)
-        logging.info("Socket server listening on %s:%d" % (self.host, self.port))
+        logging.info("Socket server listening on %s:%d",self.host, self.port)
         try:
             while True:
                 client_socket, client_address = self.socket.accept()
-                logging.info("Connection received from: " + str(client_address))
                 client_socket.settimeout(None)  # Remove timeout for persistent connection
-                self.handle_client(client_socket)
+                # each client in a separate thread
+                thread = threading.Thread(target=self.handle_client,
+                                          args=(client_socket, client_address))
+                thread.start()
 
         except KeyboardInterrupt:
             logging.info("Ctrl+C received. Server shutting down..")
@@ -53,8 +56,9 @@ class SocketServer:
             self.server_com._scope._close()
             self.server_com = None
 
-    def handle_client(self, client_socket):
+    def handle_client(self, client_socket, client_address):
         """ Handle client requests in a loop until the client disconnects. """
+        logging.info("New connection from: %s", client_address)
         try:
             while True:
                 data = receive_data(client_socket)
@@ -62,12 +66,12 @@ class SocketServer:
                 method_name = message['method']
                 args = message['args']
                 kwargs = message['kwargs']
-                logging.debug("Received request: %s, args: %s, kwargs: %s" % (
-                    method_name, args, kwargs))
+                logging.debug("Received request: %s, args: %s, kwargs: %s",
+                              method_name, args, kwargs)
 
                 # Call the appropriate method and send back the result
                 result = self.handle_request(method_name, *args, **kwargs)
-                logging.debug("Sending response: %s" % result)
+                logging.debug("Sending response: %s", result)
                 response = pickle.dumps(result)
                 send_data(client_socket, response)
 
@@ -79,7 +83,7 @@ class SocketServer:
 
         finally:
             client_socket.close()
-            logging.info("Client connection closed.")
+            logging.info("Client %s disconnected", client_address)
 
     def handle_request(self, method_name: str, *args, **kwargs):
         """ Process a socket message: pass method to the COM server

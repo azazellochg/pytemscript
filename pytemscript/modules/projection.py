@@ -32,7 +32,7 @@ class Projection:
             # restore initial mag
             self.magnification_index = saved_index
             self._client.set("tem.AutoNormalizeEnabled", True)
-            logging.info("Available magnifications: %s" % self._magnifications)
+            logging.info("Available magnifications: %s", self._magnifications)
 
     @property
     def list_magnifications(self) -> Dict:

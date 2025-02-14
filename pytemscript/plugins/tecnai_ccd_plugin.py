@@ -125,7 +125,7 @@ class TecnaiCCDPlugin:
 
         if self._plugin.IsRetractable:
             if not self._plugin.IsInserted:
-                logging.info("Inserting camera %s" % name)
+                logging.info("Inserting camera %s", name)
                 self._plugin.Insert()
                 time.sleep(5)
                 if not self._plugin.IsInserted:

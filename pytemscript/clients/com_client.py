@@ -36,10 +36,10 @@ class COMBase:
         """ Connect to a COM interface. """
         try:
             obj = comtypes.client.CreateObject(progId)
-            logging.info("Connected to %s" % progId)
+            logging.info("Connected to %s", progId)
             return obj
         except Exception as e:
-            logging.info("Could not connect to %s: %s" % (progId, str(e)))
+            logging.info("Could not connect to %s: %s", progId, str(e))
             return None
 
     def _initialize(self, useLD: bool, useTecnaiCCD: bool):
@@ -72,9 +72,9 @@ class COMBase:
         try:
             default = TEMScriptingError.E_NOT_OK.value
             err = TEMScriptingError(int(getattr(com_error, 'hresult', default))).name
-            logging.error('COM error: %s' % err)
+            logging.error('COM error: %s', err)
         except ValueError:
-            logging.error('Exception : %s' % sys.exc_info()[1])
+            logging.error('Exception : %s', sys.exc_info()[1])
 
     def _close(self):
         """ Release COM objects. """
