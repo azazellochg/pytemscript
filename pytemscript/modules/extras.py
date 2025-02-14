@@ -10,29 +10,31 @@ from ..utils.enums import (ImagePixelType, AcqImageFileFormat, StageAxes,
 
 class Vector:
     """ Utility object with two float attributes. """
+    __slots__ = ("x", "y", "__min", "__max")
+
     def __init__(self, x: float, y: float):
         self.x = x
         self.y = y
-        self._min: Optional[float] = None
-        self._max: Optional[float] = None
+        self.__min: Optional[float] = None
+        self.__max: Optional[float] = None
 
     def __repr__(self):
         return "Vector(x=%f, y=%f)" % (self.x, self.y)
 
     def set_limits(self, min_value: float, max_value: float) -> None:
         """Set the range limits for the vector."""
-        self._min = min_value
-        self._max = max_value
+        self.__min = min_value
+        self.__max = max_value
 
     @property
     def has_limits(self) -> bool:
         """Check if range limits are set."""
-        return self._min is not None and self._max is not None
+        return self.__min is not None and self.__max is not None
 
     def check_limits(self) -> None:
         """Validate that the vector's values are within the set limits."""
         if self.has_limits:
-            if any(v < self._min or v > self._max for v in self.components):
+            if any(v < self.__min or v > self.__max for v in self.components):
                 msg = "One or more values (%s) are outside of range (%f, %f)" % (self.components, self.x, self.y)
                 logging.error(msg)
                 raise ValueError(msg)

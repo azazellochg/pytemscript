@@ -6,6 +6,11 @@ class Microscope:
     """ Base client interface, exposing available methods
      and properties.
     """
+    __slots__ = ("_communication_type", "client", "_cache",
+                 "acquisition", "detectors", "gun", "optics", "stem", "vacuum",
+                 "autoloader", "stage", "piezo_stage", "apertures", "temperature",
+                 "user_buttons", "user_door", "energy_filter", "low_dose")
+
     def __init__(self, connection: str = "direct", *args, **kwargs):
         self._communication_type = connection
         if connection == "direct":

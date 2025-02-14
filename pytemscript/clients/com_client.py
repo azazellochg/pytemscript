@@ -178,3 +178,7 @@ class COMClient:
             rsetattr(self._scope, attrname, vector)
         else:
             rsetattr(self._scope, attrname, value)
+
+    def disconnect(self):
+        """ Do nothing since COMClient is local. """
+        pass

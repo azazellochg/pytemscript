@@ -8,7 +8,7 @@ from pytemscript.utils.misc import setup_logging, send_data, receive_data
 
 
 class SocketServer:
-    """ Simple UNIX socket server. Not secure at all. """
+    """ Simple socket server, each client gets its own thread. Not secure at all. """
     def __init__(self, args: Namespace):
         """ Initialize the basic variables and logging. """
         self.socket = None

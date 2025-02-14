@@ -1,3 +1,4 @@
+from typing import Optional
 import functools
 import logging
 from logging.handlers import TimedRotatingFileHandler
@@ -27,7 +28,7 @@ def rsetattr(obj, attrname, value):
 
 
 def setup_logging(fn,
-                  prefix: str = None,
+                  prefix: Optional[str] = None,
                   debug: bool = False) -> None:
     """ Setup logging handlers.
     :param fn: filename

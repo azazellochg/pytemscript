@@ -9,10 +9,12 @@ from .extras import StagePosition
 
 class Stage:
     """ Stage functions. """
+    __slots__ = ("__client", "__err_msg", "__limits")
+
     def __init__(self, client):
-        self._client = client
-        self._err_msg = "Timeout. Stage is not ready"
-        self._limits = dict()
+        self.__client = client
+        self.__err_msg = "Timeout. Stage is not ready"
+        self.__limits = dict()
 
     @property
     def _beta_available(self) -> bool:
@@ -22,14 +24,14 @@ class Stage:
         """ Wait for stage to become ready. """
         attempt = 0
         while attempt < tries:
-            if self._client.get("tem.Stage.Status") != StageStatus.READY:
+            if self.__client.get("tem.Stage.Status") != StageStatus.READY:
                 logging.info("Stage is not ready, waiting..")
                 tries += 1
                 time.sleep(1)
             else:
                 break
         else:
-            raise RuntimeError(self._err_msg)
+            raise RuntimeError(self.__err_msg)
 
     def _change_position(self,
                          direct: bool = False,
@@ -81,37 +83,37 @@ class Stage:
         # b - 29.7 to + 29.7(degrees)
 
         if not direct:
-            self._client.call("tem.Stage", obj=StagePosition,
-                              func="set", axes=axes,
-                              method="MoveTo", **new_coords)
+            self.__client.call("tem.Stage", obj=StagePosition,
+                               func="set", axes=axes,
+                               method="MoveTo", **new_coords)
         else:
             if speed is not None:
-                self._client.call("tem.Stage",
-                                  obj=StagePosition, func="set",
-                                  axes=axes, speed=speed,
-                                  method="GoToWithSpeed", **new_coords)
+                self.__client.call("tem.Stage",
+                                   obj=StagePosition, func="set",
+                                   axes=axes, speed=speed,
+                                   method="GoToWithSpeed", **new_coords)
             else:
-                self._client.call("tem.Stage", obj=StagePosition,
-                                  func="set", axes=axes,
-                                  method="GoTo", **new_coords)
+                self.__client.call("tem.Stage", obj=StagePosition,
+                                   func="set", axes=axes,
+                                   method="GoTo", **new_coords)
 
         self._wait_for_stage(tries=10)
 
     @property
     def status(self) -> str:
         """ The current state of the stage. """
-        return StageStatus(self._client.get("tem.Stage.Status")).name
+        return StageStatus(self.__client.get("tem.Stage.Status")).name
 
     @property
     def holder(self) -> str:
         """ The current specimen holder type. """
-        return StageHolderType(self._client.get("tem.Stage.Holder")).name
+        return StageHolderType(self.__client.get("tem.Stage.Holder")).name
 
     @property
     def position(self) -> Dict:
         """ The current position of the stage (x,y,z in um and a,b in degrees). """
-        return self._client.call("tem.Stage.Position", obj=StagePosition,
-                                   func="get", a=True, b=self._beta_available)
+        return self.__client.call("tem.Stage.Position", obj=StagePosition,
+                                  func="get", a=True, b=self._beta_available)
 
     def go_to(self, relative=False, **kwargs) -> None:
         """ Makes the holder directly go to the new position by moving all axes
@@ -136,7 +138,7 @@ class Stage:
     @property
     def limits(self) -> Dict:
         """ Returns a dict with stage move limits. """
-        if not self._limits:
-            self._limits = self._client.call("tem.Stage", obj=StagePosition,
-                                             func="limits")
-        return self._limits
+        if not self.__limits:
+            self.__limits = self.__client.call("tem.Stage", obj=StagePosition,
+                                               func="limits")
+        return self.__limits

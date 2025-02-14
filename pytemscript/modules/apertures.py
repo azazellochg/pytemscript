@@ -57,54 +57,56 @@ class AperturesObj(SpecialObj):
 
 class Apertures:
     """ Apertures and VPP controls. """
+    __slots__ = ("__client", "__has_apertures", "__shortcut", "__err_msg", "__err_msg_vpp")
+
     def __init__(self, client):
-        self._client = client
-        self._has_apertures = None
-        self._shortcut = "tem.ApertureMechanismCollection"
-        self._err_msg = "Apertures interface is not available. Requires a separate license"
-        self._err_msg_vpp = "Either no VPP found or it's not enabled and inserted"
+        self.__client = client
+        self.__has_apertures = None
+        self.__shortcut = "tem.ApertureMechanismCollection"
+        self.__err_msg = "Apertures interface is not available. Requires a separate license"
+        self.__err_msg_vpp = "Either no VPP found or it's not enabled and inserted"
 
     @property
     def __std_available(self) -> bool:
-        if self._has_apertures is None:
-            self._has_apertures = self._client.has(self._shortcut)
-        return self._has_apertures
+        if self.__has_apertures is None:
+            self.__has_apertures = self.__client.has(self.__shortcut)
+        return self.__has_apertures
 
     @property
     def vpp_position(self) -> int:
         """ Returns the index of the current VPP preset position. """
         try:
-            return int(self._client.get("tem_adv.PhasePlate.GetCurrentPresetPosition")) + 1
+            return int(self.__client.get("tem_adv.PhasePlate.GetCurrentPresetPosition")) + 1
         except:
-            raise RuntimeError(self._err_msg_vpp)
+            raise RuntimeError(self.__err_msg_vpp)
 
     def vpp_next_position(self) -> None:
         """ Goes to the next preset location on the VPP aperture. """
         try:
-            self._client.call("tem_adv.PhasePlate.SelectNextPresetPosition()")
+            self.__client.call("tem_adv.PhasePlate.SelectNextPresetPosition()")
         except:
-            raise RuntimeError(self._err_msg_vpp)
+            raise RuntimeError(self.__err_msg_vpp)
 
     def enable(self, aperture) -> None:
         if not self.__std_available:
-            raise NotImplementedError(self._err_msg)
+            raise NotImplementedError(self.__err_msg)
         else:
-            self._client.call(self._shortcut, obj=AperturesObj,
-                              func="enable", name=aperture)
+            self.__client.call(self.__shortcut, obj=AperturesObj,
+                               func="enable", name=aperture)
 
     def disable(self, aperture) -> None:
         if not self.__std_available:
-            raise NotImplementedError(self._err_msg)
+            raise NotImplementedError(self.__err_msg)
         else:
-            self._client.call(self._shortcut, obj=AperturesObj,
-                              func="disable", name=aperture)
+            self.__client.call(self.__shortcut, obj=AperturesObj,
+                               func="disable", name=aperture)
 
     def retract(self, aperture) -> None:
         if not self.__std_available:
-            raise NotImplementedError(self._err_msg)
+            raise NotImplementedError(self.__err_msg)
         else:
-            self._client.call(self._shortcut, obj=AperturesObj,
-                              func="retract", name=aperture)
+            self.__client.call(self.__shortcut, obj=AperturesObj,
+                               func="retract", name=aperture)
 
     def select(self, aperture: str, size: int) -> None:
         """ Select a specific aperture.
@@ -115,15 +117,15 @@ class Apertures:
         :type size: float
         """
         if not self.__std_available:
-            raise NotImplementedError(self._err_msg)
+            raise NotImplementedError(self.__err_msg)
         else:
-            self._client.call(self._shortcut, obj=AperturesObj,
-                              func="select", name=aperture, size=size)
+            self.__client.call(self.__shortcut, obj=AperturesObj,
+                               func="select", name=aperture, size=size)
 
     def show(self) -> Dict:
         """ Returns a dict with apertures information. """
         if not self.__std_available:
-            raise NotImplementedError(self._err_msg)
+            raise NotImplementedError(self.__err_msg)
         else:
-            return self._client.call(self._shortcut, obj=AperturesObj,
-                                     func="show")
+            return self.__client.call(self.__shortcut, obj=AperturesObj,
+                                      func="show")
