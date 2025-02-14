@@ -1,4 +1,5 @@
-#!/usr/bin/env python3
+import argparse
+from typing import Optional, List
 import numpy as np
 import math
 import matplotlib.pyplot as plt
@@ -82,10 +83,27 @@ def detector_acquire(microscope: Microscope,
     print_stats("STEM detector: " + cam_name, image, binning, dwell_time)
 
 
-def main():
-    print("Starting acquisition test...")
+def main(argv: Optional[List] = None) -> None:
+    """ Testing acquisition functions. """
+    parser = argparse.ArgumentParser(
+        description="This test can use local or remote client. In the latter case "
+                    "pytemscript-server must be already running",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument("-t", "--type", type=str,
+                        choices=["direct", "socket", "zmq", "grpc"],
+                        default="direct",
+                        help="Connection type: direct, socket, zmq or grpc")
+    parser.add_argument("-p", "--port", type=int, default=39000,
+                        help="Specify port on which the server is listening")
+    parser.add_argument("--host", type=str, default='127.0.0.1',
+                        help="Specify host address on which the server is listening")
+    args = parser.parse_args(argv)
 
-    microscope = Microscope()
+    microscope = Microscope(connection=args.type, host=args.host,
+                            port=args.port, debug=True)
+
+    print("Starting acquisition tests, connection: %s" % args.type)
+
     cameras = microscope.detectors.cameras
     print("Available detectors:\n", cameras)
 

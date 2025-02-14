@@ -39,8 +39,8 @@ def setup_logging(fn,
     if prefix is not None:
         fmt = prefix + fmt
 
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.DEBUG if debug else logging.INFO)
+    #logger = logging.getLogger(__name__)
+    #logger.setLevel(logging.DEBUG if debug else logging.INFO)
     formatter = logging.Formatter(fmt)
 
     file_handler = TimedRotatingFileHandler(fn, when="midnight", interval=1, backupCount=7)
@@ -49,8 +49,12 @@ def setup_logging(fn,
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(formatter)
 
-    logger.addHandler(file_handler)
-    logger.addHandler(console_handler)
+    #logger.addHandler(file_handler)
+    #logger.addHandler(console_handler)
+
+    logging.basicConfig(level=logging.DEBUG if debug else logging.INFO,
+                        datefmt='%d/%b/%Y %H:%M:%S',
+                        handlers=[file_handler, console_handler])
 
 
 def send_data(socket, data: bytes):

@@ -17,7 +17,7 @@ class ButtonsObj(SpecialObj):
 
 class UserButtons:
     """ User buttons control. """
-    __slots__ = ("_client")
+    __slots__ = ("__client",)
     valid_buttons = ["L1", "L2", "L3", "R1", "R2", "R3"]
 
     def __init__(self, client):

@@ -417,18 +417,18 @@ def main(argv: Optional[List] = None) -> None:
     print("Starting microscope tests, connection: %s" % args.type)
 
     full_test = False
-    #test_projection(microscope, has_eftem=False)
-    #test_detectors(microscope)
-    #test_vacuum(microscope, buffer_cycle=full_test)
-    #test_autoloader(microscope, check_loading=full_test, slot=1)
-    #test_temperature(microscope, force_refill=full_test)
-    #test_stage(microscope, move_stage=full_test)
-    #test_optics(microscope)
-    #test_illumination(microscope)
-    #test_gun(microscope, has_gun1=False, has_feg=False)
-    #if microscope.family != ProductFamily.TECNAI.name and mode == "local":
-    #    test_user_buttons(microscope)
-    #test_general(microscope, check_door=False)
+    test_projection(microscope, has_eftem=False)
+    test_detectors(microscope)
+    test_vacuum(microscope, buffer_cycle=full_test)
+    test_autoloader(microscope, check_loading=full_test, slot=1)
+    test_temperature(microscope, force_refill=full_test)
+    test_stage(microscope, move_stage=full_test)
+    test_optics(microscope)
+    test_illumination(microscope)
+    test_gun(microscope, has_gun1=False, has_feg=False)
+    if microscope.family != ProductFamily.TECNAI.name and args.type == "direct":
+        test_user_buttons(microscope)
+    test_general(microscope, check_door=False)
 
     if full_test:
         test_acquisition(microscope)

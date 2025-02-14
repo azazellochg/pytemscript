@@ -136,10 +136,6 @@ class COMClient:
             self.cache[attrname] = self.get(attrname)
         return self.cache[attrname]
 
-    def clear_cache(self, attrname) -> None:
-        if attrname in self.cache:
-            del self.cache[attrname]
-
     def has(self, attrname) -> bool:
         """ GET request with cache support. Should be used only for attributes
         that do not change.

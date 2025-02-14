@@ -3,33 +3,32 @@ from .utils.enums import ProductFamily, CondenserLensSystem
 
 
 class Microscope:
-    """ Base client interface, exposing available methods
+    """ Main client interface, exposing available methods
      and properties.
     """
-    __slots__ = ("_communication_type", "client", "_cache",
+    __slots__ = ("__connection", "__client",
                  "acquisition", "detectors", "gun", "optics", "stem", "vacuum",
                  "autoloader", "stage", "piezo_stage", "apertures", "temperature",
                  "user_buttons", "user_door", "energy_filter", "low_dose")
 
     def __init__(self, connection: str = "direct", *args, **kwargs):
-        self._communication_type = connection
+        self.__connection = connection
         if connection == "direct":
             from .clients.com_client import COMClient
-            self.client = COMClient(*args, **kwargs)
+            self.__client = COMClient(*args, **kwargs)
         elif connection == 'grpc':
             from .clients.grpc_client import GRPCClient
-            self.client = GRPCClient(*args, **kwargs)
+            self.__client = GRPCClient(*args, **kwargs)
         elif connection == 'zmq':
             from .clients.zmq_client import ZMQClient
-            self.client = ZMQClient(*args, **kwargs)
+            self.__client = ZMQClient(*args, **kwargs)
         elif connection == 'socket':
             from .clients.socket_client import SocketClient
-            self.client = SocketClient(*args, **kwargs)
+            self.__client = SocketClient(*args, **kwargs)
         else:
             raise ValueError("Unsupported communication type")
 
-        client = self.client
-        self._cache = self.client.cache
+        client = self.__client
 
         self.acquisition = Acquisition(client)
         self.detectors = Detectors(client)
@@ -54,16 +53,16 @@ class Microscope:
     @property
     def family(self) -> str:
         """ Returns the microscope product family / platform. """
-        value = self.client.get_from_cache("tem.Configuration.ProductFamily")
+        value = self.__client.get_from_cache("tem.Configuration.ProductFamily")
         return ProductFamily(value).name
 
     @property
     def condenser_system(self) -> str:
         """ Returns the type of condenser lens system: two or three lenses. """
-        value = self.client.get_from_cache("tem.Configuration.CondenserLensSystem")
+        value = self.__client.get_from_cache("tem.Configuration.CondenserLensSystem")
         return CondenserLensSystem(value).name
 
     def disconnect(self) -> None:
         """ Disconnects the remote client. """
-        if self._communication_type != "direct":
-            self.client.disconnect()
+        if self.__connection != "direct":
+            self.__client.disconnect()

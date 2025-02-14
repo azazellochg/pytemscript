@@ -22,7 +22,7 @@ class SocketServer:
 
     def start(self):
         """ Start both the COM client (as a server) and the socket server. """
-        from ..clients.com_client import COMClient
+        from pytemscript.clients.com_client import COMClient
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         self.socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
