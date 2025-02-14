@@ -15,8 +15,8 @@ class Vector:
     def __init__(self, x: float, y: float):
         self.x = x
         self.y = y
-        self.__min: Optional[float] = None
-        self.__max: Optional[float] = None
+        self.__min = None
+        self.__max = None
 
     def __repr__(self):
         return "Vector(x=%f, y=%f)" % (self.x, self.y)

@@ -1,5 +1,4 @@
 import threading
-from typing import Dict, Any
 import logging
 import platform
 import sys
@@ -117,7 +116,7 @@ class COMClient:
         if useTecnaiCCD and self._scope.tecnai_ccd is None:
             raise RuntimeError("Could not use Tecnai CCD plugin, please set useTecnaiCCD=False")
 
-        self.cache: Dict[str, Any] = dict()
+        self.cache = dict()
 
     @property
     def has_advanced_iface(self) -> bool:

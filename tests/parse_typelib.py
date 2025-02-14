@@ -30,7 +30,7 @@ def list_typelib_details(prog_id: str):
     typeinfo = com_obj.GetTypeInfo(0)
     typelib = typeinfo.GetContainingTypeLib()[0]
     lib_attr = typelib.GetLibAttr()
-    typelib_version = f"{lib_attr.wMajorVerNum}.{lib_attr.wMinorVerNum}"
+    typelib_version = ".".join([lib_attr.wMajorVerNum, lib_attr.wMinorVerNum])
 
     enums = constants.enums
     interfaces = {}
@@ -61,21 +61,21 @@ def list_typelib_details(prog_id: str):
 def create_output():
     """ Save output into txt. """
     for prog_id in [SCRIPTING_STD, SCRIPTING_ADV]:
-        print(f"Querying {prog_id}...", end="")
+        print("Querying %s..." % prog_id, end="")
         enums, interfaces, version = list_typelib_details(prog_id)
         if enums is not None:
-            with open(f"{prog_id}_version{version}.txt", "w") as f:
+            with open("%s_version%s.txt" % (prog_id, version), "w") as f:
                 f.write("========== Enumerations =========\n")
                 for enum, values in enums.items():
-                    f.write(f"- {enum}\n")
+                    f.write("- %s\n" % enum)
                     for name, value in values.items():
-                        f.write(f"\t{name} = {value}\n")
+                        f.write("\t%s = %s\n" % (name, value))
 
                 f.write("\n========== Interfaces ===========\n")
                 for interface, methods in interfaces.items():
-                    f.write(f"- {interface}\n")
+                    f.write("- %s\n" % interface)
                     for method in methods:
-                        f.write(f"\t{method}\n")
+                        f.write("\t%s\n" % method)
 
 
 if __name__ == '__main__':

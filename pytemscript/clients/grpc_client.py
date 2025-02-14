@@ -8,7 +8,7 @@ except ImportError:
 
 class GRPCClient:
     def __init__(self, host, port):
-        self.channel = grpc.insecure_channel(f'{host}:{port}')
+        self.channel = grpc.insecure_channel('%s:%d' % (host, port))
         self.stub = my_grpc_pb2_grpc.MyServiceStub(self.channel)
 
     def call_method(self, method_name, *args, **kwargs):

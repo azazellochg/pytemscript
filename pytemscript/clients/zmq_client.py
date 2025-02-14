@@ -9,7 +9,7 @@ class ZMQClient:
     def __init__(self, host, port):
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.REQ)  # Request-Reply pattern
-        self.socket.connect(f"tcp://{host}:{port}")
+        self.socket.connect("tcp://%s:%d" % (host, port))
 
     def call_method(self, method_name, *args, **kwargs):
         # Serialize the request
