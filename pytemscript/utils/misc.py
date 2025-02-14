@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Callable
 import functools
 import logging
 from logging.handlers import TimedRotatingFileHandler
@@ -57,7 +57,7 @@ def setup_logging(fn,
                         handlers=[file_handler, console_handler])
 
 
-def send_data(socket, data: bytes):
+def send_data(socket, data: bytes) -> None:
     """ Assemble data packet and send it over socket. """
     packet = bytearray()
     packet.extend(MAGIC_BYTES)
@@ -84,3 +84,20 @@ def receive_data(socket) -> bytes:
         data.extend(chunk)
 
     return data
+
+
+class RequestBody:
+    """ Dataclass-like structure of a request passed to the client. """
+    def __init__(self,
+                 method: str,
+                 obj: object,
+                 attr: str,
+                 validator: Optional[Callable] = None,
+                 *args,
+                 **kwargs) -> None:
+        self.method = method
+        self.obj = obj
+        self.attr = attr
+        self.validator = validator
+        self.args = args
+        self.kwargs = kwargs

@@ -1,3 +1,4 @@
+import threading
 from typing import Dict, Any
 import logging
 import platform
@@ -7,7 +8,7 @@ import comtypes
 import comtypes.client
 
 from ..modules.extras import Vector
-from ..utils.misc import rgetattr, rsetattr, setup_logging
+from ..utils.misc import rgetattr, rsetattr, setup_logging, RequestBody
 from ..utils.constants import *
 from ..utils.enums import TEMScriptingError
 
@@ -105,6 +106,8 @@ class COMClient:
                  debug: bool = False,
                  as_server: bool = False,
                  **kwargs):
+        self.__lock = threading.Lock()
+
         if not as_server:
             setup_logging("com_client.log", debug=debug)
 
@@ -178,3 +181,31 @@ class COMClient:
     def disconnect(self):
         """ Do nothing since COMClient is local. """
         pass
+
+    def call_new(self, body: RequestBody):
+        with self.__lock:
+            try:
+                response = None
+                attrname = body.attr
+                if isinstance(body.obj, str):
+                    attrname = ".".join([body.obj, body.attr])
+
+                if body.method == "set":
+                    self.set(attrname, body.args[0])
+                elif body.method == "call":
+                    response = self.call(attrname, *body.args, **body.kwargs)
+                elif body.method == "get":
+                    response = self.get(attrname)
+                elif body.method == "has":
+                    response = self.has(attrname)
+                else:
+                    raise ValueError("Unknown method: %s" % body.method)
+
+                if body.validator is not None:
+                    body.validator(response)
+
+                return response
+
+            except Exception as e:
+                logging.error(e)
+                raise e

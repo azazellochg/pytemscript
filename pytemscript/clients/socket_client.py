@@ -60,7 +60,7 @@ class SocketClient:
 
         return pickle.loads(response)
 
-    def disconnect(self):
+    def disconnect(self) -> None:
         """ Disconnect from the remote server. """
         self.socket.close()
         self.socket = None

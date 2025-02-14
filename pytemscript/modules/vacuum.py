@@ -1,6 +1,7 @@
 from typing import Dict
 
 from ..utils.enums import VacuumStatus, GaugeStatus, GaugePressureLevel
+from ..utils.misc import RequestBody
 from .extras import SpecialObj
 
 
@@ -38,7 +39,10 @@ class Vacuum:
     @property
     def status(self) -> str:
         """ Status of the vacuum system. """
-        return VacuumStatus(self.__client.get(self.__shortcut + ".Status")).name
+        request = RequestBody(method="get", obj=self.__shortcut, attr="Status", validator=int)
+        result = self.__client.call(request)
+        return VacuumStatus(result).name
+        #return VacuumStatus(self.__client.call(self.__shortcut + ".Status")).name
 
     @property
     def is_buffer_running(self) -> bool:
