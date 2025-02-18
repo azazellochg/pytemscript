@@ -14,5 +14,5 @@ from .stem import Stem
 from .temperature import Temperature
 from .userbuttons import UserButtons
 from .userdoor import UserDoor
-from .extras import Image
+from .extras import Image, Vector
 from .vacuum import Vacuum

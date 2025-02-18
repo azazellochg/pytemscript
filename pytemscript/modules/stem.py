@@ -1,5 +1,3 @@
-from typing import Tuple
-
 from .extras import Vector
 from ..utils.misc import RequestBody
 from ..utils.enums import InstrumentMode
@@ -78,7 +76,7 @@ class Stem:
             raise RuntimeError(self.__err_msg)
 
     @property
-    def scan_field_of_view(self) -> Tuple:
+    def scan_field_of_view(self) -> Vector:
         """ STEM full scan field of view. (read/write)"""
         body = RequestBody(attr=self.__id + ".InstrumentMode", validator=int)
 
@@ -89,17 +87,16 @@ class Stem:
             x = self.__client.call(method="get", body=fov_x)
             y = self.__client.call(method="get", body=fov_y)
 
-            return (x, y)
+            return Vector(x, y)
         else:
             raise RuntimeError(self.__err_msg)
 
     @scan_field_of_view.setter
-    def scan_field_of_view(self, values: Tuple) -> None:
+    def scan_field_of_view(self, vector: Vector) -> None:
         body = RequestBody(attr=self.__id + ".InstrumentMode", validator=int)
 
         if self.__client.call(method="get", body=body) == InstrumentMode.STEM:
-            new_value = Vector(*values)
-            body = RequestBody(attr="tem.Illumination.StemFullScanFieldOfView", value=new_value)
+            body = RequestBody(attr="tem.Illumination.StemFullScanFieldOfView", value=vector)
             self.__client.call(method="set", body=body)
         else:
             raise RuntimeError(self.__err_msg)

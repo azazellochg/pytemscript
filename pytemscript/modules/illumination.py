@@ -74,7 +74,7 @@ class Illumination:
         self.__client.call(method="set", body=body)
 
     @property
-    def beam_shift(self) -> Tuple:
+    def beam_shift(self) -> Vector:
         """ Beam shift X and Y in um. (read/write)"""
         shx = RequestBody(attr=self.__id + ".Shift.X", validator=float)
         shy = RequestBody(attr=self.__id + ".Shift.Y", validator=float)
@@ -82,17 +82,16 @@ class Illumination:
         x = self.__client.call(method="get", body=shx)
         y = self.__client.call(method="get", body=shy)
 
-        return (x*1e6, y*1e6)
+        return Vector(x, y) * 1e6
 
     @beam_shift.setter
-    def beam_shift(self, values: Tuple) -> None:
-        new_value = Vector(values[0] * 1e-6, values[1] * 1e-6)
-
-        body = RequestBody(attr=self.__id + ".Shift", value=new_value)
+    def beam_shift(self, vector: Vector) -> None:
+        vector *= 1e-6
+        body = RequestBody(attr=self.__id + ".Shift", value=vector)
         self.__client.call(method="set", body=body)
 
     @property
-    def rotation_center(self) -> Tuple:
+    def rotation_center(self) -> Vector:
         """ Rotation center X and Y in mrad. (read/write)
             Depending on the scripting version,
             the values might need scaling by 6.0 to _get mrads.
@@ -103,30 +102,27 @@ class Illumination:
         x = self.__client.call(method="get", body=rotx)
         y = self.__client.call(method="get", body=roty)
 
-        return (x*1e3, y*1e3)
+        return Vector(x, y) * 1e3
 
     @rotation_center.setter
-    def rotation_center(self, values: Tuple) -> None:
-        new_value = Vector(values[0] * 1e-3, values[1] * 1e-3)
-
-        body = RequestBody(attr=self.__id + ".RotationCenter", value=new_value)
+    def rotation_center(self, vector: Vector) -> None:
+        vector *= 1e-3
+        body = RequestBody(attr=self.__id + ".RotationCenter", value=vector)
         self.__client.call(method="set", body=body)
 
     @property
-    def condenser_stigmator(self) -> Tuple:
+    def condenser_stigmator(self) -> Vector:
         """ C2 condenser stigmator X and Y. (read/write)"""
         stigx = RequestBody(attr=self.__id + ".CondenserStigmator.X", validator=float)
         stigy = RequestBody(attr=self.__id + ".CondenserStigmator.Y", validator=float)
 
-        return (self.__client.call(method="get", body=stigx),
-                self.__client.call(method="get", body=stigy))
+        return Vector(self.__client.call(method="get", body=stigx),
+                      self.__client.call(method="get", body=stigy))
 
     @condenser_stigmator.setter
-    def condenser_stigmator(self, values: Tuple) -> None:
-        new_value = Vector(*values)
-        new_value.set_limits(-1.0, 1.0)
-
-        body = RequestBody(attr=self.__id + ".CondenserStigmator", value=new_value)
+    def condenser_stigmator(self, vector: Vector) -> None:
+        vector.set_limits(-1.0, 1.0)
+        body = RequestBody(attr=self.__id + ".CondenserStigmator", value=vector)
         self.__client.call(method="set", body=body)
 
     @property
@@ -242,7 +238,7 @@ class Illumination:
             raise NotImplementedError("Condenser mode can be changed only on 3-condenser lens systems.")
 
     @property
-    def beam_tilt(self) -> Union[Tuple, float]:
+    def beam_tilt(self) -> Union[Vector, float]:
         """ Dark field beam tilt relative to the origin stored at
         alignment time. Only operational if dark field mode is active.
         Units: mrad, either in Cartesian (x,y) or polar (conical)
@@ -256,34 +252,33 @@ class Illumination:
         tilt = self.__client.call(method="get", body=dftilt)
 
         if mode == DarkFieldMode.CONICAL:
-            return tilt[0] * 1e3 * math.cos(tilt[1]), tilt[0] * 1e3 * math.sin(tilt[1])
+            tilt *= 1e3
+            return Vector(tilt.x * math.cos(tilt.y), tilt.x * math.sin(tilt.y))
         elif mode == DarkFieldMode.CARTESIAN:
             return tilt * 1e3
         else:
-            return 0.0, 0.0  # Microscope might return nonsense if DFMode is OFF
+            return Vector(0.0, 0.0)  # Microscope might return nonsense if DFMode is OFF
 
     @beam_tilt.setter
-    def beam_tilt(self, tilt: Union[Tuple, float]) -> None:
+    def beam_tilt(self, tilt: Union[Vector, float]) -> None:
         body = RequestBody(attr=self.__id + ".DFMode", validator=int)
         mode = self.__client.call(method="get", body=body)
 
         if isinstance(tilt, float):
-            newtilt = [tilt, tilt]
-        else:
-            newtilt = list(tilt)
+            tilt = Vector(tilt, tilt)
 
-        newtilt[0] *= 1e-3
-        newtilt[1] *= 1e-3
-        if newtilt[0] == 0.0 and newtilt[1] == 0.0:
-            body = RequestBody(attr=self.__id + ".Tilt", value=(0.0, 0.0))
+        tilt *= 1e-3
+
+        if tilt == (0.0, 0.0):
+            body = RequestBody(attr=self.__id + ".Tilt", value=tilt)
             self.__client.call(method="set", body=body)
 
             body = RequestBody(attr=self.__id + ".DFMode", value=DarkFieldMode.OFF)
             self.__client.call(method="set", body=body)
 
         elif mode == DarkFieldMode.CONICAL:
-            value = (math.sqrt(newtilt[0] ** 2 + newtilt[1] ** 2),
-                     math.atan2(newtilt[1], newtilt[0]))
+            value = Vector(math.sqrt(tilt.x ** 2 + tilt.y ** 2),
+                           math.atan2(tilt.y, tilt.x))
             body = RequestBody(attr=self.__id + ".Tilt", value=value)
             self.__client.call(method="set", body=body)
 
@@ -291,9 +286,9 @@ class Illumination:
             body = RequestBody(attr=self.__id + ".DFMode", value=DarkFieldMode.CARTESIAN)
             self.__client.call(method="set", body=body)
 
-            body = RequestBody(attr=self.__id + ".Tilt", value=newtilt[0])
+            body = RequestBody(attr=self.__id + ".Tilt", value=tilt.x)
             self.__client.call(method="set", body=body)
 
         else:
-            body = RequestBody(attr=self.__id + ".Tilt", value=newtilt[0])
+            body = RequestBody(attr=self.__id + ".Tilt", value=tilt.x)
             self.__client.call(method="set", body=body)

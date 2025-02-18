@@ -1,4 +1,4 @@
-from typing import Dict, Tuple
+from typing import Dict
 import logging
 
 from ..utils.misc import RequestBody
@@ -121,7 +121,7 @@ class Projection:
         self.__client.call(method="set", body=body)
 
     @property
-    def image_shift(self) -> Tuple:
+    def image_shift(self) -> Vector:
         """ Image shift in um. (read/write)"""
         shx = RequestBody(attr=self.__id + ".ImageShift.X", validator=float)
         shy = RequestBody(attr=self.__id + ".ImageShift.Y", validator=float)
@@ -129,17 +129,16 @@ class Projection:
         x = self.__client.call(method="get", body=shx)
         y = self.__client.call(method="get", body=shy)
 
-        return (x*1e6, y*1e6)
+        return Vector(x, y) * 1e6
 
     @image_shift.setter
-    def image_shift(self, values:Tuple) -> None:
-        new_value = Vector(values[0] * 1e-6, values[1] * 1e-6)
-
-        body = RequestBody(attr=self.__id + ".ImageShift", value=new_value)
+    def image_shift(self, vector: Vector) -> None:
+        vector *= 1e-6
+        body = RequestBody(attr=self.__id + ".ImageShift", value=vector)
         self.__client.call(method="set", body=body)
 
     @property
-    def image_beam_shift(self) -> Tuple:
+    def image_beam_shift(self) -> Vector:
         """ Image shift with beam shift compensation in um. (read/write)"""
         bsx = RequestBody(attr=self.__id + ".ImageBeamShift.X", validator=float)
         bsy = RequestBody(attr=self.__id + ".ImageBeamShift.Y", validator=float)
@@ -147,17 +146,16 @@ class Projection:
         x = self.__client.call(method="get", body=bsx)
         y = self.__client.call(method="get", body=bsy)
 
-        return (x*1e6, y*1e6)
+        return Vector(x, y) * 1e6
 
     @image_beam_shift.setter
-    def image_beam_shift(self, values: Tuple) -> None:
-        new_value = Vector(values[0] * 1e-6, values[1] * 1e-6)
-
-        body = RequestBody(attr=self.__id + ".ImageBeamShift", value=new_value)
+    def image_beam_shift(self, vector: Vector) -> None:
+        vector *= 1e-6
+        body = RequestBody(attr=self.__id + ".ImageBeamShift", value=vector)
         self.__client.call(method="set", body=body)
 
     @property
-    def image_beam_tilt(self) -> Tuple:
+    def image_beam_tilt(self) -> Vector:
         """ Beam tilt with diffraction shift compensation in mrad. (read/write)"""
         btx = RequestBody(attr=self.__id + ".ImageBeamTilt.X", validator=float)
         bty = RequestBody(attr=self.__id + ".ImageBeamTilt.Y", validator=float)
@@ -165,17 +163,16 @@ class Projection:
         x = self.__client.call(method="get", body=btx)
         y = self.__client.call(method="get", body=bty)
 
-        return (x*1e3, y*1e3)
+        return Vector(x, y) * 1e3
 
     @image_beam_tilt.setter
-    def image_beam_tilt(self, values: Tuple) -> None:
-        new_value = Vector(values[0] * 1e-3, values[1] * 1e-3)
-
-        body = RequestBody(attr=self.__id + ".ImageBeamTilt", value=new_value)
+    def image_beam_tilt(self, vector: Vector) -> None:
+        vector *= 1e-3
+        body = RequestBody(attr=self.__id + ".ImageBeamTilt", value=vector)
         self.__client.call(method="set", body=body)
 
     @property
-    def diffraction_shift(self) -> Tuple:
+    def diffraction_shift(self) -> Vector:
         """ Diffraction shift in mrad. (read/write)"""
         #TODO: 180/pi*value = approx number in TUI
         stigx = RequestBody(attr=self.__id + ".DiffractionShift.X", validator=float)
@@ -184,17 +181,16 @@ class Projection:
         x = self.__client.call(method="get", body=stigx)
         y = self.__client.call(method="get", body=stigy)
 
-        return (x*1e3, y*1e3)
+        return Vector(x, y) * 1e3
 
     @diffraction_shift.setter
-    def diffraction_shift(self, values: Tuple) -> None:
-        new_value = Vector(values[0] * 1e-3, values[1] * 1e-3)
-
-        body = RequestBody(attr=self.__id + ".DiffractionShift", value=new_value)
+    def diffraction_shift(self, vector: Vector) -> None:
+        vector *= 1e-3
+        body = RequestBody(attr=self.__id + ".DiffractionShift", value=vector)
         self.__client.call(method="set", body=body)
 
     @property
-    def diffraction_stigmator(self) -> Tuple:
+    def diffraction_stigmator(self) -> Vector:
         """ Diffraction stigmator. (read/write)"""
         body = RequestBody(attr=self.__id + ".Mode", validator=int)
 
@@ -205,25 +201,23 @@ class Projection:
             x = self.__client.call(method="get", body=stigx)
             y = self.__client.call(method="get", body=stigy)
 
-            return (x, y)
+            return Vector(x, y)
         else:
             raise RuntimeError(self.__err_msg)
 
     @diffraction_stigmator.setter
-    def diffraction_stigmator(self, values: Tuple) -> None:
+    def diffraction_stigmator(self, vector: Vector) -> None:
         body = RequestBody(attr=self.__id + ".Mode", validator=int)
 
         if self.__client.call(method="get", body=body) == ProjectionMode.DIFFRACTION:
-            new_value = Vector(*values)
-            new_value.set_limits(-1.0, 1.0)
-
-            body = RequestBody(attr=self.__id + ".DiffractionStigmator", value=new_value)
+            vector.set_limits(-1.0, 1.0)
+            body = RequestBody(attr=self.__id + ".DiffractionStigmator", value=vector)
             self.__client.call(method="set", body=body)
         else:
             raise RuntimeError(self.__err_msg)
 
     @property
-    def objective_stigmator(self) -> Tuple:
+    def objective_stigmator(self) -> Vector:
         """ Objective stigmator. (read/write)"""
         stigx = RequestBody(attr=self.__id + ".ObjectiveStigmator.X", validator=float)
         stigy = RequestBody(attr=self.__id + ".ObjectiveStigmator.Y", validator=float)
@@ -231,14 +225,12 @@ class Projection:
         x = self.__client.call(method="get", body=stigx)
         y = self.__client.call(method="get", body=stigy)
 
-        return (x, y)
+        return Vector(x, y)
 
     @objective_stigmator.setter
-    def objective_stigmator(self, values: Tuple) -> None:
-        new_value = Vector(*values)
-        new_value.set_limits(-1.0, 1.0)
-
-        body = RequestBody(attr=self.__id + ".ObjectiveStigmator", value=new_value)
+    def objective_stigmator(self, vector: Vector) -> None:
+        vector.set_limits(-1.0, 1.0)
+        body = RequestBody(attr=self.__id + ".ObjectiveStigmator", value=vector)
         self.__client.call(method="set", body=body)
 
     @property

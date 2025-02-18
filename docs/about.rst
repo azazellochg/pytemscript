@@ -23,17 +23,21 @@ Enumerations
 
 Many of the attributes return values from enumerations. The complete list can be found in the :ref:`enumerations` section.
 
+Images
+------
+
+Two acquisition functions: :meth:`~pytemscript.modules.Acquisition.acquire_tem_image` and
+:meth:`~pytemscript.modules.Acquisition.acquire_stem_image` return an :class:`Image` object
+that has the following methods and properties:
+
+.. autoclass:: pytemscript.modules.Image
+    :members: width, height, bit_depth, pixel_type, data, save, name, metadata
+
 Vectors
 -------
 
-Some object attributes handle two dimensional vectors (e.g. ``ImageShift``). These
-attributes return ``(x, y)`` tuples and expect iterable objects (``tuple``,
-``list``, ...) with two floats when written (numpy arrays with two entries also work).
+Some attributes handle two dimensional vectors that have X and Y values (e.g. image shift or gun tilt). These
+attributes return a :class:`Vector` of two floats. Vectors can be multiplied, subtracted etc.
 
-.. code-block:: python
-
-    beam_pos = microscope.optics.illumination.beam_shift
-    print(beam_pos)
-    (0.0, 0.0)
-    new_beam_pos = beam_pos[0], beam_pos[1] + 1.02
-    microscope.optics.illumination.beam_shift = new_beam_pos
+.. autoclass:: pytemscript.modules.Vector
+    :members: set_limits, check_limits, get, set

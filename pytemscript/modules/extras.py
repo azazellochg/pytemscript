@@ -1,15 +1,31 @@
-from typing import Optional, Dict, Tuple
+from typing import Optional, Dict, Tuple, Union
 import os
 import math
 import logging
 from pathlib import Path
 
-from ..utils.enums import (ImagePixelType, AcqImageFileFormat, StageAxes,
-                           MeasurementUnitType)
+from ..utils.enums import ImagePixelType, AcqImageFileFormat, StageAxes, MeasurementUnitType
 
 
 class Vector:
-    """ Utility object with two float attributes. """
+    """ Utility object with two float attributes.
+
+    :param x: X value
+    :type x: float
+    :param y: Y value
+    :type y: float
+
+    Usage:
+            >>> from pytemscript.modules import Vector
+            >>> vector = Vector(0.03, 0.02)
+            >>> microscope.optics.illumination.beam_shift = vector
+            >>> vector *= 2
+            >>> print(vector)
+            (0.06, 0.04)
+            >>> vector.set(-0.5, -0.06)
+            >>> print(vector)
+            (-0.5, -0.06)
+    """
     __slots__ = ("x", "y", "__min", "__max")
 
     def __init__(self, x: float, y: float):
@@ -21,28 +37,68 @@ class Vector:
     def __repr__(self):
         return "Vector(x=%f, y=%f)" % (self.x, self.y)
 
+    def __str__(self):
+        return "(%f, %f)" % (self.x, self.y)
+
     def set_limits(self, min_value: float, max_value: float) -> None:
-        """Set the range limits for the vector."""
+        """Set the range limits for the vector for both X and Y."""
         self.__min = min_value
         self.__max = max_value
 
     @property
     def has_limits(self) -> bool:
-        """Check if range limits are _set."""
+        """Check if range limits are defined."""
         return self.__min is not None and self.__max is not None
 
     def check_limits(self) -> None:
-        """Validate that the vector's values are within the _set limits."""
+        """Validate that the vector's values are within the set limits."""
         if self.has_limits:
-            if any(v < self.__min or v > self.__max for v in self.components):
-                msg = "One or more values (%s) are outside of range (%f, %f)" % (self.components, self.x, self.y)
+            if any(v < self.__min or v > self.__max for v in self.get()):
+                msg = "One or more values (%s) are outside of range (%f, %f)" % (self.get(), self.x, self.y)
                 logging.error(msg)
                 raise ValueError(msg)
 
-    @property
-    def components(self) -> Tuple:
+    def get(self) -> Tuple:
         """Return the vector components as a tuple."""
         return self.x, self.y
+
+    def set(self, value: Tuple[float, float]) -> None:
+        """ Update values from a tuple. """
+        if not isinstance(value, tuple):
+            raise TypeError("Expected a tuple of floats")
+        else:
+            self.x, self.y = value
+
+    def __add__(self, other: 'Vector') -> 'Vector':
+        return Vector(self.x + other.x, self.y + other.y)
+
+    def __sub__(self, other: 'Vector') -> 'Vector':
+        return Vector(self.x - other.x, self.y - other.y)
+
+    def __mul__(self, scalar: float) -> 'Vector':
+        return Vector(self.x * scalar, self.y * scalar)
+
+    def __imul__(self, scalar: float) -> 'Vector':
+        if not isinstance(scalar, (int, float)):
+            raise ValueError("Scalar must be a number")
+        self.x *= scalar
+        self.y *= scalar
+        return self
+
+    def __truediv__(self, scalar: float) -> 'Vector':
+        if scalar == 0:
+            raise ValueError("Cannot divide by zero")
+        return Vector(self.x / scalar, self.y / scalar)
+
+    def __eq__(self, other: Union['Vector', Tuple]) -> bool:
+        if isinstance(other, tuple):
+            return (self.x, self.y) == other
+        elif isinstance(other, Vector):
+            return self.x == other.x and self.y == other.y
+        return False
+
+    def __neg__(self) -> 'Vector':
+        return Vector(-self.x, -self.y)
 
 
 class BaseImage:

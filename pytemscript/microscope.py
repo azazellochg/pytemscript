@@ -6,8 +6,27 @@ from .utils.enums import ProductFamily, CondenserLensSystem
 
 
 class Microscope:
-    """ Main client interface, exposing available methods
-     and properties.
+    """ Main client interface exposing available methods and properties.
+
+    :param connection: Client connection: direct, grpc, zmq or socket. Defaults to direct.
+    :type connection: str
+    :keyword str host: Remote hostname or IP address
+    :keyword int port: Remote port number
+    :keyword bool useLD: Connect to LowDose server on microscope PC (limited control only)
+    :keyword bool useTecnaiCCD: Connect to TecnaiCCD plugin on microscope PC that controls Digital Micrograph (maybe faster than via TIA / std scripting)
+    :keyword bool debug: Debug mode
+
+    Usage:
+            >>> microscope = Microscope()
+            >>> curr_pos = microscope.stage.position
+            >>> print(curr_pos['Y'])
+            >>> 24.05
+            >>> microscope.stage.move_to(x=-30, y=25.5)
+
+            >>> beam_shift = microscope.optics.illumination.beam_shift
+            >>> defocus = microscope.optics.projection.defocus
+            >>> microscope.optics.normalize_all()
+
     """
     __slots__ = ("__connection", "__client",
                  "acquisition", "detectors", "gun", "optics", "stem", "vacuum",
@@ -72,6 +91,6 @@ class Microscope:
         return CondenserLensSystem(result).name
 
     def disconnect(self) -> None:
-        """ Disconnects the remote client. """
+        """ Disconnects the remote client. Not applicable for direct connection."""
         if self.__connection != "direct":
             self.__client.disconnect()

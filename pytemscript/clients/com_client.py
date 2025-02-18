@@ -189,7 +189,7 @@ class COMClient(BasicClient):
         if isinstance(value, Vector):
             value.check_limits()
             vector = rgetattr(self._scope, attrname, log=False)
-            vector.X, vector.Y = value.components
+            vector.X, vector.Y = value.get()
             rsetattr(self._scope, attrname, vector)
         else:
             rsetattr(self._scope, attrname, value)

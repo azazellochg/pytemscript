@@ -28,28 +28,8 @@ Below are the main class properties, each represented by a separate class:
 Example usage
 -------------
 
-.. code-block:: python
-
-    microscope = Microscope()
-    curr_pos = microscope.stage.position
-    print(curr_pos['Y'])
-    24.05
-    microscope.stage.move_to(x=-30, y=25.5)
-
-    beam_shift = microscope.optics.illumination.beam_shift
-    defocus = microscope.optics.projection.defocus
-    microscope.optics.normalize_all()
-
-
-Image object
-------------
-
-Two acquisition functions: :meth:`~pytemscript.modules.Acquisition.acquire_tem_image` and
-:meth:`~pytemscript.modules.Acquisition.acquire_stem_image` return an :class:`Image` object
-that _has the following methods and properties:
-
-.. autoclass:: pytemscript.modules.Image
-    :members: width, height, bit_depth, pixel_type, data, save, name, metadata
+.. autoclass:: pytemscript.microscope.Microscope
+    :members: family, condenser_system, disconnect
 
 Documentation
 -------------

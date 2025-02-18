@@ -34,7 +34,7 @@ class Gun:
         return self.__client.call(method="has", body=body)
 
     @property
-    def shift(self) -> Tuple:
+    def shift(self) -> Vector:
         """ Gun shift. (read/write)"""
         shx = RequestBody(attr=self.__id + ".Shift.X", validator=float)
         shy = RequestBody(attr=self.__id + ".Shift.Y", validator=float)
@@ -42,18 +42,17 @@ class Gun:
         x = self.__client.call(method="get", body=shx)
         y = self.__client.call(method="get", body=shy)
 
-        return (x,y)
+        return Vector(x, y)
 
     @shift.setter
-    def shift(self, values: Tuple) -> None:
-        new_value = Vector(*values)
-        new_value.set_limits(-1.0, 1.0)
+    def shift(self, vector: Vector) -> None:
+        vector.set_limits(-1.0, 1.0)
 
-        body = RequestBody(attr=self.__id + ".Shift", value=new_value)
+        body = RequestBody(attr=self.__id + ".Shift", value=vector)
         self.__client.call(method="set", body=body)
 
     @property
-    def tilt(self) -> Tuple:
+    def tilt(self) -> Vector:
         """ Gun tilt. (read/write)"""
         tx = RequestBody(attr=self.__id + ".Tilt.X", validator=float)
         ty = RequestBody(attr=self.__id + ".Tilt.Y", validator=float)
@@ -61,14 +60,13 @@ class Gun:
         x = self.__client.call(method="get", body=tx)
         y = self.__client.call(method="get", body=ty)
 
-        return (x, y)
+        return Vector(x, y)
 
     @tilt.setter
-    def tilt(self, values: Tuple) -> None:
-        new_value = Vector(*values)
-        new_value.set_limits(-1.0, 1.0)
+    def tilt(self, vector: Vector) -> None:
+        vector.set_limits(-1.0, 1.0)
 
-        body = RequestBody(attr=self.__id + ".Tilt", value=new_value)
+        body = RequestBody(attr=self.__id + ".Tilt", value=vector)
         self.__client.call(method="set", body=body)
 
     @property

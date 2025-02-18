@@ -27,14 +27,14 @@ The documentation can be found at https://pytemscript.readthedocs.io
    self
    about
    microscope
-   remote
    enumerations
+   remote
    changelog
 
 Installation
 ------------
 
-.. warning:: The project is still in development phase, no beta version _has been released yet. Installing from sources is recommended.
+.. warning:: The project is still in development phase, no beta version has been released yet. Installing from sources is recommended.
 
 Requirements:
 
@@ -127,11 +127,9 @@ Move beam:
 
 .. code-block:: python
 
-    beam_pos = microscope.optics.illumination.beam_shift
-    print(beam_pos)
-    (0.0, 0.0)
-    new_beam_pos = beam_pos[0], beam_pos[1] + 1.02
-    microscope.optics.illumination.beam_shift = new_beam_pos
+    shift = microscope.optics.illumination.beam_shift
+    shift += (0.0, 0.25)
+    microscope.optics.illumination.beam_shift = shift
 
 Take an image:
 
