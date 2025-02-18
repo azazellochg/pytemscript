@@ -3,7 +3,7 @@ import functools
 import logging
 from logging.handlers import TimedRotatingFileHandler
 
-from pytemscript.utils.constants import MAGIC_BYTES
+from .constants import MAGIC_BYTES
 
 
 def rgetattr(obj, attrname, *args, **kwargs):

@@ -3,8 +3,9 @@ import socket
 import threading
 import pickle
 import logging
+from typing import Optional
 
-from pytemscript.utils.misc import setup_logging, send_data, receive_data
+from ..utils.misc import setup_logging, send_data, receive_data, RequestBody
 
 
 class SocketServer:
@@ -63,14 +64,12 @@ class SocketServer:
             while True:
                 data = receive_data(client_socket)
                 message = pickle.loads(data)
-                method_name = message['method']
-                args = message['args']
-                kwargs = message['kwargs']
-                logging.debug("Received request: %s, args: %s, kwargs: %s",
-                              method_name, args, kwargs)
+                method = message.get('method')
+                body = message.get('body')
+                logging.debug("Received %s request: %s",method, body)
 
                 # Call the appropriate method and send back the result
-                result = self.handle_request(method_name, *args, **kwargs)
+                result = self.handle_request(method, body)
                 logging.debug("Sending response: %s", result)
                 response = pickle.dumps(result)
                 send_data(client_socket, response)
@@ -85,13 +84,13 @@ class SocketServer:
             client_socket.close()
             logging.info("Client %s disconnected", client_address)
 
-    def handle_request(self, method_name: str, *args, **kwargs):
+    def handle_request(self,
+                       method: str,
+                       body: Optional[RequestBody] = None):
         """ Process a socket message: pass method to the COM server
          and return result to the client. """
-        method = getattr(self.server_com, method_name, None)
-        if method is None:
-            raise ValueError("Unknown method: %s" % method_name)
-        elif callable(method):
-            return method(*args, **kwargs)
-        else:  # for property decorators
-            return method
+        if body is None:
+            # it is a property
+            return getattr(self.server_com, method)
+        else:
+            return self.server_com.call(method, body)

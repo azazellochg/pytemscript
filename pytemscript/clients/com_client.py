@@ -11,6 +11,7 @@ from ..modules.extras import Vector
 from ..utils.misc import rgetattr, rsetattr, setup_logging, RequestBody
 from ..utils.constants import *
 from ..utils.enums import TEMScriptingError
+from .base_client import BasicClient
 
 
 com_module = comtypes
@@ -87,7 +88,7 @@ class COMBase:
         com_module.CoUninitialize()
 
 
-class COMClient:
+class COMClient(BasicClient):
     """ Local COM client interface for the microscope.
     Creating an instance of this class will also create COM interfaces for the TEM.
 
@@ -198,6 +199,7 @@ class COMClient:
         pass
 
     def call(self, method: str, body: RequestBody):
+        """ Main method used by modules. """
         with self.__lock:
             try:
                 response = None

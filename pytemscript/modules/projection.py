@@ -2,7 +2,8 @@ from typing import Dict, Tuple
 import logging
 
 from ..utils.misc import RequestBody
-from ..utils.enums import ProjectionMode, ProjectionSubMode, ProjDetectorShiftMode, ProjectionDetectorShift, LensProg
+from ..utils.enums import (ProjectionMode, ProjectionSubMode, ProjDetectorShiftMode,
+                           ProjectionDetectorShift, LensProg)
 from .extras import Vector
 
 

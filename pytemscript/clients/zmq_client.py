@@ -4,8 +4,10 @@ try:
 except ImportError:
     raise ImportError("Missing dependency 'pyzmq', please install it via pip")
 
+from .base_client import BasicClient
 
-class ZMQClient:
+
+class ZMQClient(BasicClient):
     def __init__(self, host, port):
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.REQ)  # Request-Reply pattern
