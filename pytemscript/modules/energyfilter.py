@@ -20,11 +20,11 @@ class EnergyFilter:
         return self.__client.call(method="has", body=body)
 
     def _check_range(self, attrname: str, value: float) -> None:
-        vmin = RequestBody(attr=attrname + ".Begin", validator=float)
-        vmax = RequestBody(attr=attrname + ".End", validator=float)
+        start = RequestBody(attr=attrname + ".Begin", validator=float)
+        end = RequestBody(attr=attrname + ".End", validator=float)
 
-        vmin = self.__client.call(method="get", body=vmin)
-        vmax = self.__client.call(method="get", body=vmax)
+        vmin = self.__client.call(method="get", body=start)
+        vmax = self.__client.call(method="get", body=end)
 
         if not (vmin <= float(value) <= vmax):
             raise ValueError("Value is outside of allowed "

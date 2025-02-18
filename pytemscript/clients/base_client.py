@@ -8,22 +8,22 @@ class BasicClient:
     @property
     @lru_cache(maxsize=1)
     def has_advanced_iface(self) -> bool:
-        raise NotImplementedError
+        raise NotImplementedError("Method must be implemented in subclass")
 
     @property
     @lru_cache(maxsize=1)
     def has_lowdose_iface(self) -> bool:
-        raise NotImplementedError
+        raise NotImplementedError("Method must be implemented in subclass")
 
     @property
     @lru_cache(maxsize=1)
     def has_ccd_iface(self) -> bool:
-        raise NotImplementedError
+        raise NotImplementedError("Method must be implemented in subclass")
 
     def call(self, method: str, body: RequestBody):
         """ Main method used by modules. """
-        raise NotImplementedError
+        raise NotImplementedError("Method must be implemented in subclass")
 
     def disconnect(self):
         """ Disconnect the client. """
-        raise NotImplementedError
+        raise NotImplementedError("Method must be implemented in subclass")

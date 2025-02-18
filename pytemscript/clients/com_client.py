@@ -218,14 +218,10 @@ class COMClient(BasicClient):
                 else:
                     raise ValueError("Unknown method: %s" % method)
 
-                if body.validator is not None:
-                    try:
-                        assert isinstance(response, body.validator)
-                        #body.validator(response)
-                    except TypeError or ValueError:
-                        logging.error("Invalid type for %s: expected %s but %s (value=%s) was returned",
-                                      attrname, body.validator, type(response), response)
-                        raise
+                if body.validator is not None and not isinstance(response, body.validator):
+                    logging.error("Invalid type for %s: expected %s but %s (value=%s) was returned",
+                                  attrname, body.validator, type(response), response)
+                    raise TypeError
                 return response
 
             except Exception as e:
