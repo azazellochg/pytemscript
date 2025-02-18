@@ -89,15 +89,9 @@ def receive_data(socket) -> bytes:
 class RequestBody:
     """ Dataclass-like structure of a request passed to the client. """
     def __init__(self,
-                 method: str,
-                 obj: object,
-                 attr: str,
+                 attr: str = "",
                  validator: Optional[Callable] = None,
-                 *args,
                  **kwargs) -> None:
-        self.method = method
-        self.obj = obj
         self.attr = attr
         self.validator = validator
-        self.args = args
         self.kwargs = kwargs

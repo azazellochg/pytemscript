@@ -14,7 +14,7 @@ class GaugesObj(SpecialObj):
         for g in self.com_object:
             # g.Read()
             if g.Status == GaugeStatus.UNDEFINED:
-                # set manually if undefined, otherwise fails
+                # _set manually if undefined, otherwise fails
                 pressure_level = GaugePressureLevel.UNDEFINED.name
             else:
                 pressure_level = GaugePressureLevel(g.PressureLevel).name
@@ -30,19 +30,19 @@ class GaugesObj(SpecialObj):
 
 class Vacuum:
     """ Vacuum functions. """
-    __slots__ = ("__client", "__shortcut")
+    __slots__ = ("__client", "__id")
 
     def __init__(self, client):
         self.__client = client
-        self.__shortcut = "tem.Vacuum"
+        self.__id = "tem.Vacuum"
 
     @property
     def status(self) -> str:
         """ Status of the vacuum system. """
-        request = RequestBody(method="get", obj=self.__shortcut, attr="Status", validator=int)
-        result = self.__client.call(request)
+        body = RequestBody(attr=self.__id + ".Status", validator=int)
+        result = self.__client.call(method="get", body=body)
+
         return VacuumStatus(result).name
-        #return VacuumStatus(self.__client.call(self.__shortcut + ".Status")).name
 
     @property
     def is_buffer_running(self) -> bool:
@@ -50,29 +50,39 @@ class Vacuum:
         (consequences: vibrations, exposure function blocked
         or should not be called).
         """
-        return bool(self.__client.get(self.__shortcut + ".PVPRunning"))
+        body = RequestBody(attr=self.__id + ".PVPRunning", validator=bool)
+
+        return self.__client.call(method="get", body=body)
 
     @property
     def is_column_open(self) -> bool:
         """ The status of the column valves. """
-        return bool(self.__client.get(self.__shortcut + ".ColumnValvesOpen"))
+        body = RequestBody(attr=self.__id + ".ColumnValvesOpen", validator=bool)
+
+        return self.__client.call(method="get", body=body)
 
     @property
     def gauges(self) -> Dict:
         """ Returns a dict with vacuum gauges information.
         Pressure values are in Pascals.
         """
-        return self.__client.call(self.__shortcut + ".Gauges",
-                                  obj=GaugesObj, func="show")
+        body = RequestBody(attr=self.__id + ".Gauges",
+                           obj_cls=GaugesObj, obj_method="show")
+        result = self.__client.call(method="exec_special", body=body)
+
+        return result
 
     def column_open(self) -> None:
         """ Open column valves. """
-        self.__client.set(self.__shortcut + ".ColumnValvesOpen", True)
+        body = RequestBody(attr=self.__id + ".ColumnValvesOpen", value=True)
+        self.__client.call(method="set", body=body)
 
     def column_close(self) -> None:
         """ Close column valves. """
-        self.__client.set(self.__shortcut + ".ColumnValvesOpen", False)
+        body = RequestBody(attr=self.__id + ".ColumnValvesOpen", value=False)
+        self.__client.call(method="set", body=body)
 
     def run_buffer_cycle(self) -> None:
         """ Runs a pumping cycle to empty the buffer. """
-        self.__client.call(self.__shortcut + ".RunBufferCycle()")
+        body = RequestBody(attr=self.__id + ".RunBufferCycle()")
+        self.__client.call(method="exec", body=body)

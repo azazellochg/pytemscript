@@ -26,7 +26,7 @@ def test_projection(microscope: Microscope,
     print("\tMagnification:", projection.magnification)
     print("\tMagnificationIndex:", projection.magnification_index)
 
-    # set first SA mag
+    # _set first SA mag
     for key, value in projection.list_magnifications.items():
         if value[1] == ProjectionSubMode.SA.name:
             projection.magnification = key
@@ -52,7 +52,7 @@ def test_projection(microscope: Microscope,
     print("\tImageBeamTilt:", projection.image_beam_tilt)
     print("\tLensProgram:", projection.is_eftem_on)
 
-    projection.reset_defocus()  # TODO: not working remotely? check exec!
+    projection.reset_defocus()  # TODO: not working remotely? check _exec!
 
     if has_eftem:
         print("\tToggling EFTEM mode...")

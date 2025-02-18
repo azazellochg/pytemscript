@@ -3,16 +3,18 @@ import math
 import time
 import logging
 
+from ..utils.misc import RequestBody
 from ..utils.enums import MeasurementUnitType, StageStatus, StageHolderType, StageAxes
 from .extras import StagePosition
 
 
 class Stage:
     """ Stage functions. """
-    __slots__ = ("__client", "__err_msg", "__limits")
+    __slots__ = ("__client", "__id", "__err_msg", "__limits")
 
     def __init__(self, client):
         self.__client = client
+        self.__id = "tem.Stage"
         self.__err_msg = "Timeout. Stage is not ready"
         self.__limits = dict()
 
@@ -24,7 +26,8 @@ class Stage:
         """ Wait for stage to become ready. """
         attempt = 0
         while attempt < tries:
-            if self.__client.get("tem.Stage.Status") != StageStatus.READY:
+            body = RequestBody(attr=self.__id + ".Status", validator=int)
+            if self.__client.call(method="get", body=body) != StageStatus.READY:
                 logging.info("Stage is not ready, waiting..")
                 tries += 1
                 time.sleep(1)
@@ -83,37 +86,47 @@ class Stage:
         # b - 29.7 to + 29.7(degrees)
 
         if not direct:
-            self.__client.call("tem.Stage", obj=StagePosition,
-                               func="set", axes=axes,
+            body = RequestBody(attr=self.__id, obj_cls=StagePosition,
+                               obj_method="set", axes=axes,
                                method="MoveTo", **new_coords)
+            self.__client.call(method="exec_special", body=body)
         else:
             if speed is not None:
-                self.__client.call("tem.Stage",
-                                   obj=StagePosition, func="set",
-                                   axes=axes, speed=speed,
+                body = RequestBody(attr=self.__id, obj_cls=StagePosition,
+                                   obj_method="set", axes=axes, speed=speed,
                                    method="GoToWithSpeed", **new_coords)
+                self.__client.call(method="exec_special", body=body)
             else:
-                self.__client.call("tem.Stage", obj=StagePosition,
-                                   func="set", axes=axes,
+                body = RequestBody(attr=self.__id, obj_cls=StagePosition,
+                                   obj_method="set", axes=axes,
                                    method="GoTo", **new_coords)
+                self.__client.call(method="exec_special", body=body)
 
         self._wait_for_stage(tries=10)
 
     @property
     def status(self) -> str:
         """ The current state of the stage. """
-        return StageStatus(self.__client.get("tem.Stage.Status")).name
+        body = RequestBody(attr=self.__id + ".Status", validator=int)
+        result = self.__client.call(method="get", body=body)
+
+        return StageStatus(result).name
 
     @property
     def holder(self) -> str:
         """ The current specimen holder type. """
-        return StageHolderType(self.__client.get("tem.Stage.Holder")).name
+        body = RequestBody(attr=self.__id + ".Holder", validator=int)
+        result = self.__client.call(method="get", body=body)
+
+        return StageHolderType(result).name
 
     @property
     def position(self) -> Dict:
         """ The current position of the stage (x,y,z in um and a,b in degrees). """
-        return self.__client.call("tem.Stage.Position", obj=StagePosition,
-                                  func="get", a=True, b=self._beta_available)
+        body = RequestBody(attr=self.__id + ".Position", obj_cls=StagePosition,
+                           obj_method="get", a=True, b=self._beta_available)
+
+        return self.__client.call(method="exec_special", body=body)
 
     def go_to(self, relative=False, **kwargs) -> None:
         """ Makes the holder directly go to the new position by moving all axes
@@ -139,6 +152,8 @@ class Stage:
     def limits(self) -> Dict:
         """ Returns a dict with stage move limits. """
         if not self.__limits:
-            self.__limits = self.__client.call("tem.Stage", obj=StagePosition,
-                                               func="limits")
+            body = RequestBody(attr=self.__id, obj_cls=StagePosition,
+                               obj_method="limits")
+            self.__limits = self.__client.call(method="exec_special", body=body)
+
         return self.__limits

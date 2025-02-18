@@ -1,4 +1,7 @@
+from functools import lru_cache
+
 from .modules import *
+from .utils.misc import RequestBody
 from .utils.enums import ProductFamily, CondenserLensSystem
 
 
@@ -51,16 +54,22 @@ class Microscope:
             self.low_dose = LowDose(client)
 
     @property
+    @lru_cache(maxsize=1)
     def family(self) -> str:
         """ Returns the microscope product family / platform. """
-        value = self.__client.get_from_cache("tem.Configuration.ProductFamily")
-        return ProductFamily(value).name
+        body = RequestBody(attr="tem.Configuration.ProductFamily", validator=int)
+        result = self.__client.call(method="get", body=body)
+
+        return ProductFamily(result).name
 
     @property
+    @lru_cache(maxsize=1)
     def condenser_system(self) -> str:
         """ Returns the type of condenser lens system: two or three lenses. """
-        value = self.__client.get_from_cache("tem.Configuration.CondenserLensSystem")
-        return CondenserLensSystem(value).name
+        body = RequestBody(attr="tem.Configuration.CondenserLensSystem", validator=int)
+        result = self.__client.call(method="get", body=body)
+
+        return CondenserLensSystem(result).name
 
     def disconnect(self) -> None:
         """ Disconnects the remote client. """

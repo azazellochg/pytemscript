@@ -1,6 +1,7 @@
 from typing import Dict
 
 from .extras import SpecialObj
+from ..utils.misc import RequestBody
 from ..utils.enums import MechanismId, MechanismState
 
 
@@ -57,33 +58,39 @@ class AperturesObj(SpecialObj):
 
 class Apertures:
     """ Apertures and VPP controls. """
-    __slots__ = ("__client", "__has_apertures", "__shortcut", "__err_msg", "__err_msg_vpp")
+    __slots__ = ("__client", "__has_apertures", "__id",
+                 "__id_adv", "__err_msg", "__err_msg_vpp")
 
     def __init__(self, client):
         self.__client = client
         self.__has_apertures = None
-        self.__shortcut = "tem.ApertureMechanismCollection"
+        self.__id = "tem.ApertureMechanismCollection"
+        self.__id_adv = "tem_adv.PhasePlate"
         self.__err_msg = "Apertures interface is not available. Requires a separate license"
         self.__err_msg_vpp = "Either no VPP found or it's not enabled and inserted"
 
     @property
     def __std_available(self) -> bool:
         if self.__has_apertures is None:
-            self.__has_apertures = self.__client.has(self.__shortcut)
+            body = RequestBody(attr=self.__id, validator=bool)
+            self.__has_apertures = self.__client.call(method="has", body=body)
+
         return self.__has_apertures
 
     @property
     def vpp_position(self) -> int:
         """ Returns the index of the current VPP preset position. """
         try:
-            return int(self.__client.get("tem_adv.PhasePlate.GetCurrentPresetPosition")) + 1
+            body = RequestBody(attr=self.__id_adv + ".GetCurrentPresetPosition", validator=int)
+            return self.__client.call(method="get", body=body) + 1
         except:
             raise RuntimeError(self.__err_msg_vpp)
 
     def vpp_next_position(self) -> None:
         """ Goes to the next preset location on the VPP aperture. """
         try:
-            self.__client.call("tem_adv.PhasePlate.SelectNextPresetPosition()")
+            body = RequestBody(attr=self.__id_adv + ".SelectNextPresetPosition()")
+            self.__client.call(method="exec", body=body)
         except:
             raise RuntimeError(self.__err_msg_vpp)
 
@@ -91,22 +98,25 @@ class Apertures:
         if not self.__std_available:
             raise NotImplementedError(self.__err_msg)
         else:
-            self.__client.call(self.__shortcut, obj=AperturesObj,
-                               func="enable", name=aperture)
+            body = RequestBody(attr=self.__id, obj_cls=AperturesObj,
+                               obj_method="enable", name=aperture)
+            self.__client.call(method="exec_special", body=body)
 
     def disable(self, aperture) -> None:
         if not self.__std_available:
             raise NotImplementedError(self.__err_msg)
         else:
-            self.__client.call(self.__shortcut, obj=AperturesObj,
-                               func="disable", name=aperture)
+            body = RequestBody(attr=self.__id, obj_cls=AperturesObj,
+                               obj_method="disable", name=aperture)
+            self.__client.call(method="exec_special", body=body)
 
     def retract(self, aperture) -> None:
         if not self.__std_available:
             raise NotImplementedError(self.__err_msg)
         else:
-            self.__client.call(self.__shortcut, obj=AperturesObj,
-                               func="retract", name=aperture)
+            body = RequestBody(attr=self.__id, obj_cls=AperturesObj,
+                               obj_method="retract", name=aperture)
+            self.__client.call(method="exec_special", body=body)
 
     def select(self, aperture: str, size: int) -> None:
         """ Select a specific aperture.
@@ -119,13 +129,15 @@ class Apertures:
         if not self.__std_available:
             raise NotImplementedError(self.__err_msg)
         else:
-            self.__client.call(self.__shortcut, obj=AperturesObj,
-                               func="select", name=aperture, size=size)
+            body = RequestBody(attr=self.__id, obj_cls=AperturesObj,
+                               obj_method="select", name=aperture, size=size)
+            self.__client.call(method="exec_special", body=body)
 
     def show(self) -> Dict:
         """ Returns a dict with apertures information. """
         if not self.__std_available:
             raise NotImplementedError(self.__err_msg)
         else:
-            return self.__client.call(self.__shortcut, obj=AperturesObj,
-                                      func="show")
+            body = RequestBody(attr=self.__id, obj_cls=AperturesObj,
+                               obj_method="show")
+            return self.__client.call(method="exec_special", body=body)

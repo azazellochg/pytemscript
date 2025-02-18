@@ -4,14 +4,15 @@ import logging
 from datetime import datetime
 
 from ..plugins.tecnai_ccd_plugin import TecnaiCCDPlugin
+from ..utils.misc import RequestBody
 from ..utils.enums import AcqImageSize, AcqShutterMode, PlateLabelDateFormat, ScreenPosition
 from .extras import Image, SpecialObj
 
 
 class AcquisitionObj(SpecialObj):
     """ Wrapper around cameras COM object with specific acquisition methods. """
-    def __init__(self, com_object, func: str, **kwargs):
-        super().__init__(com_object, func, **kwargs)
+    def __init__(self, com_object):
+        super().__init__(com_object)
         self.current_camera = None
 
     def acquire_film(self,
@@ -72,7 +73,7 @@ class AcquisitionObj(SpecialObj):
         raise ValueError("Unsupported binning value: %d" % binning)
 
     def acquire(self, cameraName: str) -> Image:
-        """ Perform actual acquisition. Camera settings should be set beforehand.
+        """ Perform actual acquisition. Camera settings should be _set beforehand.
 
         :param cameraName: Camera name
         :returns: Image object
@@ -157,16 +158,16 @@ class AcquisitionObj(SpecialObj):
         if 'pre_exp_time' in kwargs:
             if kwargs['shutter_mode'] != AcqShutterMode.BOTH:
                 raise RuntimeError("Pre-exposures can only be be done "
-                                   "when the shutter mode is set to BOTH")
+                                   "when the shutter mode is _set to BOTH")
             settings.PreExposureTime = kwargs['pre_exp_time']
         if 'pre_exp_pause_time' in kwargs:
             if kwargs['shutter_mode'] != AcqShutterMode.BOTH:
                 raise RuntimeError("Pre-exposures can only be be done when "
-                                   "the shutter mode is set to BOTH")
+                                   "the shutter mode is _set to BOTH")
             settings.PreExposurePauseTime = kwargs['pre_exp_pause_time']
 
         # Set exposure after binning, since it adjusted
-        # automatically when binning is set
+        # automatically when binning is _set
         settings.ExposureTime = exp_time
 
         return prev_shutter_mode
@@ -217,7 +218,7 @@ class AcquisitionObj(SpecialObj):
         settings.ReadoutArea = size
 
         # Set exposure after binning, since it adjusted
-        # automatically when binning is set
+        # automatically when binning is _set
         settings.ExposureTime = exp_time
 
         if 'align_image' in kwargs:
@@ -256,7 +257,7 @@ class AcquisitionObj(SpecialObj):
                          settings.CalculateNumberOfFrames(), output)
             if eer is False:
                 logging.info("MRC format can only contain images of up to "
-                             "16-bits per pixel, to get true CameraCounts "
+                             "16-bits per pixel, to _get true CameraCounts "
                              "multiply pixels by PixelToValueCameraCounts "
                              "factor found in the metadata")
 
@@ -302,25 +303,34 @@ class Acquisition:
     must be running (even if you are using DigitalMicrograph as the CCD server).
 
     If it is necessary to update the acquisition object (e.g. when the STEM detector
-    selection on the TEM UI has been changed), you have to release and recreate the
+    selection on the TEM UI _has been changed), you have to release and recreate the
     main microscope object. If you do not do so, you keep accessing the same
     acquisition object which will not work properly anymore.
     """
-    __slots__ = ("__client", "__has_film", "__has_csa", "__has_cca", "__camera_type")
+    __slots__ = ("__client", "__id_adv", "__has_film",
+                 "__has_csa", "__has_cca", "__camera_type")
 
     def __init__(self, client):
         self.__client = client
+        self.__id_adv = "tem_adv.Acquisitions"
         self.__has_film = None
+
         # CSA is supported by Ceta 1, Ceta 2, Falcon 3, Falcon 4
-        self.__has_csa = self.__client.has_advanced_iface and self.__client.has("tem_adv.Acquisitions.CameraSingleAcquisition")
+        csa = RequestBody(attr=self.__id_adv + ".CameraSingleAcquisition", validator=bool)
+        self.__has_csa = self.__client.has_advanced_iface and self.__client.call(method="has", body=csa)
+
         # CCA is supported by Ceta 2
-        self.__has_cca = self.__client.has_advanced_iface and self.__client.has("tem_adv.Acquisitions.CameraContinuousAcquisition")
+        cca = RequestBody(attr=self.__id_adv + ".CameraContinuousAcquisition", validator=bool)
+        self.__has_cca = self.__client.has_advanced_iface and self.__client.call(method="has", body=cca)
+
         self.__camera_type = "std"
 
     @property
     def __film_available(self) -> bool:
         if self.__has_film is None:
-            self.__has_film = self.__client.has("tem.Camera.Stock")
+            body = RequestBody(attr="tem.Camera.Stock", validator=int)
+            self.__has_film = self.__client.call(method="has", body=body)
+
         return self.__has_film
 
     def _check_prerequisites(self) -> None:
@@ -328,7 +338,8 @@ class Acquisition:
         running before acquisition call. """
         counter = 0
         while counter < 10:
-            if self.__client.get("tem.Vacuum.PVPRunning"):
+            body = RequestBody(attr="tem.Vacuum.PVPRunning", validator=bool)
+            if self.__client.call(method="get", body=body):
                 logging.info("Buffer cycle in progress, waiting...\r")
                 time.sleep(2)
                 counter += 1
@@ -336,10 +347,12 @@ class Acquisition:
                 logging.info("Checking buffer levels...")
                 break
 
-        if self.__client.has("tem.TemperatureControl.TemperatureControlAvailable"):
+        body = RequestBody(attr="tem.TemperatureControl.TemperatureControlAvailable", validator=bool)
+        if self.__client.call(method="has", body=body):
             counter = 0
             while counter < 40:
-                if self.__client.get("tem.TemperatureControl.DewarsAreBusyFilling"):
+                body = RequestBody("tem.TemperatureControl.DewarsAreBusyFilling", validator=bool)
+                if self.__client.call(method="get", body=body):
                     logging.info("Dewars are filling, waiting...\r")
                     time.sleep(30)
                     counter += 1
@@ -359,17 +372,23 @@ class Acquisition:
         else:
             logging.info("Using TecnaiCCD plugin for Gatan camera")
             # Get camera size from std scripting
-            camerasize = self.__client.call("tem.Acquisition.Cameras", obj=AcquisitionObj,
-                                            func="find_camera_size", cameraName=cameraName)
+            body = RequestBody(attr="tem.Acquisition.Cameras",
+                               obj_cls=AcquisitionObj,
+                               obj_method="find_camera_size",
+                               cameraName=cameraName)
+            camerasize = self.__client.call(method="exec_special", body=body)
 
-            image = self.__client.call("tecnai_ccd", obj=TecnaiCCDPlugin,
-                                       func="acquire_image",
-                                       cameraName=cameraName,
-                                       size=size,
-                                       exp_time=exp_time,
-                                       binning=binning,
-                                       camerasize=camerasize,
-                                       **kwargs)
+            body = RequestBody(attr="tecnai_ccd",
+                               obj_cls=TecnaiCCDPlugin,
+                               obj_method="acquire_image",
+                               cameraName=cameraName,
+                               size=size,
+                               exp_time=exp_time,
+                               binning=binning,
+                               camerasize=camerasize,
+                               **kwargs)
+            image = self.__client.call(method="exec_special", body=body)
+
             return image
 
     def acquire_tem_image(self,
@@ -411,57 +430,69 @@ class Acquisition:
 
         if self.__client.has_advanced_iface:
             # update camera type
-            self.__camera_type = self.__client.call("tem_adv.Acquisitions",
-                                                    func="find_camera_type",
-                                                    obj=AcquisitionObj,
-                                                    cameraName=cameraName,
-                                                    has_cca=self.__has_cca)
+            body = RequestBody(attr=self.__id_adv,
+                               obj_cls=AcquisitionObj,
+                               obj_method="find_camera_type",
+                               cameraName=cameraName,
+                               has_cca=self.__has_cca)
+            self.__camera_type = self.__client.call(method="exec_special", body=body)
 
         if self.__camera_type == "std": # Use standard scripting
-            prev_shutter_mode = self.__client.call("tem.Acquisition.Cameras",
-                                                   obj=AcquisitionObj,
-                                                   func="set_tem_presets",
-                                                   cameraName=cameraName,
-                                                   size=size,
-                                                   exp_time=exp_time,
-                                                   binning=binning,
-                                                   **kwargs)
+            body = RequestBody(attr="tem.Acquisition.Cameras",
+                               obj_cls=AcquisitionObj,
+                               obj_method="set_tem_presets",
+                               cameraName=cameraName,
+                               size=size,
+                               exp_time=exp_time,
+                               binning=binning,
+                               **kwargs)
+            prev_shutter_mode = self.__client.call(method="exec_special", body=body)
 
             self._check_prerequisites()
-            image = self.__client.call("tem.Acquisition", obj=AcquisitionObj,
-                                       func="acquire", cameraName=cameraName)
+            body = RequestBody(attr="tem.Acquisition",
+                               obj_cls=AcquisitionObj,
+                               obj_method="acquire",
+                               cameraName=cameraName)
+            image = self.__client.call(method="exec_special", body=body)
 
             if prev_shutter_mode is not None:
-                self.__client.call("tem.Acquisition.Cameras", obj=AcquisitionObj,
-                                   func="restore_shutter", cameraName=cameraName,
+                body = RequestBody(attr="tem.Acquisition.Cameras",
+                                   obj_cls=AcquisitionObj,
+                                   obj_method="restore_shutter",
+                                   cameraName=cameraName,
                                    prev_shutter_mode=prev_shutter_mode)
+                self.__client.call(method="exec_special", body=body)
 
             return image
 
-        else: # cca os csa, use advanced scripting
-            self.__client.call("tem_adv.Acquisitions",
-                               obj=AcquisitionObj,
-                               func="set_tem_presets_advanced",
+        else: # CCA or CSA camera type, use advanced scripting
+            body = RequestBody(attr=self.__id_adv,
+                               obj_cls=AcquisitionObj,
+                               obj_method="set_tem_presets_advanced",
                                cameraName=cameraName,
                                size=size,
                                exp_time=exp_time,
                                binning=binning,
                                camera_type=self.__camera_type,
                                **kwargs)
+            self.__client.call(method="exec_special", body=body)
 
             if "recording" in kwargs:
-                self.__client.call("tem_adv.Acquisitions", obj=AcquisitionObj,
-                                   func="acquire_advanced", cameraName=cameraName,
+                body = RequestBody(attr=self.__id_adv,
+                                   obj_cls=AcquisitionObj,
+                                   obj_method="acquire_advanced",
+                                   cameraName=cameraName,
                                    recording=True)
+                self.__client.call(method="exec_special", body=body)
                 logging.info("Continuous acquisition and offloading job are completed.")
                 return None
             else:
-                image = self.__client.call("tem_adv.Acquisitions",
-                                           obj=AcquisitionObj,
-                                           func="acquire_advanced",
-                                           cameraName=cameraName)
+                body = RequestBody(attr=self.__id_adv,
+                                   obj_cls=AcquisitionObj,
+                                   obj_method="acquire_advanced",
+                                   cameraName=cameraName)
+                image = self.__client.call(method="exec_special", body=body)
                 return image
-
 
     def acquire_stem_image(self,
                            cameraName: str,
@@ -483,19 +514,22 @@ class Acquisition:
         :keyword float contrast: Contrast setting
         :returns: Image object
         """
-
-        self.__client.call("tem.Acquisition.Detectors",
-                           obj=AcquisitionObj,
-                           func="set_stem_presets",
+        body = RequestBody(attr="tem.Acquisition.Detectors",
+                           obj_cls=AcquisitionObj,
+                           obj_method="set_stem_presets",
                            cameraName=cameraName,
                            size=size,
                            dwell_time=dwell_time,
                            binning=binning,
                            **kwargs)
+        self.__client.call(method="exec_special", body=body)
 
         self._check_prerequisites()
-        image = self.__client.call("tem.Acquisition", obj=AcquisitionObj,
-                                   func="acquire", cameraName=cameraName)
+        body = RequestBody(attr="tem.Acquisition",
+                           obj_cls=AcquisitionObj,
+                           obj_method="acquire",
+                           cameraName=cameraName)
+        image = self.__client.call(method="exec_special", body=body)
 
         return image
 
@@ -509,11 +543,15 @@ class Acquisition:
         :param exp_time: Exposure time in seconds
         :type exp_time: float
         """
-        if self.__film_available and self.__client.get("tem.Camera.Stock") > 0:
-            self.__client.call("tem.Camera", obj=AcquisitionObj,
-                               func="acquire_film",
-                               film_text=film_text,
-                               exp_time=exp_time)
+        stock = RequestBody(attr="tem.Camera.Stock", validator=int)
+
+        if self.__film_available and self.__client.call(method="get", body=stock) > 0:
+            body = RequestBody(attr="tem.Camera",
+                               obj_cls=AcquisitionObj,
+                               obj_method="acquire_film",
+                               film_text = film_text,
+                               exp_time = exp_time)
+            self.__client.call(method="exec_special", body=body)
             logging.info("Film exposure completed")
         else:
             raise RuntimeError("Plate is not available or stock is empty!")

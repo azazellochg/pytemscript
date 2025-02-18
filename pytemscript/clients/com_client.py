@@ -5,6 +5,7 @@ import sys
 import atexit
 import comtypes
 import comtypes.client
+from functools import lru_cache
 
 from ..modules.extras import Vector
 from ..utils.misc import rgetattr, rsetattr, setup_logging, RequestBody
@@ -114,31 +115,29 @@ class COMClient:
         self._scope = COMBase(useLD, useTecnaiCCD)
 
         if useTecnaiCCD and self._scope.tecnai_ccd is None:
-            raise RuntimeError("Could not use Tecnai CCD plugin, please set useTecnaiCCD=False")
+            raise RuntimeError("Could not use Tecnai CCD plugin, please _set useTecnaiCCD=False")
 
         self.cache = dict()
 
     @property
+    @lru_cache(maxsize=1)
     def has_advanced_iface(self) -> bool:
         return self._scope.tem_adv is not None
 
     @property
+    @lru_cache(maxsize=1)
     def has_lowdose_iface(self) -> bool:
         return self._scope.tem_lowdose is not None
 
     @property
+    @lru_cache(maxsize=1)
     def has_ccd_iface(self) -> bool:
         return self._scope.tecnai_ccd is not None
 
-    def get(self, attrname):
+    def _get(self, attrname):
         return rgetattr(self._scope, attrname)
 
-    def get_from_cache(self, attrname):
-        if attrname not in self.cache:
-            self.cache[attrname] = self.get(attrname)
-        return self.cache[attrname]
-
-    def has(self, attrname) -> bool:
+    def _has(self, attrname) -> bool:
         """ GET request with cache support. Should be used only for attributes
         that do not change.
         Behavior:
@@ -149,7 +148,7 @@ class COMClient:
         """
         if attrname not in self.cache:
             try:
-                output = self.get(attrname)
+                output = self._get(attrname)
                 if isinstance(output, bool):
                     self.cache[attrname] = output
                 else:
@@ -159,16 +158,33 @@ class COMClient:
 
         return self.cache[attrname]
 
-    def call(self, attrname, *args, **kwargs):
+    def _exec(self, attrname, **kwargs):
         attrname = attrname.rstrip("()")
-        obj = kwargs.pop("obj", None)
-        if obj is not None:
-            attr = rgetattr(self._scope, attrname)
-            return obj(attr, *args, **kwargs).execute()
-        else:
-            return rgetattr(self._scope, attrname, *args, **kwargs)
+        if "arg" in kwargs:  # some methods expect non-keyword argument
+            return rgetattr(self._scope, attrname, kwargs.get("arg"))
 
-    def set(self, attrname, value):
+        return rgetattr(self._scope, attrname, **kwargs)
+
+    def _exec_special(self, attrname, **kwargs):
+        obj_cls = kwargs.pop("obj_cls")
+        obj_method = kwargs.pop("obj_method")
+
+        if obj_cls is None or obj_method is None:
+            raise AttributeError("obj_class and obj_method must be specified")
+
+        com_obj = rgetattr(self._scope, attrname)
+        obj_instance = obj_cls(com_obj)
+        method = getattr(obj_instance, obj_method)
+
+        if method is None:
+            raise AttributeError("Method %s not implemented for %s" % (obj_method, obj_cls))
+
+        result = method(**kwargs)
+        obj_instance.validate(result)
+
+        return result
+
+    def _set(self, attrname, value=None):
         if isinstance(value, Vector):
             value.check_limits()
             vector = rgetattr(self._scope, attrname, log=False)
@@ -181,28 +197,33 @@ class COMClient:
         """ Do nothing since COMClient is local. """
         pass
 
-    def call_new(self, body: RequestBody):
+    def call(self, method: str, body: RequestBody):
         with self.__lock:
             try:
                 response = None
                 attrname = body.attr
-                if isinstance(body.obj, str):
-                    attrname = ".".join([body.obj, body.attr])
 
-                if body.method == "set":
-                    self.set(attrname, body.args[0])
-                elif body.method == "call":
-                    response = self.call(attrname, *body.args, **body.kwargs)
-                elif body.method == "get":
-                    response = self.get(attrname)
-                elif body.method == "has":
-                    response = self.has(attrname)
+                if method == "set":
+                    self._set(attrname, **body.kwargs)
+                elif method == "exec":
+                    response = self._exec(attrname, **body.kwargs)
+                elif method == "exec_special":
+                    response = self._exec_special(attrname, **body.kwargs)
+                elif method == "get":
+                    response = self._get(attrname)
+                elif method == "has":
+                    response = self._has(attrname)
                 else:
-                    raise ValueError("Unknown method: %s" % body.method)
+                    raise ValueError("Unknown method: %s" % method)
 
                 if body.validator is not None:
-                    body.validator(response)
-
+                    try:
+                        assert isinstance(response, body.validator)
+                        #body.validator(response)
+                    except TypeError or ValueError:
+                        logging.error("Invalid type for %s: expected %s but %s (value=%s) was returned",
+                                      attrname, body.validator, type(response), response)
+                        raise
                 return response
 
             except Exception as e:

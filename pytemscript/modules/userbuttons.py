@@ -1,5 +1,6 @@
 from typing import Dict
 
+from ..utils.misc import RequestBody
 from .extras import SpecialObj
 
 
@@ -25,7 +26,11 @@ class UserButtons:
 
     def show(self) -> Dict:
         """ Returns a dict with assigned hand panels buttons. """
-        return self.__client.call("tem.UserButtons", obj=ButtonsObj, func="show")
+        body = RequestBody(attr="tem.UserButtons",
+                           obj_cls=ButtonsObj, obj_method="show")
+        result = self.__client.call(method="exec_special", body=body)
+
+        return result
 
     def __getattr__(self, name):
         if name in self.valid_buttons:

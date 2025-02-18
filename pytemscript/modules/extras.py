@@ -28,11 +28,11 @@ class Vector:
 
     @property
     def has_limits(self) -> bool:
-        """Check if range limits are set."""
+        """Check if range limits are _set."""
         return self.__min is not None and self.__max is not None
 
     def check_limits(self) -> None:
-        """Validate that the vector's values are within the set limits."""
+        """Validate that the vector's values are within the _set limits."""
         if self.has_limits:
             if any(v < self.__min or v > self.__max for v in self.components):
                 msg = "One or more values (%s) are outside of range (%f, %f)" % (self.components, self.x, self.y)
@@ -184,18 +184,12 @@ class Image(BaseImage):
 
 class SpecialObj:
     """ Wrapper class for complex methods to be executed on a COM object. """
-    def __init__(self, com_object, func: str, **kwargs):
+    def __init__(self, com_object):
         self.com_object = com_object
-        self.func = func
-        self.kwargs = kwargs
 
-    def execute(self):
-        method = getattr(self, self.func)
-        if callable(method):
-            return method(**self.kwargs)
-        else:
-            raise AttributeError("Function %s is not implemented for %s" % (
-                self.func, SpecialObj.__name__))
+    def validate(self, result):
+        """ Must be implemented in subclasses. """
+        pass
 
 
 class StagePosition(SpecialObj):

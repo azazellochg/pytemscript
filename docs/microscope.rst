@@ -46,7 +46,7 @@ Image object
 
 Two acquisition functions: :meth:`~pytemscript.modules.Acquisition.acquire_tem_image` and
 :meth:`~pytemscript.modules.Acquisition.acquire_stem_image` return an :class:`Image` object
-that has the following methods and properties:
+that _has the following methods and properties:
 
 .. autoclass:: pytemscript.modules.Image
     :members: width, height, bit_depth, pixel_type, data, save, name, metadata

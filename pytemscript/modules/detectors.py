@@ -2,6 +2,7 @@ from typing import Dict
 import logging
 
 from .extras import SpecialObj
+from ..utils.misc import RequestBody
 from ..utils.enums import ScreenPosition, AcqShutterMode
 
 
@@ -91,16 +92,18 @@ class DetectorsObj(SpecialObj):
 
 class Detectors:
     """ CCD/DDD, film/plate and STEM detectors. """
-    __slots__ = ("__client", "__has_film", "__has_cca")
+    __slots__ = ("__client", "__id", "__has_film", "__has_cca")
 
     def __init__(self, client):
         self.__client = client
+        self.__id = "tem_adv.Acquisitions"
         self.__has_film = None
         self.__has_cca = False
 
         # CCA is supported by Ceta 2
+        body = RequestBody(attr=self.__id + ".CameraContinuousAcquisition", validator=bool)
         if (self.__client.has_advanced_iface and
-                self.__client.has("tem_adv.Acquisitions.CameraContinuousAcquisition")):
+                self.__client.call(method="has", body=body)):
             self.__has_cca = True
         else:
             logging.info("Continuous acquisition not supported.")
@@ -108,57 +111,70 @@ class Detectors:
     @property
     def __film_available(self) -> bool:
         if self.__has_film is None:
-            self.__has_film = self.__client.has("tem.Camera.Stock")
+            body = RequestBody(attr="tem.Camera.Stock", validator=bool)
+            self.__has_film = self.__client.call(method="has", body=body)
+
         return self.__has_film
 
     @property
     def cameras(self) -> Dict:
         """ Returns a dict with parameters for all TEM cameras. """
-        tem_cameras = self.__client.call("tem.Acquisition.Cameras",
-                                         obj=DetectorsObj,
-                                         func="show_cameras")
+        body = RequestBody(attr="tem.Acquisition.Cameras",
+                           obj_cls=DetectorsObj,
+                           obj_method="show_cameras")
+        tem_cameras = self.__client.call(method="exec_special", body=body)
 
         if not self.__client.has_advanced_iface:
             return tem_cameras
 
         # CSA is supported by Ceta 1, Ceta 2, Falcon 3, Falcon 4
-        csa_cameras = self.__client.call("tem_adv.Acquisitions.CameraSingleAcquisition",
-                                         obj=DetectorsObj, func="show_cameras_csa")
+        body = RequestBody(attr=self.__id + ".CameraSingleAcquisition",
+                           obj_cls=DetectorsObj,
+                           obj_method="show_cameras_csa")
+        csa_cameras = self.__client.call(method="exec_special", body=body)
         tem_cameras.update(csa_cameras)
 
         # CCA is supported by Ceta 2
         if self.__has_cca:
-            tem_cameras = self.__client.call("tem_adv.Acquisitions.CameraContinuousAcquisition",
-                                             obj=DetectorsObj, func="show_cameras_cca",
-                                             tem_cameras=tem_cameras)
+            body = RequestBody(attr=self.__id + ".CameraContinuousAcquisition",
+                               obj_cls=DetectorsObj,
+                               obj_method="show_cameras_cca")
+            tem_cameras =  self.__client.call(method="exec_special", body=body,
+                                              tem_cameras=tem_cameras)
 
         return tem_cameras
 
     @property
     def stem_detectors(self) -> Dict:
         """ Returns a dict with STEM detectors parameters. """
-        return self.__client.call("tem.Acquisition.Detectors",
-                                  obj=DetectorsObj,
-                                  func="show_stem_detectors")
+        body = RequestBody(attr="tem.Acquisition.Detectors",
+                           obj_cls=DetectorsObj,
+                           obj_method="show_stem_detectors")
+        return self.__client.call(method="exec_special", body=body)
 
     @property
     def screen(self) -> str:
         """ Fluorescent screen position. (read/write)"""
-        return ScreenPosition(self.__client.get("tem.Camera.MainScreen")).name
+        body = RequestBody(attr="tem.Camera.MainScreen", validator=int)
+        result = self.__client.call(method="get", body=body)
+
+        return ScreenPosition(result).name
 
     @screen.setter
     def screen(self, value: ScreenPosition) -> None:
-        self.__client.set("tem.Camera.MainScreen", value)
+        body = RequestBody(attr="tem.Camera.MainScreen", value=value)
+        self.__client.call(method="set", body=body)
 
     @property
     def film_settings(self) -> Dict:
         """ Returns a dict with film settings.
-        Note: The plate camera has become obsolete with Win7 so
+        Note: The plate camera _has become obsolete with Win7 so
         most of the existing functions are no longer supported.
         """
         if self.__film_available:
-            return self.__client.call("tem.Camera", obj=DetectorsObj,
-                                      func="show_film_settings")
+            body = RequestBody(attr="tem.Camera", obj_cls=DetectorsObj,
+                               obj_method="show_film_settings")
+            return self.__client.call(method="exec_special", body=body)
         else:
             logging.error("No film/plate device detected.")
             return {}

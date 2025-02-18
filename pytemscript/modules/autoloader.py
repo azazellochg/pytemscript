@@ -1,12 +1,16 @@
+from ..utils.misc import RequestBody
 from ..utils.enums import CassetteSlotStatus
 
 
 class Autoloader:
     """ Sample loading functions. """
-    __slots__ = ("__client", "__has_autoloader_adv", "_shortcut", "__err_msg", "__err_msg_adv")
+    __slots__ = ("__client", "__id", "__id_adv", "__has_autoloader_adv",
+                 "__err_msg", "__err_msg_adv")
 
     def __init__(self, client):
         self.__client = client
+        self.__id = "tem.AutoLoader"
+        self.__id_adv = "tem_adv.AutoLoader"
         self.__has_autoloader_adv = None
         self.__err_msg = "Autoloader is not available"
         self.__err_msg_adv = "This function is not available in your advanced scripting interface."
@@ -14,19 +18,23 @@ class Autoloader:
     @property
     def __adv_available(self) -> bool:
         if self.__has_autoloader_adv is None:
-            self.__has_autoloader_adv = self.__client.has("tem_adv.AutoLoader")
+            body = RequestBody(attr=self.__id_adv, validator=bool)
+            self.__has_autoloader_adv = self.__client.call(method="has", body=body)
         return self.__has_autoloader_adv
 
     @property
     def is_available(self) -> bool:
         """ Status of the autoloader. Should be always False on Tecnai instruments. """
-        return bool(self.__client.get("tem.AutoLoader.AutoLoaderAvailable"))
+        body = RequestBody(attr=self.__id + ".AutoLoaderAvailable", validator=bool)
+
+        return self.__client.call(method="get", body=body)
 
     @property
     def number_of_slots(self) -> int:
         """ The number of slots in a cassette. """
         if self.is_available:
-            return int(self.__client.get("tem.AutoLoader.NumberOfCassetteSlots"))
+            body = RequestBody(attr=self.__id + ".NumberOfCassetteSlots", validator=int)
+            return self.__client.call(method="get", body=body)
         else:
             raise RuntimeError(self.__err_msg)
 
@@ -43,7 +51,9 @@ class Autoloader:
                 raise ValueError("Only %s slots are available" % total)
             if self.slot_status(slot) != CassetteSlotStatus.OCCUPIED.name:
                 raise RuntimeError("Slot %d is not occupied" % slot)
-            self.__client.call("tem.AutoLoader.LoadCartridge()", slot)
+
+            body = RequestBody(attr=self.__id + ".LoadCartridge()", arg=slot)
+            self.__client.call(method="exec", body=body)
         else:
             raise RuntimeError(self.__err_msg)
 
@@ -52,7 +62,8 @@ class Autoloader:
         slot in the cassette.
         """
         if self.is_available:
-            self.__client.call("tem.AutoLoader.UnloadCartridge()")
+            body = RequestBody(attr=self.__id + ".UnloadCartridge()")
+            self.__client.call(method="exec", body=body)
         else:
             raise RuntimeError(self.__err_msg)
 
@@ -62,7 +73,8 @@ class Autoloader:
         """
         # TODO: check if cassette is present
         if self.is_available:
-            self.__client.call("tem.AutoLoader.PerformCassetteInventory()")
+            body = RequestBody(attr=self.__id + ".PerformCassetteInventory()")
+            self.__client.call(method="exec", body=body)
         else:
             raise RuntimeError(self.__err_msg)
 
@@ -76,7 +88,9 @@ class Autoloader:
             total = self.number_of_slots
             if slot > total:
                 raise ValueError("Only %s slots are available" % total)
-            status = self.__client.call("tem.AutoLoader.SlotStatus()", int(slot))
+
+            body = RequestBody(attr=self.__id + ".SlotStatus()", arg=slot, validator=int)
+            status = self.__client.call(method="exec", body=body)
             return CassetteSlotStatus(status).name
         else:
             raise RuntimeError(self.__err_msg)
@@ -85,7 +99,8 @@ class Autoloader:
         """ Moves the cassette from the docker to the capsule. """
         if self.__adv_available:
             if self.is_available:
-                self.__client.call("tem_adv.AutoLoader.UndockCassette()")
+                body = RequestBody(attr=self.__id_adv + ".UndockCassette()")
+                self.__client.call(method="exec", body=body)
             else:
                 raise RuntimeError(self.__err_msg)
         else:
@@ -95,7 +110,8 @@ class Autoloader:
         """ Moves the cassette from the capsule to the docker. """
         if self.__adv_available:
             if self.is_available:
-                self.__client.call("tem_adv.AutoLoader.DockCassette()")
+                body = RequestBody(attr=self.__id_adv + ".DockCassette()")
+                self.__client.call(method="exec", body=body)
             else:
                 raise RuntimeError(self.__err_msg)
         else:
@@ -105,7 +121,8 @@ class Autoloader:
         """ Initializes / Recovers the Autoloader for further use. """
         if self.__adv_available:
             if self.is_available:
-                self.__client.call("tem_adv.AutoLoader.Initialize()")
+                body = RequestBody(attr=self.__id_adv + ".Initialize()")
+                self.__client.call(method="exec", body=body)
             else:
                 raise RuntimeError(self.__err_msg)
         else:
@@ -115,7 +132,8 @@ class Autoloader:
         """ Synchronously runs the Autoloader buffer cycle. """
         if self.__adv_available:
             if self.is_available:
-                self.__client.call("tem_adv.AutoLoader.BufferCycle()")
+                body = RequestBody(attr=self.__id_adv + ".BufferCycle()")
+                self.__client.call(method="exec", body=body)
             else:
                 raise RuntimeError(self.__err_msg)
         else:
