@@ -248,7 +248,7 @@ class SpecialObj:
         pass
 
 
-class StagePosition(SpecialObj):
+class StageObj(SpecialObj):
     """ Wrapper around stage / piezo stage COM object. """
 
     def set(self,
@@ -270,8 +270,12 @@ class StagePosition(SpecialObj):
             getattr(self.com_object, method)(pos, axes)
 
     def get(self, a=False, b=False) -> Dict:
-        """ The current position or speed of the stage/piezo stage (x,y,z in um).
+        """ The current position of the stage/piezo stage (x,y,z in um).
         Set a and b to True if you want to retrieve them as well.
+        x,y,z are in um and a,b in deg
+
+        If retrieving velocity, return the speed of the piezo stage instead.
+        x,y,z are in um/s and a,b in deg/s
         """
         pos = {key: getattr(self.com_object, key.upper()) * 1e6 for key in 'xyz'}
         if a:

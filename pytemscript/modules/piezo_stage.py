@@ -2,7 +2,7 @@ from functools import lru_cache
 from typing import Dict, Tuple
 
 from ..utils.misc import RequestBody
-from .extras import StagePosition
+from .extras import StageObj
 
 
 class PiezoStage:
@@ -28,7 +28,7 @@ class PiezoStage:
             raise NotImplementedError(self.__err_msg)
         else:
             body = RequestBody(attr=self.__id + ".CurrentPosition",
-                               obj_cls=StagePosition, obj_method="get")
+                               obj_cls=StageObj, obj_method="get")
             return self.__client.call(method="exec_special", body=body)
 
     @property
@@ -42,10 +42,11 @@ class PiezoStage:
 
     @property
     def velocity(self) -> Dict:
-        """ Returns a dict with stage velocities. """
+        """ Returns a dict with stage velocities (x,y,z are in um/s and a,b in deg/s). """
         if not self.__has_pstage:
             raise NotImplementedError(self.__err_msg)
         else:
             body = RequestBody(attr=self.__id + ".CurrentJogVelocity",
-                               obj_cls=StagePosition, obj_method="get")
+                               obj_cls=StageObj, obj_method="get",
+                               get_speed=True)
             return self.__client.call(method="exec_special", body=body)

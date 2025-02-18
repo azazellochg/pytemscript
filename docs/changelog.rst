@@ -5,10 +5,14 @@ Version 3.0
 ^^^^^^^^^^^
 
 * New changes are distributed under GPLv3+
+* Complete detailed documentation
 * Complete re-write using comtypes library
 * Standard scripting interface updated to v1.9
 * Added Advanced scripting interface v1.2
-* Initial support for remote execution (socket-based client)
+* Unified client interface for both local or remote connections
+* Initial support for remote execution (socket-based server and client)
+* New utility object: Vector
+* Validation of returned data types
 * Development and testing are performed on:
 
     - Tecnai Spirit (WinXP, Python 3.4)

@@ -1,3 +1,4 @@
+from functools import lru_cache
 from typing import Dict
 import math
 import time
@@ -5,18 +6,17 @@ import logging
 
 from ..utils.misc import RequestBody
 from ..utils.enums import MeasurementUnitType, StageStatus, StageHolderType, StageAxes
-from .extras import StagePosition
+from .extras import StageObj
 
 
 class Stage:
     """ Stage functions. """
-    __slots__ = ("__client", "__id", "__err_msg", "__limits")
+    __slots__ = ("__client", "__id", "__err_msg")
 
     def __init__(self, client):
         self.__client = client
         self.__id = "tem.Stage"
         self.__err_msg = "Timeout. Stage is not ready"
-        self.__limits = dict()
 
     @property
     def _beta_available(self) -> bool:
@@ -86,18 +86,18 @@ class Stage:
         # b - 29.7 to + 29.7(degrees)
 
         if not direct:
-            body = RequestBody(attr=self.__id, obj_cls=StagePosition,
+            body = RequestBody(attr=self.__id, obj_cls=StageObj,
                                obj_method="set", axes=axes,
                                method="MoveTo", **new_coords)
             self.__client.call(method="exec_special", body=body)
         else:
             if speed is not None:
-                body = RequestBody(attr=self.__id, obj_cls=StagePosition,
+                body = RequestBody(attr=self.__id, obj_cls=StageObj,
                                    obj_method="set", axes=axes, speed=speed,
                                    method="GoToWithSpeed", **new_coords)
                 self.__client.call(method="exec_special", body=body)
             else:
-                body = RequestBody(attr=self.__id, obj_cls=StagePosition,
+                body = RequestBody(attr=self.__id, obj_cls=StageObj,
                                    obj_method="set", axes=axes,
                                    method="GoTo", **new_coords)
                 self.__client.call(method="exec_special", body=body)
@@ -123,7 +123,7 @@ class Stage:
     @property
     def position(self) -> Dict:
         """ The current position of the stage (x,y,z in um and a,b in degrees). """
-        body = RequestBody(attr=self.__id + ".Position", obj_cls=StagePosition,
+        body = RequestBody(attr=self.__id + ".Position", obj_cls=StageObj,
                            obj_method="get", a=True, b=self._beta_available)
 
         return self.__client.call(method="exec_special", body=body)
@@ -149,11 +149,9 @@ class Stage:
         self._change_position(relative=relative, **kwargs)
 
     @property
+    @lru_cache(maxsize=1)
     def limits(self) -> Dict:
         """ Returns a dict with stage move limits. """
-        if not self.__limits:
-            body = RequestBody(attr=self.__id, obj_cls=StagePosition,
-                               obj_method="limits")
-            self.__limits = self.__client.call(method="exec_special", body=body)
-
-        return self.__limits
+        body = RequestBody(attr=self.__id, obj_cls=StageObj,
+                           obj_method="limits")
+        return self.__client.call(method="exec_special", body=body)
