@@ -137,6 +137,8 @@ class Apertures:
         if not self.__std_available:
             raise NotImplementedError(self.__err_msg)
         else:
-            body = RequestBody(attr=self.__id, obj_cls=AperturesObj,
+            body = RequestBody(attr=self.__id,
+                               validator=dict,
+                               obj_cls=AperturesObj,
                                obj_method="show")
             return self.__client.call(method="exec_special", body=body)

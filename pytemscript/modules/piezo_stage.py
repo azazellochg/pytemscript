@@ -28,6 +28,7 @@ class PiezoStage:
             raise NotImplementedError(self.__err_msg)
         else:
             body = RequestBody(attr=self.__id + ".CurrentPosition",
+                               validator=dict,
                                obj_cls=StageObj, obj_method="get")
             return self.__client.call(method="exec_special", body=body)
 
@@ -47,6 +48,7 @@ class PiezoStage:
             raise NotImplementedError(self.__err_msg)
         else:
             body = RequestBody(attr=self.__id + ".CurrentJogVelocity",
+                               validator=dict,
                                obj_cls=StageObj, obj_method="get",
                                get_speed=True)
             return self.__client.call(method="exec_special", body=body)

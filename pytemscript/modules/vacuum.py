@@ -66,7 +66,7 @@ class Vacuum:
         """ Returns a dict with vacuum gauges information.
         Pressure values are in Pascals.
         """
-        body = RequestBody(attr=self.__id + ".Gauges",
+        body = RequestBody(attr=self.__id + ".Gauges", validator=dict,
                            obj_cls=GaugesObj, obj_method="show")
         result = self.__client.call(method="exec_special", body=body)
 

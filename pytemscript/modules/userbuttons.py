@@ -26,7 +26,7 @@ class UserButtons:
 
     def show(self) -> Dict:
         """ Returns a dict with assigned hand panels buttons. """
-        body = RequestBody(attr="tem.UserButtons",
+        body = RequestBody(attr="tem.UserButtons", validator=dict,
                            obj_cls=ButtonsObj, obj_method="show")
         result = self.__client.call(method="exec_special", body=body)
 

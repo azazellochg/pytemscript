@@ -436,6 +436,7 @@ class Acquisition:
         if self.__client.has_advanced_iface:
             # update camera type
             body = RequestBody(attr=self.__id_adv,
+                               validator=str,
                                obj_cls=AcquisitionObj,
                                obj_method="find_camera_type",
                                cameraName=cameraName,
@@ -493,6 +494,7 @@ class Acquisition:
                 return None
             else:
                 body = RequestBody(attr=self.__id_adv,
+                                   validator=Image,
                                    obj_cls=AcquisitionObj,
                                    obj_method="acquire_advanced",
                                    cameraName=cameraName)
@@ -531,6 +533,7 @@ class Acquisition:
 
         self._check_prerequisites()
         body = RequestBody(attr="tem.Acquisition",
+                           validator=Image,
                            obj_cls=AcquisitionObj,
                            obj_method="acquire",
                            cameraName=cameraName)

@@ -1,4 +1,4 @@
-from typing import Union, Tuple
+from typing import Union
 import math
 
 from .extras import Vector

@@ -243,10 +243,6 @@ class SpecialObj:
     def __init__(self, com_object):
         self.com_object = com_object
 
-    def validate(self, result):
-        """ Must be implemented in subclasses. """
-        pass
-
 
 class StageObj(SpecialObj):
     """ Wrapper around stage / piezo stage COM object. """

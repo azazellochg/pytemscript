@@ -118,6 +118,7 @@ class Detectors:
     def cameras(self) -> Dict:
         """ Returns a dict with parameters for all TEM cameras. """
         body = RequestBody(attr="tem.Acquisition.Cameras",
+                           validator=dict,
                            obj_cls=DetectorsObj,
                            obj_method="show_cameras")
         tem_cameras = self.__client.call(method="exec_special", body=body)
@@ -127,6 +128,7 @@ class Detectors:
 
         # CSA is supported by Ceta 1, Ceta 2, Falcon 3, Falcon 4
         body = RequestBody(attr=self.__id + ".CameraSingleAcquisition",
+                           validator=dict,
                            obj_cls=DetectorsObj,
                            obj_method="show_cameras_csa")
         csa_cameras = self.__client.call(method="exec_special", body=body)
@@ -135,6 +137,7 @@ class Detectors:
         # CCA is supported by Ceta 2
         if self.__has_cca:
             body = RequestBody(attr=self.__id + ".CameraContinuousAcquisition",
+                               validator=dict,
                                obj_cls=DetectorsObj,
                                obj_method="show_cameras_cca")
             tem_cameras =  self.__client.call(method="exec_special", body=body,
@@ -146,6 +149,7 @@ class Detectors:
     def stem_detectors(self) -> Dict:
         """ Returns a dict with STEM detectors parameters. """
         body = RequestBody(attr="tem.Acquisition.Detectors",
+                           validator=dict,
                            obj_cls=DetectorsObj,
                            obj_method="show_stem_detectors")
         return self.__client.call(method="exec_special", body=body)
@@ -170,7 +174,9 @@ class Detectors:
         most of the existing functions are no longer supported.
         """
         if self.__has_film:
-            body = RequestBody(attr="tem.Camera", obj_cls=DetectorsObj,
+            body = RequestBody(attr="tem.Camera",
+                               validator=dict,
+                               obj_cls=DetectorsObj,
                                obj_method="show_film_settings")
             return self.__client.call(method="exec_special", body=body)
         else:

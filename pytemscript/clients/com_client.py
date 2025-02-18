@@ -181,7 +181,6 @@ class COMClient(BasicClient):
             raise AttributeError("Method %s not implemented for %s" % (obj_method, obj_cls))
 
         result = method(**kwargs)
-        obj_instance.validate(result)
 
         return result
 

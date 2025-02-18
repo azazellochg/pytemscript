@@ -123,8 +123,9 @@ class Stage:
     @property
     def position(self) -> Dict:
         """ The current position of the stage (x,y,z in um and a,b in degrees). """
-        body = RequestBody(attr=self.__id + ".Position", obj_cls=StageObj,
-                           obj_method="get", a=True, b=self._beta_available)
+        body = RequestBody(attr=self.__id + ".Position", validator=dict,
+                           obj_cls=StageObj, obj_method="get",
+                           a=True, b=self._beta_available)
 
         return self.__client.call(method="exec_special", body=body)
 
@@ -152,6 +153,6 @@ class Stage:
     @lru_cache(maxsize=1)
     def limits(self) -> Dict:
         """ Returns a dict with stage move limits. """
-        body = RequestBody(attr=self.__id, obj_cls=StageObj,
-                           obj_method="limits")
+        body = RequestBody(attr=self.__id, validator=dict,
+                           obj_cls=StageObj, obj_method="limits")
         return self.__client.call(method="exec_special", body=body)
