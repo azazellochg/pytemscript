@@ -1,40 +1,37 @@
+from functools import lru_cache
+
 from ..utils.misc import RequestBody
 
 
 class Temperature:
     """ LN dewars and temperature controls. """
-    __slots__ = ("__client", "__has_tmpctrl", "__has_tmpctrl_adv",
-                 "__id", "__id_adv", "__err_msg", "__err_msg_adv")
+    __slots__ = ("__client", "__id", "__id_adv", "__err_msg", "__err_msg_adv")
 
     def __init__(self, client):
         self.__client = client
-        self.__has_tmpctrl = None
-        self.__has_tmpctrl_adv = None
         self.__id = "tem.TemperatureControl"
         self.__id_adv = "tem_adv.TemperatureControl"
         self.__err_msg = "TemperatureControl is not available"
         self.__err_msg_adv = "This function is not available in your advanced scripting interface."
     
-    @property    
-    def __std_available(self) -> bool:
-        if self.__has_tmpctrl is None:
-            body = RequestBody(attr=self.__id, validator=bool)
-            self.__has_tmpctrl = self.__client.call(method="has", body=body)
+    @property
+    @lru_cache(maxsize=1)
+    def __has_tmpctrl(self) -> bool:
+        body = RequestBody(attr=self.__id, validator=bool)
 
-        return self.__has_tmpctrl
+        return self.__client.call(method="has", body=body)
 
     @property
-    def __adv_available(self) -> bool:
-        if self.__has_tmpctrl_adv is None:
-            body = RequestBody(attr=self.__id_adv, validator=bool)
-            self.__has_tmpctrl_adv = self.__client.call(method="has", body=body)
+    @lru_cache(maxsize=1)
+    def __has_tmpctrl_adv(self) -> bool:
+        body = RequestBody(attr=self.__id_adv, validator=bool)
 
-        return self.__has_tmpctrl_adv
+        return self.__client.call(method="has", body=body)
 
     @property
     def is_available(self) -> bool:
         """ Status of the temperature control. Should be always False on Tecnai instruments. """
-        if self.__std_available:
+        if self.__has_tmpctrl:
             body = RequestBody(attr=self.__id + ".TemperatureControlAvailable", validator=bool)
             return self.__client.call(method="has", body=body)
         else:
@@ -44,10 +41,10 @@ class Temperature:
         """ Forces LN refill if the level is below 70%, otherwise returns an error.
         Note: this function takes considerable time to execute.
         """
-        if self.__std_available:
+        if self.__has_tmpctrl:
             body = RequestBody(attr=self.__id + ".ForceRefill()")
             self.__client.call(method="exec", body=body)
-        elif self.__adv_available:
+        elif self.__has_tmpctrl_adv:
             body = RequestBody(attr=self.__id_adv + ".RefillAllDewars()")
             self.__client.call(method="exec", body=body)
         else:
@@ -59,7 +56,7 @@ class Temperature:
         :param dewar: Dewar name (RefrigerantDewar enum)
         :type dewar: IntEnum
         """
-        if self.__std_available:
+        if self.__has_tmpctrl:
             body = RequestBody(attr=self.__id + ".RefrigerantLevel()",
                                validator=float, args=dewar)
             return self.__client.call(method="exec", body=body)
@@ -69,10 +66,10 @@ class Temperature:
     @property
     def is_dewar_filling(self) -> bool:
         """ Returns TRUE if any of the dewars is currently busy filling. """
-        if self.__std_available:
+        if self.__has_tmpctrl:
             body = RequestBody(attr=self.__id + ".DewarsAreBusyFilling", validator=bool)
             return self.__client.call(method="get", body=body)
-        elif self.__adv_available:
+        elif self.__has_tmpctrl_adv:
             body = RequestBody(attr=self.__id_adv + ".IsAnyDewarFilling", validator=bool)
             return self.__client.call(method="get", body=body)
         else:
@@ -85,7 +82,7 @@ class Temperature:
         dewar present).
         """
         # TODO: check if returns -60 at room temperature
-        if self.__std_available:
+        if self.__has_tmpctrl:
             body = RequestBody(attr=self.__id + ".DewarsRemainingTime", validator=int)
             return self.__client.call(method="get", body=body)
         else:
@@ -94,7 +91,7 @@ class Temperature:
     @property
     def temp_docker(self) -> float:
         """ Returns Docker temperature in Kelvins. """
-        if self.__adv_available:
+        if self.__has_tmpctrl_adv:
             body = RequestBody(attr=self.__id_adv + ".AutoloaderCompartment.DockerTemperature",
                                validator=float)
             return self.__client.call(method="get", body=body)
@@ -104,7 +101,7 @@ class Temperature:
     @property
     def temp_cassette(self) -> float:
         """ Returns Cassette gripper temperature in Kelvins. """
-        if self.__adv_available:
+        if self.__has_tmpctrl_adv:
             body = RequestBody(attr=self.__id_adv + ".AutoloaderCompartment.CassetteTemperature",
                                validator=float)
             return self.__client.call(method="get", body=body)
@@ -114,7 +111,7 @@ class Temperature:
     @property
     def temp_cartridge(self) -> float:
         """ Returns Cartridge gripper temperature in Kelvins. """
-        if self.__adv_available:
+        if self.__has_tmpctrl_adv:
             body = RequestBody(attr=self.__id_adv + ".AutoloaderCompartment.CartridgeTemperature",
                                validator=float)
             return self.__client.call(method="get", body=body)
@@ -124,7 +121,7 @@ class Temperature:
     @property
     def temp_holder(self) -> float:
         """ Returns Holder temperature in Kelvins. """
-        if self.__adv_available:
+        if self.__has_tmpctrl_adv:
             body = RequestBody(attr=self.__id_adv + ".AutoloaderCompartment.HolderTemperature",
                                validator=float)
             return self.__client.call(method="get", body=body)

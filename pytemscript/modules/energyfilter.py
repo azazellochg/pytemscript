@@ -1,22 +1,23 @@
+from functools import lru_cache
+
 from ..utils.misc import RequestBody
 
 
 class EnergyFilter:
     """ Energy filter controls. Requires advanced scripting. """
-    __slots__ = ("__client", "__id", "__has_ef", "__err_msg")
+    __slots__ = ("__client", "__id", "__err_msg")
 
     def __init__(self, client):
         self.__client = client
         self.__id = "tem_adv.EnergyFilter"
-        self.__has_ef = None
         self.__err_msg = "EnergyFilter interface is not available"
 
     @property
-    def __adv_available(self) -> bool:
-        if self.__has_ef is None:
-            body = RequestBody(attr="tem.Gun1", validator=bool)
-            self.__has_ef = self.__client.call(method="has", body=body)
-        return self.__has_ef
+    @lru_cache(maxsize=1)
+    def __has_ef(self) -> bool:
+        body = RequestBody(attr=self.__id, validator=bool)
+
+        return self.__client.call(method="has", body=body)
 
     def _check_range(self, attrname: str, value: float) -> None:
         vmin = RequestBody(attr=attrname + ".Begin", validator=float)
@@ -35,7 +36,7 @@ class EnergyFilter:
         :param width: Slit width in eV
         :type width: float
         """
-        if not self.__adv_available:
+        if not self.__has_ef:
             raise NotImplementedError(self.__err_msg)
 
         self._check_range(self.__id + ".Slit.WidthRange", width)
@@ -49,7 +50,7 @@ class EnergyFilter:
 
     def retract_slit(self) -> None:
         """ Retract energy slit. """
-        if not self.__adv_available:
+        if not self.__has_ef:
             raise NotImplementedError(self.__err_msg)
 
         body = RequestBody(attr=self.__id + ".Slit.Retract()")
@@ -58,7 +59,7 @@ class EnergyFilter:
     @property
     def slit_width(self) -> float:
         """ Returns energy slit width in eV. """
-        if not self.__adv_available:
+        if not self.__has_ef:
             raise NotImplementedError(self.__err_msg)
 
         body = RequestBody(attr=self.__id + ".Slit.Width", validator=float)
@@ -66,7 +67,7 @@ class EnergyFilter:
 
     @slit_width.setter
     def slit_width(self, value: float) -> None:
-        if not self.__adv_available:
+        if not self.__has_ef:
             raise NotImplementedError(self.__err_msg)
 
         self._check_range(self.__id + ".Slit.WidthRange", value)
@@ -76,7 +77,7 @@ class EnergyFilter:
     @property
     def ht_shift(self) -> float:
         """ Returns High Tension energy shift in eV. """
-        if not self.__adv_available:
+        if not self.__has_ef:
             raise NotImplementedError(self.__err_msg)
 
         body = RequestBody(attr=self.__id + ".HighTensionEnergyShift.EnergyShift", validator=float)
@@ -84,7 +85,7 @@ class EnergyFilter:
 
     @ht_shift.setter
     def ht_shift(self, value: float) -> None:
-        if not self.__adv_available:
+        if not self.__has_ef:
             raise NotImplementedError(self.__err_msg)
 
         self._check_range(self.__id + ".HighTensionEnergyShift.EnergyShiftRange", value)
@@ -94,7 +95,7 @@ class EnergyFilter:
     @property
     def zlp_shift(self) -> float:
         """ Returns Zero-Loss Peak (ZLP) energy shift in eV. """
-        if not self.__adv_available:
+        if not self.__has_ef:
             raise NotImplementedError(self.__err_msg)
 
         body = RequestBody(attr=self.__id + ".ZeroLossPeakAdjustment.EnergyShift", validator=float)
@@ -102,7 +103,7 @@ class EnergyFilter:
 
     @zlp_shift.setter
     def zlp_shift(self, value: float) -> None:
-        if not self.__adv_available:
+        if not self.__has_ef:
             raise NotImplementedError(self.__err_msg)
 
         self._check_range(self.__id + ".ZeroLossPeakAdjustment.EnergyShiftRange", value)

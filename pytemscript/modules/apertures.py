@@ -1,4 +1,5 @@
 from typing import Dict
+from functools import lru_cache
 
 from .extras import SpecialObj
 from ..utils.misc import RequestBody
@@ -58,24 +59,22 @@ class AperturesObj(SpecialObj):
 
 class Apertures:
     """ Apertures and VPP controls. """
-    __slots__ = ("__client", "__has_apertures", "__id",
-                 "__id_adv", "__err_msg", "__err_msg_vpp")
+    __slots__ = ("__client", "__id", "__id_adv",
+                 "__err_msg", "__err_msg_vpp")
 
     def __init__(self, client):
         self.__client = client
-        self.__has_apertures = None
         self.__id = "tem.ApertureMechanismCollection"
         self.__id_adv = "tem_adv.PhasePlate"
         self.__err_msg = "Apertures interface is not available. Requires a separate license"
         self.__err_msg_vpp = "Either no VPP found or it's not enabled and inserted"
 
     @property
+    @lru_cache(maxsize=1)
     def __std_available(self) -> bool:
-        if self.__has_apertures is None:
-            body = RequestBody(attr=self.__id, validator=bool)
-            self.__has_apertures = self.__client.call(method="has", body=body)
+        body = RequestBody(attr=self.__id, validator=bool)
 
-        return self.__has_apertures
+        return self.__client.call(method="has", body=body)
 
     @property
     def vpp_position(self) -> int:

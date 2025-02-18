@@ -2,6 +2,7 @@ from typing import Optional
 import time
 import logging
 from datetime import datetime
+from functools import lru_cache
 
 from ..plugins.tecnai_ccd_plugin import TecnaiCCDPlugin
 from ..utils.misc import RequestBody
@@ -307,31 +308,35 @@ class Acquisition:
     main microscope object. If you do not do so, you keep accessing the same
     acquisition object which will not work properly anymore.
     """
-    __slots__ = ("__client", "__id_adv", "__has_film",
-                 "__has_csa", "__has_cca", "__camera_type")
+    __slots__ = ("__client", "__id_adv", "__camera_type")
 
     def __init__(self, client):
         self.__client = client
         self.__id_adv = "tem_adv.Acquisitions"
-        self.__has_film = None
-
-        # CSA is supported by Ceta 1, Ceta 2, Falcon 3, Falcon 4
-        csa = RequestBody(attr=self.__id_adv + ".CameraSingleAcquisition", validator=bool)
-        self.__has_csa = self.__client.has_advanced_iface and self.__client.call(method="has", body=csa)
-
-        # CCA is supported by Ceta 2
-        cca = RequestBody(attr=self.__id_adv + ".CameraContinuousAcquisition", validator=bool)
-        self.__has_cca = self.__client.has_advanced_iface and self.__client.call(method="has", body=cca)
-
         self.__camera_type = "std"
 
     @property
-    def __film_available(self) -> bool:
-        if self.__has_film is None:
-            body = RequestBody(attr="tem.Camera.Stock", validator=int)
-            self.__has_film = self.__client.call(method="has", body=body)
+    @lru_cache(maxsize=1)
+    def __has_cca(self) -> bool:
+        """ CCA is supported by Ceta 2. """
+        cca = RequestBody(attr=self.__id_adv + ".CameraContinuousAcquisition", validator=bool)
 
-        return self.__has_film
+        return self.__client.has_advanced_iface and self.__client.call(method="has", body=cca)
+
+    @property
+    @lru_cache(maxsize=1)
+    def __has_csa(self) -> bool:
+        """ CSA is supported by Ceta 1, Ceta 2, Falcon 3, Falcon 4. """
+        csa = RequestBody(attr=self.__id_adv + ".CameraSingleAcquisition", validator=bool)
+
+        return self.__client.has_advanced_iface and self.__client.call(method="has", body=csa)
+
+    @property
+    @lru_cache(maxsize=1)
+    def __has_film(self) -> bool:
+        body = RequestBody(attr="tem.Camera.Stock", validator=int)
+
+        return self.__client.call(method="has", body=body)
 
     def _check_prerequisites(self) -> None:
         """ Check if buffer cycle or LN filling is
@@ -545,7 +550,7 @@ class Acquisition:
         """
         stock = RequestBody(attr="tem.Camera.Stock", validator=int)
 
-        if self.__film_available and self.__client.call(method="get", body=stock) > 0:
+        if self.__has_film and self.__client.call(method="get", body=stock) > 0:
             body = RequestBody(attr="tem.Camera",
                                obj_cls=AcquisitionObj,
                                obj_method="acquire_film",

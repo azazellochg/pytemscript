@@ -1,26 +1,26 @@
+from functools import lru_cache
+
 from ..utils.misc import RequestBody
 from ..utils.enums import CassetteSlotStatus
 
 
 class Autoloader:
     """ Sample loading functions. """
-    __slots__ = ("__client", "__id", "__id_adv", "__has_autoloader_adv",
-                 "__err_msg", "__err_msg_adv")
+    __slots__ = ("__client", "__id", "__id_adv", "__err_msg", "__err_msg_adv")
 
     def __init__(self, client):
         self.__client = client
         self.__id = "tem.AutoLoader"
         self.__id_adv = "tem_adv.AutoLoader"
-        self.__has_autoloader_adv = None
         self.__err_msg = "Autoloader is not available"
         self.__err_msg_adv = "This function is not available in your advanced scripting interface."
 
     @property
+    @lru_cache(maxsize=1)
     def __adv_available(self) -> bool:
-        if self.__has_autoloader_adv is None:
-            body = RequestBody(attr=self.__id_adv, validator=bool)
-            self.__has_autoloader_adv = self.__client.call(method="has", body=body)
-        return self.__has_autoloader_adv
+        body = RequestBody(attr=self.__id_adv, validator=bool)
+
+        return self.__client.call(method="has", body=body)
 
     @property
     def is_available(self) -> bool:

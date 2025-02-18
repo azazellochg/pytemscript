@@ -1,3 +1,4 @@
+from functools import lru_cache
 import logging
 import time
 from typing import Tuple
@@ -9,31 +10,28 @@ from .extras import Vector
 
 class Gun:
     """ Gun functions. """
-    __slots__ = ("__client", "__has_gun1", "__has_source",
-                 "__id", "__id_adv", "__err_msg_gun1", "__err_msg_cfeg")
+    __slots__ = ("__client", "__id", "__id_adv", "__err_msg_gun1", "__err_msg_cfeg")
 
     def __init__(self, client):
         self.__client = client
-        self.__has_gun1 = None
-        self.__has_source = None
         self.__id = "tem.Gun"
         self.__id_adv = "tem_adv.Source"
         self.__err_msg_gun1 = "Gun1 interface is not available. Requires TEM Server 7.10+"
         self.__err_msg_cfeg = "Source/C-FEG interface is not available"
 
     @property
-    def __gun1_available(self) -> bool:
-        if self.__has_gun1 is None:
-            body = RequestBody(attr="tem.Gun1", validator=bool)
-            self.__has_gun1 = self.__client.call(method="has", body=body)
-        return self.__has_gun1
+    @lru_cache(maxsize=1)
+    def __has_gun1(self) -> bool:
+        body = RequestBody(attr="tem.Gun1", validator=bool)
+
+        return self.__client.call(method="has", body=body)
 
     @property
-    def __adv_available(self) -> bool:
-        if self.__has_source is None:
-            body = RequestBody(attr=self.__id_adv + ".State", validator=bool)
-            self.__has_source = self.__client.call(method="has", body=body)
-        return self.__has_source
+    @lru_cache(maxsize=1)
+    def __has_source(self) -> bool:
+        body = RequestBody(attr=self.__id_adv + ".State", validator=bool)
+
+        return self.__client.call(method="has", body=body)
 
     @property
     def shift(self) -> Tuple:
@@ -76,7 +74,7 @@ class Gun:
     @property
     def voltage_offset(self) -> float:
         """ High voltage offset. (read/write)"""
-        if self.__gun1_available:
+        if self.__has_gun1:
             body = RequestBody(attr="tem.Gun1.HighVoltageOffset", validator=float)
             return self.__client.call(method="get", body=body)
         else:
@@ -84,7 +82,7 @@ class Gun:
 
     @voltage_offset.setter
     def voltage_offset(self, offset: float) -> None:
-        if self.__gun1_available:
+        if self.__has_gun1:
             body = RequestBody(attr="tem.Gun1.HighVoltageOffset", value=offset)
             self.__client.call(method="set", body=body)
         else:
@@ -93,7 +91,7 @@ class Gun:
     @property
     def feg_state(self) -> str:
         """ FEG emitter status. """
-        if self.__adv_available:
+        if self.__has_source:
             body = RequestBody(attr=self.__id_adv + ".State", validator=int)
             result = self.__client.call(method="get", body=body)
             return FegState(result).name
@@ -158,7 +156,7 @@ class Gun:
     @property
     def voltage_offset_range(self):
         """ Returns the high voltage offset range. """
-        if self.__gun1_available:
+        if self.__has_gun1:
             #TODO: this is a function?
             body = RequestBody(attr="tem.Gun1.GetHighVoltageOffsetRange()")
             return self.__client.call(method="exec", body=body)
@@ -168,7 +166,7 @@ class Gun:
     @property
     def beam_current(self) -> float:
         """ Returns the C-FEG beam current in Amperes. """
-        if self.__adv_available:
+        if self.__has_source:
             body = RequestBody(attr=self.__id_adv + ".BeamCurrent", validator=float)
             return self.__client.call(method="get", body=body)
         else:
@@ -177,7 +175,7 @@ class Gun:
     @property
     def extractor_voltage(self) -> float:
         """ Returns the extractor voltage. """
-        if self.__adv_available:
+        if self.__has_source:
             body = RequestBody(attr=self.__id_adv + ".ExtractorVoltage", validator=float)
             return self.__client.call(method="get", body=body)
         else:
@@ -186,7 +184,7 @@ class Gun:
     @property
     def focus_index(self) -> Tuple[int, int]:
         """ Returns coarse and fine gun lens index. """
-        if self.__adv_available:
+        if self.__has_source:
             coarse = RequestBody(attr=self.__id_adv + ".FocusIndex.Coarse", validator=int)
             fine = RequestBody(attr=self.__id_adv + ".FocusIndex.Fine", validator=int)
             return (self.__client.call(method="get", body=coarse),
@@ -200,7 +198,7 @@ class Gun:
         :param flash_type: FEG flashing type (FegFlashingType enum)
         :type flash_type: IntEnum
         """
-        if not self.__adv_available:
+        if not self.__has_source:
             raise NotImplementedError(self.__err_msg_cfeg)
 
         body = RequestBody(attr=self.__id_adv + ".Flashing.IsFlashingAdvised()",

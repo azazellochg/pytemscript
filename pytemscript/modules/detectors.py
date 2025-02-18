@@ -1,3 +1,4 @@
+from functools import lru_cache
 from typing import Dict
 import logging
 
@@ -92,29 +93,26 @@ class DetectorsObj(SpecialObj):
 
 class Detectors:
     """ CCD/DDD, film/plate and STEM detectors. """
-    __slots__ = ("__client", "__id", "__has_film", "__has_cca")
+    __slots__ = ("__client", "__id")
 
     def __init__(self, client):
         self.__client = client
         self.__id = "tem_adv.Acquisitions"
-        self.__has_film = None
-        self.__has_cca = False
-
-        # CCA is supported by Ceta 2
-        body = RequestBody(attr=self.__id + ".CameraContinuousAcquisition", validator=bool)
-        if (self.__client.has_advanced_iface and
-                self.__client.call(method="has", body=body)):
-            self.__has_cca = True
-        else:
-            logging.info("Continuous acquisition not supported.")
 
     @property
-    def __film_available(self) -> bool:
-        if self.__has_film is None:
-            body = RequestBody(attr="tem.Camera.Stock", validator=bool)
-            self.__has_film = self.__client.call(method="has", body=body)
+    @lru_cache(maxsize=1)
+    def __has_cca(self) -> bool:
+        """ CCA is supported by Ceta 2. """
+        cca = RequestBody(attr=self.__id + ".CameraContinuousAcquisition", validator=bool)
 
-        return self.__has_film
+        return self.__client.has_advanced_iface and self.__client.call(method="has", body=cca)
+
+    @property
+    @lru_cache(maxsize=1)
+    def __has_film(self) -> bool:
+        body = RequestBody(attr="tem.Camera.Stock", validator=int)
+
+        return self.__client.call(method="has", body=body)
 
     @property
     def cameras(self) -> Dict:
@@ -171,7 +169,7 @@ class Detectors:
         Note: The plate camera _has become obsolete with Win7 so
         most of the existing functions are no longer supported.
         """
-        if self.__film_available:
+        if self.__has_film:
             body = RequestBody(attr="tem.Camera", obj_cls=DetectorsObj,
                                obj_method="show_film_settings")
             return self.__client.call(method="exec_special", body=body)
