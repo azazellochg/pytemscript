@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Union, Tuple
 import math
 
 from .extras import Vector
@@ -28,7 +28,7 @@ class Illumination:
 
     @spotsize.setter
     def spotsize(self, value: int) -> None:
-        if not (1 <= int(value) <= 11):
+        if not (0 < int(value) < 12):
             raise ValueError("%s is outside of range 1-11" % value)
 
         body = RequestBody(attr=self.__id + ".SpotsizeIndex", value=value)
@@ -74,7 +74,7 @@ class Illumination:
         self.__client.call(method="set", body=body)
 
     @property
-    def beam_shift(self) -> tuple:
+    def beam_shift(self) -> Tuple:
         """ Beam shift X and Y in um. (read/write)"""
         shx = RequestBody(attr=self.__id + ".Shift.X", validator=float)
         shy = RequestBody(attr=self.__id + ".Shift.Y", validator=float)
@@ -85,14 +85,14 @@ class Illumination:
         return (x*1e6, y*1e6)
 
     @beam_shift.setter
-    def beam_shift(self, values: tuple) -> None:
+    def beam_shift(self, values: Tuple) -> None:
         new_value = Vector(values[0] * 1e-6, values[1] * 1e-6)
 
         body = RequestBody(attr=self.__id + ".Shift", value=new_value)
         self.__client.call(method="set", body=body)
 
     @property
-    def rotation_center(self) -> tuple:
+    def rotation_center(self) -> Tuple:
         """ Rotation center X and Y in mrad. (read/write)
             Depending on the scripting version,
             the values might need scaling by 6.0 to _get mrads.
@@ -106,14 +106,14 @@ class Illumination:
         return (x*1e3, y*1e3)
 
     @rotation_center.setter
-    def rotation_center(self, values: tuple) -> None:
+    def rotation_center(self, values: Tuple) -> None:
         new_value = Vector(values[0] * 1e-3, values[1] * 1e-3)
 
         body = RequestBody(attr=self.__id + ".RotationCenter", value=new_value)
         self.__client.call(method="set", body=body)
 
     @property
-    def condenser_stigmator(self) -> tuple:
+    def condenser_stigmator(self) -> Tuple:
         """ C2 condenser stigmator X and Y. (read/write)"""
         stigx = RequestBody(attr=self.__id + ".CondenserStigmator.X", validator=float)
         stigy = RequestBody(attr=self.__id + ".CondenserStigmator.Y", validator=float)
@@ -122,7 +122,7 @@ class Illumination:
                 self.__client.call(method="get", body=stigy))
 
     @condenser_stigmator.setter
-    def condenser_stigmator(self, values: tuple) -> None:
+    def condenser_stigmator(self, values: Tuple) -> None:
         new_value = Vector(*values)
         new_value.set_limits(-1.0, 1.0)
 
@@ -148,8 +148,8 @@ class Illumination:
 
     @property
     def probe_defocus(self) -> float:
-        """ Probe defocus. Works only on 3-condenser lens systems. (read/write)"""
-        if self.__has_3cond:
+        """ Probe defocus. Works only on 3-condenser lens systems in probe mode. (read/write)"""
+        if self.condenser_mode == CondenserMode.PROBE.name:
             body = RequestBody(attr=self.__id + ".ProbeDefocus", validator=float)
             return self.__client.call(method="get", body=body)
         else:
@@ -157,17 +157,16 @@ class Illumination:
 
     @probe_defocus.setter
     def probe_defocus(self, value: float) -> None:
-        if self.__has_3cond:
+        if self.condenser_mode == CondenserMode.PROBE.name:
             body = RequestBody(attr=self.__id + ".ProbeDefocus", value=value)
             self.__client.call(method="set", body=body)
         else:
             raise NotImplementedError("Probe defocus exists only on 3-condenser lens systems.")
 
-    #TODO: check if the illum. mode is probe?
     @property
     def convergence_angle(self) -> float:
-        """ Convergence angle. Works only on 3-condenser lens systems. (read/write)"""
-        if self.__has_3cond:
+        """ Convergence angle. Works only on 3-condenser lens systems in probe mode. (read/write)"""
+        if self.condenser_mode == CondenserMode.PROBE.name:
             body = RequestBody(attr=self.__id + ".ConvergenceAngle", validator=float)
             return self.__client.call(method="get", body=body)
         else:
@@ -175,7 +174,7 @@ class Illumination:
 
     @convergence_angle.setter
     def convergence_angle(self, value: float) -> None:
-        if self.__has_3cond:
+        if self.condenser_mode == CondenserMode.PROBE.name:
             body = RequestBody(attr=self.__id + ".ConvergenceAngle", value=value)
             self.__client.call(method="set", body=body)
         else:
@@ -243,7 +242,7 @@ class Illumination:
             raise NotImplementedError("Condenser mode can be changed only on 3-condenser lens systems.")
 
     @property
-    def beam_tilt(self) -> Union[tuple, float]:
+    def beam_tilt(self) -> Union[Tuple, float]:
         """ Dark field beam tilt relative to the origin stored at
         alignment time. Only operational if dark field mode is active.
         Units: mrad, either in Cartesian (x,y) or polar (conical)
@@ -264,7 +263,7 @@ class Illumination:
             return 0.0, 0.0  # Microscope might return nonsense if DFMode is OFF
 
     @beam_tilt.setter
-    def beam_tilt(self, tilt: Union[tuple, float]) -> None:
+    def beam_tilt(self, tilt: Union[Tuple, float]) -> None:
         body = RequestBody(attr=self.__id + ".DFMode", validator=int)
         mode = self.__client.call(method="get", body=body)
 

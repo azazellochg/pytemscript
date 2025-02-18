@@ -1,5 +1,6 @@
 import logging
 import time
+from typing import Tuple
 
 from ..utils.misc import RequestBody
 from ..utils.enums import FegState, HighTensionState, FegFlashingType
@@ -35,7 +36,7 @@ class Gun:
         return self.__has_source
 
     @property
-    def shift(self) -> tuple:
+    def shift(self) -> Tuple:
         """ Gun shift. (read/write)"""
         shx = RequestBody(attr=self.__id + ".Shift.X", validator=float)
         shy = RequestBody(attr=self.__id + ".Shift.Y", validator=float)
@@ -46,7 +47,7 @@ class Gun:
         return (x,y)
 
     @shift.setter
-    def shift(self, values: tuple) -> None:
+    def shift(self, values: Tuple) -> None:
         new_value = Vector(*values)
         new_value.set_limits(-1.0, 1.0)
 
@@ -54,7 +55,7 @@ class Gun:
         self.__client.call(method="set", body=body)
 
     @property
-    def tilt(self) -> tuple:
+    def tilt(self) -> Tuple:
         """ Gun tilt. (read/write)"""
         tx = RequestBody(attr=self.__id + ".Tilt.X", validator=float)
         ty = RequestBody(attr=self.__id + ".Tilt.Y", validator=float)
@@ -65,7 +66,7 @@ class Gun:
         return (x, y)
 
     @tilt.setter
-    def tilt(self, values: tuple) -> None:
+    def tilt(self, values: Tuple) -> None:
         new_value = Vector(*values)
         new_value.set_limits(-1.0, 1.0)
 
@@ -183,11 +184,11 @@ class Gun:
             raise NotImplementedError(self.__err_msg_cfeg)
 
     @property
-    def focus_index(self) -> tuple:
+    def focus_index(self) -> Tuple[int, int]:
         """ Returns coarse and fine gun lens index. """
         if self.__adv_available:
-            coarse = RequestBody(attr=self.__id_adv + ".FocusIndex.Coarse", validator=float)
-            fine = RequestBody(attr=self.__id_adv + ".FocusIndex.Fine", validator=float)
+            coarse = RequestBody(attr=self.__id_adv + ".FocusIndex.Coarse", validator=int)
+            fine = RequestBody(attr=self.__id_adv + ".FocusIndex.Fine", validator=int)
             return (self.__client.call(method="get", body=coarse),
                     self.__client.call(method="get", body=fine))
         else:
@@ -205,7 +206,7 @@ class Gun:
         body = RequestBody(attr=self.__id_adv + ".Flashing.IsFlashingAdvised()",
                            arg=flash_type, validator=bool)
         if self.__client.call(method="exec", body=body):
-            # FIXME: lowT flashing can be done even if not advised
+            # Warning: lowT flashing can be done even if not advised
             doflash = RequestBody(attr=self.__id_adv + ".Flashing.PerformFlashing()",
                                   arg=flash_type)
             self.__client.call(method="exec", body=doflash)

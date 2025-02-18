@@ -1,4 +1,4 @@
-from typing import Optional, Dict
+from typing import Optional, Dict, Tuple
 import os
 import math
 import logging
@@ -40,7 +40,7 @@ class Vector:
                 raise ValueError(msg)
 
     @property
-    def components(self) -> tuple:
+    def components(self) -> Tuple:
         """Return the vector components as a tuple."""
         return self.x, self.y
 

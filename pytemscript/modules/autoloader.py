@@ -46,9 +46,8 @@ class Autoloader:
         """
         if self.is_available:
             total = self.number_of_slots
-            slot = int(slot)
-            if slot > total:
-                raise ValueError("Only %s slots are available" % total)
+            if not (0 < slot <= total):
+                raise ValueError("Slot number must be between 1 and %d" % total)
             if self.slot_status(slot) != CassetteSlotStatus.OCCUPIED.name:
                 raise RuntimeError("Slot %d is not occupied" % slot)
 
@@ -86,8 +85,8 @@ class Autoloader:
         """
         if self.is_available:
             total = self.number_of_slots
-            if slot > total:
-                raise ValueError("Only %s slots are available" % total)
+            if not (0 < slot <= total):
+                raise ValueError("Slot number must be between 1 and %d" % total)
 
             body = RequestBody(attr=self.__id + ".SlotStatus()", arg=slot, validator=int)
             status = self.__client.call(method="exec", body=body)

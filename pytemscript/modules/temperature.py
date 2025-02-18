@@ -79,14 +79,14 @@ class Temperature:
             raise NotImplementedError(self.__err_msg)
 
     @property
-    def dewars_time(self) -> float:
+    def dewars_time(self) -> int:
         """ Returns remaining time (seconds) until the next dewar refill.
         Returns -1 if no refill is scheduled (e.g. All room temperature, or no
         dewar present).
         """
         # TODO: check if returns -60 at room temperature
         if self.__std_available:
-            body = RequestBody(attr=self.__id + ".DewarsRemainingTime", validator=float)
+            body = RequestBody(attr=self.__id + ".DewarsRemainingTime", validator=int)
             return self.__client.call(method="get", body=body)
         else:
             raise NotImplementedError(self.__err_msg)
