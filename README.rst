@@ -16,12 +16,12 @@ New changes and this whole product is distributed under either version 3 of the 
 Documentation
 -------------
 
-The documentation can be found at https://pytemscript.readthedocs.io
+The documentation can be found at https://pytemscript.readthedocs.io or locally in the docs/ direcory.
 
 Installation
 ------------
 
-.. warning:: The project is still in development phase, no beta version has been released yet. Installing from sources is recommended.
+.. warning:: The project is still in development phase, no beta version _has been released yet. Installing from sources is recommended.
 
 Requirements:
 
@@ -29,8 +29,6 @@ Requirements:
     * comtypes
     * mrcfile
     * numpy
-    * sphinx-rtd-theme (optional, only for building documentation)
-    * matplotlib (optional, only for running tests)
 
 Installation from PyPI on Windows
 #################################
@@ -49,7 +47,7 @@ Offline-Installation from wheels file on Windows
 
 This assumes you have downloaded the wheels file <downloaded-wheels-file>.whl for temscript and comtypes into the current folder.
 
-Execute from the command line (assuming you have your Python interpreter in the path:
+Execute from the command line (assuming you have your Python interpreter in the path):
 
 .. code-block:: python
 
@@ -80,7 +78,7 @@ Relative to TEM V1.9 standard scripting adapter:
     * Projection
     * Stage
     * TemperatureControl
-    * UserButton(s) (no events handling)
+    * UserButtons
     * Vacuum
 
 Relative to TEM V1.2 advanced scripting adapter:
@@ -101,7 +99,7 @@ Disclaimer
 Copyright (c) 2012-2021 by Tore Niermann
 Contact: tore.niermann (at) tu-berlin.de
 
-Copyleft 2022-2023 by Grigory Sharov
+Copyright (c) 2022-2025 by Grigory Sharov
 Contact: gsharov (at) mrc-lmb.cam.ac.uk
 
 All product and company names are trademarks or registered trademarks

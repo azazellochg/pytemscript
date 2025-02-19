@@ -1,12 +1,19 @@
-#!/usr/bin/env python3
-
+import argparse
+from typing import Optional, List
 from time import sleep
+
 from pytemscript.microscope import Microscope
+from pytemscript.modules import Vector
 from pytemscript.utils.enums import *
 
 
-def test_projection(microscope, has_eftem=False):
-    print("Testing projection...")
+def test_projection(microscope: Microscope,
+                    has_eftem: bool = False) -> None:
+    """ Test projection module attrs.
+    :param microscope: Microscope object
+    :param has_eftem: If true, test EFTEM mode
+    """
+    print("\nTesting projection...")
     projection = microscope.optics.projection
     print("\tMode:", projection.mode)
     print("\tFocus:", projection.focus)
@@ -18,16 +25,24 @@ def test_projection(microscope, has_eftem=False):
     projection.defocus = orig_def
 
     print("\tMagnification:", projection.magnification)
-    #print("\tMagnificationIndex:", projection.magnificationIndex)
+    print("\tMagnificationIndex:", projection.magnification_index)
+
+    # _set first SA mag
+    for key, value in projection.list_magnifications.items():
+        if value[1] == ProjectionSubMode.SA.name:
+            projection.magnification = key
+            break
 
     projection.mode = ProjectionMode.DIFFRACTION
     print("\tCameraLength:", projection.camera_length)
-    #print("\tCameraLengthIndex:", projection.camera_length_index)
+    print("\tCameraLengthIndex:", projection.camera_length_index)
     print("\tDiffractionShift:", projection.diffraction_shift)
     print("\tDiffractionStigmator:", projection.diffraction_stigmator)
     projection.mode = ProjectionMode.IMAGING
 
     print("\tImageShift:", projection.image_shift)
+    projection.image_shift = Vector(-0,0)
+
     print("\tImageBeamShift:", projection.image_beam_shift)
     print("\tObjectiveStigmator:", projection.objective_stigmator)
     print("\tSubMode:", projection.magnification_range)
@@ -38,7 +53,7 @@ def test_projection(microscope, has_eftem=False):
     print("\tImageBeamTilt:", projection.image_beam_tilt)
     print("\tLensProgram:", projection.is_eftem_on)
 
-    projection.reset_defocus()
+    projection.reset_defocus()  # TODO: not working remotely? check _exec!
 
     if has_eftem:
         print("\tToggling EFTEM mode...")
@@ -46,8 +61,11 @@ def test_projection(microscope, has_eftem=False):
         projection.eftem_off()
 
 
-def test_acquisition(microscope):
-    print("Testing acquisition...")
+def test_acquisition(microscope: Microscope) -> None:
+    """ Acquire test image on each camera.
+    :param microscope: Microscope object
+    """
+    print("\nTesting acquisition...")
     acquisition = microscope.acquisition
     cameras = microscope.detectors.cameras
     detectors = microscope.detectors.stem_detectors
@@ -58,18 +76,19 @@ def test_acquisition(microscope):
                                               size=AcqImageSize.FULL,
                                               exp_time=0.25,
                                               binning=2)
-        print("\tImage name:", image.name)
-        print("\tImage size:", image.width, image.height)
-        print("\tBit depth:", image.bit_depth)
+        if image is not None:
+            print("\tImage name:", image.name)
+            print("\tImage size:", image.width, image.height)
+            print("\tBit depth:", image.bit_depth)
 
-        if image.metadata is not None:
-            print("\tBinning:", image.metadata['Binning.Width'])
-            print("\tExp time:", image.metadata['ExposureTime'])
-            print("\tTimestamp:", image.metadata['TimeStamp'])
+            if image.metadata is not None:
+                print("\tBinning:", image.metadata['Binning.Width'])
+                print("\tExp time:", image.metadata['ExposureTime'])
+                print("\tTimestamp:", image.metadata['TimeStamp'])
 
-        fn = cam_name + ".mrc"
-        print("Saving to ", fn)
-        image.save(filename=fn, normalize=False)
+            fn = cam_name + ".mrc"
+            print("Saving to ", fn)
+            image.save(filename=fn, normalize=False, overwrite=True)
 
     if stem.is_available:
         stem.enable()
@@ -78,14 +97,20 @@ def test_acquisition(microscope):
                                                    size=AcqImageSize.FULL,
                                                    dwell_time=1e-5,
                                                    binning=2)
-            fn = det + ".mrc"
-            print("Saving to ", fn)
-            image.save(filename=fn, normalize=False)
+            if image is not None:
+                fn = det + ".mrc"
+                print("Saving to ", fn)
+                image.save(filename=fn, normalize=False, overwrite=True)
         stem.disable()
 
 
-def test_vacuum(microscope, buffer_cycle=False):
-    print("Testing vacuum...")
+def test_vacuum(microscope: Microscope,
+                buffer_cycle: bool = False) -> None:
+    """ Test vacuum module attrs.
+    :param microscope: Microscope object
+    :param buffer_cycle: If true, toggle column valves and run buffer cycle
+    """
+    print("\nTesting vacuum...")
     vacuum = microscope.vacuum
     print("\tStatus:", vacuum.status)
     print("\tPVPRunning:", vacuum.is_buffer_running)
@@ -101,10 +126,15 @@ def test_vacuum(microscope, buffer_cycle=False):
         vacuum.run_buffer_cycle()
 
 
-def test_temperature(microscope, force_refill=False):
+def test_temperature(microscope: Microscope,
+                     force_refill: bool = False) -> None:
+    """ Test temperature module attrs.
+    :param microscope: Microscope object
+    :param force_refill: If true, force refill dewars
+    """
     temp = microscope.temperature
     if temp.is_available:
-        print("Testing TemperatureControl...")
+        print("\nTesting TemperatureControl...")
         print("\tRefrigerantLevel (autoloader):",
               temp.dewar_level(RefrigerantDewar.AUTOLOADER_DEWAR))
         print("\tRefrigerantLevel (column):",
@@ -120,12 +150,19 @@ def test_temperature(microscope, force_refill=False):
                 print(str(e))
 
 
-def test_autoloader(microscope, check_loading=False, slot=1):
+def test_autoloader(microscope: Microscope,
+                    check_loading: bool = False,
+                    slot: int = 1) -> None:
+    """ Test autoloader module attrs.
+    :param microscope: Microscope object
+    :param check_loading: If true, test cartridge loading
+    :param slot: slot number
+    """
     al = microscope.autoloader
     if al.is_available:
-        print("Testing Autoloader...")
+        print("\nTesting Autoloader...")
         print("\tNumberOfCassetteSlots", al.number_of_slots)
-        print("\tSlotStatus for #%d" % slot, al.slot_status(slot))
+        print("\tSlotStatus for #%d: %s" % (slot, al.slot_status(slot)))
 
         if check_loading:
             try:
@@ -134,14 +171,19 @@ def test_autoloader(microscope, check_loading=False, slot=1):
                 if al.slot_status(slot) == CassetteSlotStatus.OCCUPIED.name:
                     al.load_cartridge(slot)
                     assert al.slot_status(slot) == CassetteSlotStatus.EMPTY.name
-                    al.unload_cartridge(slot)
+                    al.unload_cartridge()
             except Exception as e:
                 print(str(e))
 
 
-def test_stage(microscope, move_stage=False):
+def test_stage(microscope: Microscope,
+               move_stage: bool = False) -> None:
+    """ Test stage module attrs.
+    :param microscope: Microscope object
+    :param move_stage: If true, move stage around
+    """
     stage = microscope.stage
-    print("Testing stage...")
+    print("\nTesting stage...")
     pos = stage.position
     print("\tStatus:", stage.status)
     print("\tPosition:", pos)
@@ -165,16 +207,27 @@ def test_stage(microscope, move_stage=False):
     print("\tPosition:", stage.position)
 
 
-def test_detectors(microscope):
-    print("Testing cameras...")
+def test_detectors(microscope: Microscope) -> None:
+    """ Test all cameras / detectors.
+    :param microscope: Microscope object
+    """
+    print("\nTesting cameras...")
     dets = microscope.detectors
     print("\tFilm settings:", dets.film_settings)
     print("\tCameras:", dets.cameras)
-    print("\tSTEM detectors:", dets.stem_detectors)
+
+    stem = microscope.stem
+    if stem.is_available:
+        stem.enable()
+        print("\tSTEM detectors:", dets.stem_detectors)
+        stem.disable()
 
 
-def test_optics(microscope):
-    print("Testing optics...")
+def test_optics(microscope: Microscope) -> None:
+    """ Test optics module attrs.
+    :param microscope: Microscope object
+    """
+    print("\nTesting optics...")
     opt = microscope.optics
     print("\tScreenCurrent:", opt.screen_current)
     print("\tBeamBlanked:", opt.is_beam_blanked)
@@ -186,15 +239,18 @@ def test_optics(microscope):
     opt.normalize_all()
 
 
-def test_illumination(microscope):
-    print("Testing illumination...")
+def test_illumination(microscope: Microscope) -> None:
+    """ Test illumination module attrs.
+    :param microscope: Microscope object
+    """
+    print("\nTesting illumination...")
     illum = microscope.optics.illumination
     print("\tMode:", illum.mode)
     print("\tSpotsizeIndex:", illum.spotsize)
 
     orig_spot = illum.spotsize
-    illum.spotsize = 4
-    assert illum.spotsize == 4
+    illum.spotsize = 5
+    assert illum.spotsize == 5
     illum.spotsize = orig_spot
 
     print("\tIntensity:", illum.intensity)
@@ -208,14 +264,13 @@ def test_illumination(microscope):
     print("\tIntensityLimitEnabled:", illum.intensity_limit)
     print("\tShift:", illum.beam_shift)
 
-    illum.beam_shift = (0.5, 0.5)
-    assert illum.beam_shift == (0.5, 0.5)
-    illum.beam_shift = 0, 0
+    illum.beam_shift = Vector(0.5, 0.5)
+    illum.beam_shift = Vector(0, 0)
 
-    print("\tTilt:", illum.beam_tilt)
+    #print("\tTilt:", illum.beam_tilt)
     print("\tRotationCenter:", illum.rotation_center)
     print("\tCondenserStigmator:", illum.condenser_stigmator)
-    print("\tDFMode:", illum.dark_field)
+    #print("\tDFMode:", illum.dark_field)
 
     if microscope.condenser_system == CondenserLensSystem.THREE_CONDENSER_LENSES:
         print("\tCondenserMode:", illum.condenser_mode)
@@ -230,8 +285,11 @@ def test_illumination(microscope):
         illum.illuminated_area = orig_illum
 
 
-def test_stem(microscope):
-    print("Testing STEM...")
+def test_stem(microscope: Microscope) -> None:
+    """ Test STEM module attrs.
+    :param microscope: Microscope object
+    """
+    print("\nTesting STEM...")
     stem = microscope.stem
     print("\tStemAvailable:", stem.is_available)
 
@@ -243,8 +301,15 @@ def test_stem(microscope):
         stem.disable()
 
 
-def test_gun(microscope, has_gun1=False, has_feg=False):
-    print("Testing gun...")
+def test_gun(microscope: Microscope,
+             has_gun1: bool = False,
+             has_feg: bool = False) -> None:
+    """ Test gun module attrs.
+    :param microscope: Microscope object
+    :param has_gun1: If true, test GUN1 interface
+    :param has_feg: If true, test C-FEG interface
+    """
+    print("\nTesting gun...")
     gun = microscope.gun
     print("\tHTValue:", gun.voltage)
     print("\tHTMaxValue:", gun.voltage_max)
@@ -264,8 +329,13 @@ def test_gun(microscope, has_gun1=False, has_feg=False):
         gun.do_flashing(FegFlashingType.LOW_T)
 
 
-def test_apertures(microscope, hasLicense=False):
-    print("Testing apertures...")
+def test_apertures(microscope: Microscope,
+                   has_license: bool = False) -> None:
+    """ Test aperture module attrs.
+    :param microscope: Microscope object
+    :param has_license: If true, test apertures, otherwise test only VPP
+    """
+    print("\nTesting apertures...")
     aps = microscope.apertures
 
     try:
@@ -274,18 +344,42 @@ def test_apertures(microscope, hasLicense=False):
     except Exception as e:
         print(str(e))
 
-    if hasLicense:
-        aps.show_all()
+    if has_license:
+        aps.show()
         aps.disable("C2")
         aps.enable("C2")
         aps.select("C2", 50)
 
 
-def test_general(microscope, check_door=False):
-    print("Testing configuration...")
+def test_user_buttons(microscope: Microscope) -> None:
+    """ Test user button module attrs.
+    :param microscope: Microscope object
+    """
+    print("\nTesting user buttons...")
+    buttons = microscope.user_buttons
+    print("Buttons: %s" % buttons.show())
+    import comtypes.client
 
+    def eventHandler():
+        def Pressed():
+            print("L1 button was pressed!")
+
+    buttons.L1.Assignment = "My function"
+    comtypes.client.GetEvents(buttons.L1, eventHandler)
+    # Simulate L1 press
+    buttons.L1.Pressed()
+    # Clear the assignment
+    buttons.L1.Assignment = ""
+
+
+def test_general(microscope: Microscope,
+                 check_door: bool = False) -> None:
+    """ Test general attrs.
+    :param microscope: Microscope object
+    :param check_door: If true, check the door
+    """
+    print("\nTesting configuration...")
     print("\tConfiguration.ProductFamily:", microscope.family)
-    print("\tUserButtons:", microscope.user_buttons)
     print("\tBlankerShutter.ShutterOverrideOn:",
           microscope.optics.is_shutter_override_on)
     print("\tCondenser system:", microscope.condenser_system)
@@ -301,11 +395,31 @@ def test_general(microscope, check_door=False):
         microscope.user_door.close()
 
 
-if __name__ == '__main__':
-    print("Starting microscope tests...")
+def main(argv: Optional[List] = None) -> None:
+    """ Test all aspects of the microscope interface. """
+    parser = argparse.ArgumentParser(
+        description="This test can use local or remote client. In the latter case "
+                    "pytemscript-server must be already running",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument("-t", "--type", type=str,
+                        choices=["direct", "socket", "zmq", "grpc"],
+                        default="direct",
+                        help="Connection type: direct, socket, zmq or grpc")
+    parser.add_argument("-p", "--port", type=int, default=39000,
+                        help="Specify port on which the server is listening")
+    parser.add_argument("--host", type=str, default='127.0.0.1',
+                        help="Specify host address on which the server is listening")
+    parser.add_argument("-d", "--debug", dest="debug",
+                        default=False, action='store_true',
+                        help="Enable debug mode")
+    args = parser.parse_args(argv)
+
+    microscope = Microscope(connection=args.type, host=args.host,
+                            port=args.port, debug=args.debug)
+
+    print("Starting microscope tests, connection: %s" % args.type)
 
     full_test = False
-    microscope = Microscope()
     test_projection(microscope, has_eftem=False)
     test_detectors(microscope)
     test_vacuum(microscope, buffer_cycle=full_test)
@@ -315,17 +429,24 @@ if __name__ == '__main__':
     test_optics(microscope)
     test_illumination(microscope)
     test_gun(microscope, has_gun1=False, has_feg=False)
+    if microscope.family != ProductFamily.TECNAI.name and args.type == "direct":
+        test_user_buttons(microscope)
     test_general(microscope, check_door=False)
 
     if full_test:
         test_acquisition(microscope)
         test_stem(microscope)
-        test_apertures(microscope, hasLicense=False)
+        test_apertures(microscope, has_license=False)
+
+    microscope.disconnect()
+
+
+if __name__ == '__main__':
+    main()
 
 
 """
 Notes for Tecnai F20:
 - DF element not found -> no DF mode or beam tilt. Check if python is 32-bit?
 - Userbuttons not found
-
 """

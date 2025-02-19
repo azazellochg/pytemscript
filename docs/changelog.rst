@@ -5,9 +5,14 @@ Version 3.0
 ^^^^^^^^^^^
 
 * New changes are distributed under GPLv3+
-* Interface re-written using comtypes library
-* Standard scripting interfaces updated to v1.9
-* Added Advanced scripting interfaces v1.2
+* Complete detailed documentation
+* Complete re-write using comtypes library
+* Standard scripting interface updated to v1.9
+* Added Advanced scripting interface v1.2
+* Unified client interface for both local or remote connections
+* Initial support for remote execution (socket-based server and client)
+* New utility object: Vector
+* Validation of returned data types
 * Development and testing are performed on:
 
     - Tecnai Spirit (WinXP, Python 3.4)
@@ -15,7 +20,12 @@ Version 3.0
     - Tecnai Polara (WinXP, Python 3.4)
     - Glacios (Win10, Python 3.8)
     - Tundra (Win10, Python 3.11)
-    - Titan Krios G1 (Win7, Python 3.6), G2, G3i (Win10, Python 3.8)
+    - Titan Krios G1 (Win7, Python 3.6), G2, G3i (Win10, Python 3.8), G4 (Win10, Python 3.8)
+
+* TODO:
+
+    - UTAPI support
+    - support for GRPC and ZMQ clients
 
 Version 2.0.0
 ^^^^^^^^^^^^^
