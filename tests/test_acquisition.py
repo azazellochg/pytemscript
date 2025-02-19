@@ -1,4 +1,5 @@
 import argparse
+import logging
 from typing import Optional, List
 import numpy as np
 import math
@@ -31,6 +32,9 @@ def print_stats(cam_name: str,
     vmin = np.percentile(image.data, 3)
     vmax = np.percentile(image.data, 97)
     print("\tStdDev: ", np.std(image.data))
+
+    logging.getLogger("matplotlib").setLevel(logging.INFO)
+
     plt.imshow(image.data, interpolation="nearest", cmap="gray",
                vmin=vmin, vmax=vmax)
     print("\tStdDev: ", np.std(image.data))

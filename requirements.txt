@@ -1,3 +1,3 @@
-comtypes; platform_system == 'Windows'
+comtypes>=1.1.13; platform_system == 'Windows'
 mrcfile
 numpy
