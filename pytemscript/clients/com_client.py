@@ -116,7 +116,7 @@ class COMClient(BasicClient):
         self._scope = COMBase(useLD, useTecnaiCCD)
 
         if useTecnaiCCD and self._scope.tecnai_ccd is None:
-            raise RuntimeError("Could not use Tecnai CCD plugin, please _set useTecnaiCCD=False")
+            raise RuntimeError("Could not use Tecnai CCD plugin, please set useTecnaiCCD=False")
 
         self.cache = dict()
 

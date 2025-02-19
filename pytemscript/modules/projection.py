@@ -31,7 +31,7 @@ class Projection:
             while True:
                 self.magnification_index = index
                 index = self.magnification_index
-                if index == previous_index:  # failed to _set new index
+                if index == previous_index:  # failed to set new index
                     break
                 self.__magnifications[self.magnification] = (index, self.magnification_range)
                 previous_index = index

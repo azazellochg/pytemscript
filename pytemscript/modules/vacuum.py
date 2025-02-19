@@ -14,7 +14,7 @@ class GaugesObj(SpecialObj):
         for g in self.com_object:
             # g.Read()
             if g.Status == GaugeStatus.UNDEFINED:
-                # _set manually if undefined, otherwise fails
+                # set manually if undefined, otherwise fails
                 pressure_level = GaugePressureLevel.UNDEFINED.name
             else:
                 pressure_level = GaugePressureLevel(g.PressureLevel).name

@@ -74,7 +74,7 @@ class AcquisitionObj(SpecialObj):
         raise ValueError("Unsupported binning value: %d" % binning)
 
     def acquire(self, cameraName: str) -> Image:
-        """ Perform actual acquisition. Camera settings should be _set beforehand.
+        """ Perform actual acquisition. Camera settings should be set beforehand.
 
         :param cameraName: Camera name
         :returns: Image object
@@ -159,16 +159,16 @@ class AcquisitionObj(SpecialObj):
         if 'pre_exp_time' in kwargs:
             if kwargs['shutter_mode'] != AcqShutterMode.BOTH:
                 raise RuntimeError("Pre-exposures can only be be done "
-                                   "when the shutter mode is _set to BOTH")
+                                   "when the shutter mode is set to BOTH")
             settings.PreExposureTime = kwargs['pre_exp_time']
         if 'pre_exp_pause_time' in kwargs:
             if kwargs['shutter_mode'] != AcqShutterMode.BOTH:
                 raise RuntimeError("Pre-exposures can only be be done when "
-                                   "the shutter mode is _set to BOTH")
+                                   "the shutter mode is set to BOTH")
             settings.PreExposurePauseTime = kwargs['pre_exp_pause_time']
 
         # Set exposure after binning, since it adjusted
-        # automatically when binning is _set
+        # automatically when binning is set
         settings.ExposureTime = exp_time
 
         return prev_shutter_mode
@@ -219,7 +219,7 @@ class AcquisitionObj(SpecialObj):
         settings.ReadoutArea = size
 
         # Set exposure after binning, since it adjusted
-        # automatically when binning is _set
+        # automatically when binning is set
         settings.ExposureTime = exp_time
 
         if 'align_image' in kwargs:
@@ -258,7 +258,7 @@ class AcquisitionObj(SpecialObj):
                          settings.CalculateNumberOfFrames(), output)
             if eer is False:
                 logging.info("MRC format can only contain images of up to "
-                             "16-bits per pixel, to _get true CameraCounts "
+                             "16-bits per pixel, to get true CameraCounts "
                              "multiply pixels by PixelToValueCameraCounts "
                              "factor found in the metadata")
 
@@ -304,7 +304,7 @@ class Acquisition:
     must be running (even if you are using DigitalMicrograph as the CCD server).
 
     If it is necessary to update the acquisition object (e.g. when the STEM detector
-    selection on the TEM UI _has been changed), you have to release and recreate the
+    selection on the TEM UI has been changed), you have to release and recreate the
     main microscope object. If you do not do so, you keep accessing the same
     acquisition object which will not work properly anymore.
     """

@@ -117,7 +117,7 @@ class TecnaiCCDPlugin:
                           binning: int,
                           camerasize: int,
                           **kwargs):
-        """ Find the TEM camera and _set its params. """
+        """ Find the TEM camera and set its params. """
         camera_index = self._find_camera(name)
         self._img_params['bit_depth'] = self._plugin.PixelDepth(camera_index)
 

@@ -170,7 +170,7 @@ class Detectors:
     @property
     def film_settings(self) -> Dict:
         """ Returns a dict with film settings.
-        Note: The plate camera _has become obsolete with Win7 so
+        Note: The plate camera has become obsolete with Win7 so
         most of the existing functions are no longer supported.
         """
         if self.__has_film:

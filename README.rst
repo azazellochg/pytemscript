@@ -1,3 +1,20 @@
+.. image:: https://img.shields.io/pypi/v/pytemscript.svg
+        :target: https://pypi.python.org/pypi/pytemscript
+        :alt: PyPI release
+
+.. image:: https://img.shields.io/pypi/l/pytemscript.svg
+        :target: https://pypi.python.org/pypi/pytemscript
+        :alt: License
+
+.. image:: https://img.shields.io/pypi/pyversions/pytemscript.svg
+        :target: https://pypi.python.org/pypi/pytemscript
+        :alt: Supported Python versions
+
+.. image:: https://img.shields.io/pypi/dm/pytemscript
+        :target: https://pypi.python.org/pypi/pytemscript
+        :alt: Downloads
+
+
 The ``pytemscript`` package provides a Python wrapper for both standard and advanced scripting
 interfaces of Thermo Fisher Scientific and FEI microscopes. The functionality is
 limited to the functionality of the original scripting interfaces. For detailed information
@@ -21,7 +38,7 @@ The documentation can be found at https://pytemscript.readthedocs.io or locally 
 Installation
 ------------
 
-.. warning:: The project is still in development phase, no beta version _has been released yet. Installing from sources is recommended.
+.. warning:: The project is still in development phase, no beta version has been released yet. Installing from sources is recommended.
 
 Requirements:
 

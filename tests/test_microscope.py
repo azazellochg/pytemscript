@@ -27,7 +27,7 @@ def test_projection(microscope: Microscope,
     print("\tMagnification:", projection.magnification)
     print("\tMagnificationIndex:", projection.magnification_index)
 
-    # _set first SA mag
+    # set first SA mag
     for key, value in projection.list_magnifications.items():
         if value[1] == ProjectionSubMode.SA.name:
             projection.magnification = key

@@ -14,7 +14,7 @@ class Stem:
 
     @property
     def is_available(self) -> bool:
-        """ Returns whether the microscope _has a STEM system or not. """
+        """ Returns whether the microscope has a STEM system or not. """
         body = RequestBody(attr=self.__id + ".StemAvailable", validator=bool)
 
         return self.__client.call(method="has", body=body)
