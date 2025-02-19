@@ -3,4 +3,5 @@ graft tests
 include LICENSE_GPL
 include LICENSE_BSD
 include README.rst
+include requirements.txt
 prune docs/_build
