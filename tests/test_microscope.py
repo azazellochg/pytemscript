@@ -3,6 +3,7 @@ from typing import Optional, List
 from time import sleep
 
 from pytemscript.microscope import Microscope
+from pytemscript.modules import Vector
 from pytemscript.utils.enums import *
 
 
@@ -40,7 +41,7 @@ def test_projection(microscope: Microscope,
     projection.mode = ProjectionMode.IMAGING
 
     print("\tImageShift:", projection.image_shift)
-    projection.image_shift = -0,0
+    projection.image_shift = Vector(-0,0)
 
     print("\tImageBeamShift:", projection.image_beam_shift)
     print("\tObjectiveStigmator:", projection.objective_stigmator)
@@ -263,9 +264,8 @@ def test_illumination(microscope: Microscope) -> None:
     print("\tIntensityLimitEnabled:", illum.intensity_limit)
     print("\tShift:", illum.beam_shift)
 
-    illum.beam_shift = (0.5, 0.5)
-    assert illum.beam_shift == (0.5, 0.5)
-    illum.beam_shift = 0, 0
+    illum.beam_shift = Vector(0.5, 0.5)
+    illum.beam_shift = Vector(0, 0)
 
     #print("\tTilt:", illum.beam_tilt)
     print("\tRotationCenter:", illum.rotation_center)
@@ -409,10 +409,13 @@ def main(argv: Optional[List] = None) -> None:
                         help="Specify port on which the server is listening")
     parser.add_argument("--host", type=str, default='127.0.0.1',
                         help="Specify host address on which the server is listening")
+    parser.add_argument("-d", "--debug", dest="debug",
+                        default=False, action='store_true',
+                        help="Enable debug mode")
     args = parser.parse_args(argv)
 
     microscope = Microscope(connection=args.type, host=args.host,
-                            port=args.port, debug=True)
+                            port=args.port, debug=args.debug)
 
     print("Starting microscope tests, connection: %s" % args.type)
 
@@ -434,6 +437,8 @@ def main(argv: Optional[List] = None) -> None:
         test_acquisition(microscope)
         test_stem(microscope)
         test_apertures(microscope, has_license=False)
+
+    microscope.disconnect()
 
 
 if __name__ == '__main__':

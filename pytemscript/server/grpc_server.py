@@ -25,5 +25,4 @@ def serve(args: Namespace):
     useLD = args.useLD
     useTecnaiCCD = args.useTecnaiCCD
     server.add_insecure_port('[%s]:%d' % (host, port))
-    server.start()
-    server.wait_for_termination()
+    return server

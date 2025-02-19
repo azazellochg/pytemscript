@@ -1,6 +1,16 @@
 from typing import List, Optional
 import argparse
 import platform
+import signal
+
+
+def handle_signal(server):
+    """Signal handler to stop the server gracefully."""
+
+    def signal_handler(sig, frame):
+        server.stop()
+
+    return signal_handler
 
 
 def main(argv: Optional[List] = None) -> None:
@@ -33,12 +43,16 @@ def main(argv: Optional[List] = None) -> None:
 
     if args.type == 'grpc':
         from .grpc_server import serve
-        serve(args)
+        server = serve(args)
+        server.start()
+        server.wait_for_termination()
     elif args.type == 'zmq':
         from .zmq_server import ZMQServer
         server = ZMQServer(args)
+        signal.signal(signal.SIGINT, handle_signal(server))
         server.start()
     elif args.type == 'socket':
         from .socket_server import SocketServer
         server = SocketServer(args)
+        signal.signal(signal.SIGINT, handle_signal(server))
         server.start()

@@ -1,4 +1,5 @@
 import logging
+import sys
 import socket
 import pickle
 from functools import lru_cache
@@ -29,7 +30,15 @@ class SocketClient(BasicClient):
         setup_logging("socket_client.log", prefix="[CLIENT]", debug=debug)
         try:
             self.socket = socket.create_connection((self.host, self.port), timeout=5)
+            self.socket.settimeout(5)
             self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
+            if sys.platform == "win32":
+                self.socket.ioctl(socket.SIO_KEEPALIVE_VALS, (1, 60 * 1000, 10 * 1000))
+                # (enable=1, idle time=60 sec, interval=10 sec)
+            else:
+                self.socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPIDLE, 60)
+                self.socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPINTVL, 10)
+                self.socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPCNT, 5)
         except Exception as e:
             raise RuntimeError("Error communicating with server: %s" % e)
 

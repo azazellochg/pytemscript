@@ -6,23 +6,21 @@ from logging.handlers import TimedRotatingFileHandler
 from .constants import MAGIC_BYTES
 
 
-def rgetattr(obj, attrname, *args, **kwargs):
+def rgetattr(obj, attrname, *args, iscallable=False, log=True, **kwargs):
     """ Recursive getattr or callable on a COM object"""
     try:
-        log = kwargs.pop("log", True)
         if log:
             logging.debug("<= GET: %s, args=%s, kwargs=%s",
                           attrname, args, kwargs)
         result = functools.reduce(getattr, attrname.split('.'), obj)
-        return result(*args, **kwargs) if args or kwargs else result
-    except:
-        logging.error("Attribute error %s", attrname)
-        raise AttributeError("AttributeError: %s" % attrname)
+        return result(*args, **kwargs) if iscallable else result
+
+    except Exception as e:
+        raise AttributeError("AttributeError: %s: %s" % (attrname, e))
 
 
 def rsetattr(obj, attrname, value):
     """ https://stackoverflow.com/a/31174427 """
-    logging.debug("=> SET: %s = %s", attrname, value)
     pre, _, post = attrname.rpartition('.')
     return setattr(rgetattr(obj, pre, log=False) if pre else obj, post, value)
 
@@ -39,8 +37,6 @@ def setup_logging(fn,
     if prefix is not None:
         fmt = prefix + fmt
 
-    #logger = logging.getLogger(__name__)
-    #logger.setLevel(logging.DEBUG if debug else logging.INFO)
     formatter = logging.Formatter(fmt)
 
     file_handler = TimedRotatingFileHandler(fn, when="midnight", interval=1, backupCount=7)
@@ -48,9 +44,6 @@ def setup_logging(fn,
 
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(formatter)
-
-    #logger.addHandler(file_handler)
-    #logger.addHandler(console_handler)
 
     logging.basicConfig(level=logging.DEBUG if debug else logging.INFO,
                         datefmt='%d/%b/%Y %H:%M:%S',
@@ -69,10 +62,12 @@ def send_data(socket, data: bytes) -> None:
 def receive_data(socket) -> bytes:
     """ Received a packet and extract data. """
     header = socket.recv(6)
-    if len(header) != 6:
-        raise ValueError("Incomplete header received")
+    if len(header) == 0:  # client disconnected
+        return b''
+    elif len(header) != 6:
+        raise ConnectionError("Incomplete header received")
     if header[:2] != MAGIC_BYTES:
-        raise ValueError("Invalid magic bytes received")
+        raise ConnectionError("Invalid magic bytes received")
 
     data_length = int.from_bytes(header[2:], 'big')
 
@@ -95,3 +90,11 @@ class RequestBody:
         self.attr = attr
         self.validator = validator
         self.kwargs = kwargs
+
+    def __str__(self) -> str:
+        return '{"attr": "%s", "validator": "%s", "kwargs": %s}' % (
+            self.attr, self.validator, self.kwargs)
+
+    def __repr__(self) -> str:
+        return 'RequestBody(attr=%s, validator=%s, kwargs=%s)' % (
+            self.attr, self.validator, self.kwargs)

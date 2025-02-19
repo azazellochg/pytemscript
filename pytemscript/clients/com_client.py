@@ -162,9 +162,10 @@ class COMClient(BasicClient):
     def _exec(self, attrname, **kwargs):
         attrname = attrname.rstrip("()")
         if "arg" in kwargs:  # some methods expect non-keyword argument
-            return rgetattr(self._scope, attrname, kwargs.get("arg"))
+            return rgetattr(self._scope, attrname, kwargs.get("arg"),
+                            iscallable=True)
 
-        return rgetattr(self._scope, attrname, **kwargs)
+        return rgetattr(self._scope, attrname, iscallable=True, **kwargs)
 
     def _exec_special(self, attrname, **kwargs):
         obj_cls = kwargs.pop("obj_cls")
@@ -185,6 +186,7 @@ class COMClient(BasicClient):
         return result
 
     def _set(self, attrname, value=None):
+        logging.debug("=> SET: %s = %s", attrname, value)
         if isinstance(value, Vector):
             value.check_limits()
             vector = rgetattr(self._scope, attrname, log=False)
@@ -220,7 +222,6 @@ class COMClient(BasicClient):
                 if body.validator is not None and not isinstance(response, body.validator):
                     logging.error("Invalid type for %s: expected %s but %s (value=%s) was returned",
                                   attrname, body.validator, type(response), response)
-                    raise TypeError
                 return response
 
             except Exception as e:
