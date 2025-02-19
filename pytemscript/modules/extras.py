@@ -69,11 +69,21 @@ class Vector:
         else:
             self.x, self.y = value
 
-    def __add__(self, other: 'Vector') -> 'Vector':
-        return Vector(self.x + other.x, self.y + other.y)
+    def __add__(self, other: Union['Vector', Tuple]) -> 'Vector':
+        if isinstance(other, tuple):
+            return Vector(self.x + other[0], self.y + other[1])
+        elif isinstance(other, Vector):
+            return Vector(self.x + other.x, self.y + other.y)
+        else:
+            raise TypeError("Expected a Vector or a tuple")
 
-    def __sub__(self, other: 'Vector') -> 'Vector':
-        return Vector(self.x - other.x, self.y - other.y)
+    def __sub__(self, other: Union['Vector', Tuple]) -> 'Vector':
+        if isinstance(other, tuple):
+            return Vector(self.x - other[0], self.y - other[1])
+        elif isinstance(other, Vector):
+            return Vector(self.x - other.x, self.y - other.y)
+        else:
+            raise TypeError("Expected a Vector or a tuple")
 
     def __mul__(self, scalar: float) -> 'Vector':
         return Vector(self.x * scalar, self.y * scalar)

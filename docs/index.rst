@@ -128,7 +128,8 @@ Move beam:
 .. code-block:: python
 
     shift = microscope.optics.illumination.beam_shift
-    shift += (0.0, 0.25)
+    shift += (0.4, 0.2)
+    shift *= 2
     microscope.optics.illumination.beam_shift = shift
 
 Take an image:

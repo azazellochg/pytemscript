@@ -37,7 +37,15 @@ Vectors
 -------
 
 Some attributes handle two dimensional vectors that have X and Y values (e.g. image shift or gun tilt). These
-attributes return a :class:`Vector` of two floats. Vectors can be multiplied, subtracted etc.
+attributes accept and return a :class:`Vector` of two floats. Vectors can be multiplied, subtracted etc.:
+
+.. code-block:: python
+
+    from pytemscript.modules import Vector
+    shift = Vector(0.5,-0.5)
+    shift += (0.4, 0.2)
+    shift *= 2
+    microscope.optics.illumination.beam_shift = shift
 
 .. autoclass:: pytemscript.modules.Vector
     :members: set_limits, check_limits, get, set
