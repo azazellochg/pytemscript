@@ -43,12 +43,12 @@ class Temperature:
         """
         if self.__has_tmpctrl:
             body = RequestBody(attr=self.__id + ".ForceRefill()")
-            self.__client.call(method="exec", body=body)
         elif self.__has_tmpctrl_adv:
             body = RequestBody(attr=self.__id_adv + ".RefillAllDewars()")
-            self.__client.call(method="exec", body=body)
         else:
             raise NotImplementedError(self.__err_msg)
+
+        self.__client.call(method="exec", body=body)
 
     def dewar_level(self, dewar) -> float:
         """ Returns the LN level (%) in a dewar.
@@ -58,7 +58,7 @@ class Temperature:
         """
         if self.__has_tmpctrl:
             body = RequestBody(attr=self.__id + ".RefrigerantLevel()",
-                               validator=float, args=dewar)
+                               validator=float, arg=dewar)
             return self.__client.call(method="exec", body=body)
         else:
             raise NotImplementedError(self.__err_msg)
@@ -68,12 +68,12 @@ class Temperature:
         """ Returns TRUE if any of the dewars is currently busy filling. """
         if self.__has_tmpctrl:
             body = RequestBody(attr=self.__id + ".DewarsAreBusyFilling", validator=bool)
-            return self.__client.call(method="get", body=body)
         elif self.__has_tmpctrl_adv:
             body = RequestBody(attr=self.__id_adv + ".IsAnyDewarFilling", validator=bool)
-            return self.__client.call(method="get", body=body)
         else:
             raise NotImplementedError(self.__err_msg)
+
+        return self.__client.call(method="get", body=body)
 
     @property
     def dewars_time(self) -> int:

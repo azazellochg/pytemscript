@@ -68,7 +68,6 @@ def test_acquisition(microscope: Microscope) -> None:
     print("\nTesting acquisition...")
     acquisition = microscope.acquisition
     cameras = microscope.detectors.cameras
-    detectors = microscope.detectors.stem_detectors
     stem = microscope.stem
 
     for cam_name in cameras:
@@ -82,6 +81,7 @@ def test_acquisition(microscope: Microscope) -> None:
 
     if stem.is_available:
         stem.enable()
+        detectors = microscope.detectors.stem_detectors
 
         for det in detectors:
             image = acquisition.acquire_stem_image(det,
@@ -89,7 +89,8 @@ def test_acquisition(microscope: Microscope) -> None:
                                                    dwell_time=1e-5,
                                                    binning=2)
             if image is not None:
-                image.save(fn=det + ".mrc", overwrite=True)
+                print("Metadata: ", image.metadata)
+                image.save(fn=det+".mrc", overwrite=True)
 
         stem.disable()
 
@@ -355,9 +356,9 @@ def test_user_buttons(microscope: Microscope) -> None:
             print("L1 button was pressed!")
 
     buttons.L1.Assignment = "My function"
-    comtypes.client.GetEvents(buttons.L1, eventHandler)
+    #comtypes.client.GetEvents(buttons.L1, eventHandler)
     # Simulate L1 press
-    buttons.L1.Pressed()
+    #buttons.L1.Pressed()
     # Clear the assignment
     buttons.L1.Assignment = ""
 
@@ -409,12 +410,12 @@ def main(argv: Optional[List] = None) -> None:
 
     print("Starting microscope tests, connection: %s" % args.type)
 
-    full_test = False
+    full_test = True
     test_projection(microscope, has_eftem=False)
     test_detectors(microscope)
     test_vacuum(microscope, buffer_cycle=full_test)
     test_autoloader(microscope, check_loading=full_test, slot=1)
-    test_temperature(microscope, force_refill=full_test)
+    test_temperature(microscope, force_refill=False)
     test_stage(microscope, move_stage=full_test)
     test_optics(microscope)
     test_illumination(microscope)

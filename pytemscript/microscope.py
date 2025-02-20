@@ -63,7 +63,9 @@ class Microscope:
         self.piezo_stage = PiezoStage(client)
         self.apertures = Apertures(client)
         self.temperature = Temperature(client)
-        self.user_buttons = UserButtons(client)
+
+        if connection == "direct":
+            self.user_buttons = UserButtons(client)
 
         if client.has_advanced_iface:
             self.user_door = UserDoor(client)

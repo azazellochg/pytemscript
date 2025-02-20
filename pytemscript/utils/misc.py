@@ -1,4 +1,4 @@
-from typing import Optional, Callable
+from typing import Optional, Any
 import functools
 import logging
 from logging.handlers import TimedRotatingFileHandler
@@ -127,7 +127,7 @@ class RequestBody:
     """ Dataclass-like structure of a request passed to the client. """
     def __init__(self,
                  attr: str = "",
-                 validator: Optional[Callable] = None,
+                 validator: Optional[Any] = None,
                  **kwargs) -> None:
         self.attr = attr
         self.validator = validator

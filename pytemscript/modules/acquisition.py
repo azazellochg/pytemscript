@@ -444,6 +444,7 @@ class Acquisition:
                                cameraName=cameraName,
                                has_cca=self.__has_cca)
             self.__camera_type = self.__client.call(method="exec_special", body=body)
+            logging.debug("Camera type detected for %s: %s", cameraName, self.__camera_type)
 
         if self.__camera_type == "std": # Use standard scripting
             body = RequestBody(attr="tem.Acquisition.Cameras",

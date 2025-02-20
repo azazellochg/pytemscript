@@ -133,8 +133,7 @@ class Image:
 
     @property
     def checksum(self) -> str:
-        """ Compute checksum of the raw_data. """
-
+        """ Compute checksum of the raw data. """
         return sha1(self.data).hexdigest()
 
     def __create_tiff_tags(self) -> PilTiff.ImageFileDirectory_v2:
@@ -205,7 +204,7 @@ class Image:
         else:
             raise NotImplementedError("Unsupported file format: %s" % ext)
 
-        logging.info("File %s saved", os.path.abspath(fn))
+        logging.info("File saved: %s", os.path.abspath(fn))
 
 
 class SpecialObj:

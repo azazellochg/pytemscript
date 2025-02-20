@@ -139,9 +139,9 @@ class Detectors:
             body = RequestBody(attr=self.__id + ".CameraContinuousAcquisition",
                                validator=dict,
                                obj_cls=DetectorsObj,
-                               obj_method="show_cameras_cca")
-            tem_cameras =  self.__client.call(method="exec_special", body=body,
-                                              tem_cameras=tem_cameras)
+                               obj_method="show_cameras_cca",
+                               tem_cameras=tem_cameras)
+            tem_cameras =  self.__client.call(method="exec_special", body=body)
 
         return tem_cameras
 

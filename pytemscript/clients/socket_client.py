@@ -4,7 +4,9 @@ import socket
 import pickle
 from functools import lru_cache
 from typing import Dict
+from hashlib import sha1
 
+from ..modules.extras import Image
 from ..utils.misc import setup_logging, send_data, receive_data, RequestBody
 from .base_client import BasicClient
 
@@ -71,6 +73,11 @@ class SocketClient(BasicClient):
         payload = {"method": method, "body": body}
         response = self.__send_request(payload)
         logging.debug("Received response: %s", response)
+
+        if isinstance(response, Image):
+            received_checksum = sha1(response.data).hexdigest()
+            if received_checksum != response.checksum:
+                raise RuntimeError("Checksum mismatch")
 
         return response
 
