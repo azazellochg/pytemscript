@@ -1,10 +1,20 @@
 from typing import Optional, Dict, Tuple, Union
-import os
+import os.path
 import math
 import logging
 from pathlib import Path
+import numpy as np
+from hashlib import sha1
 
-from ..utils.enums import ImagePixelType, AcqImageFileFormat, StageAxes, MeasurementUnitType
+try:
+    import PIL.Image as PilImage
+    import PIL.TiffImagePlugin as PilTiff
+except ImportError:
+    print("Pillow library not found, you won't be able to "
+          "save images in non-MRC format.")
+
+
+from ..utils.enums import StageAxes, MeasurementUnitType
 
 
 class Vector:
@@ -111,141 +121,90 @@ class Vector:
         return Vector(-self.x, -self.y)
 
 
-class BaseImage:
+class Image:
     """ Acquired image basic object. """
     def __init__(self,
-                 obj,
-                 name: Optional[str] = None,
-                 isAdvanced: bool = False,
-                 **kwargs):
-        self._img = obj
-        self._name = name
-        self._isAdvanced = isAdvanced
-        self._kwargs = kwargs
-
-    def _get_metadata(self, obj):
-        raise NotImplementedError
+                 data: np.ndarray,
+                 name: str,
+                 metadata: Dict):
+        self.data = data
+        self.name = name
+        self.metadata = metadata
 
     @property
-    def name(self) -> Optional[str]:
-        """ Image name. """
-        return self._name if self._isAdvanced else self._img.Name
+    def checksum(self) -> str:
+        """ Compute checksum of the raw_data. """
 
-    @property
-    def width(self):
-        """ Image width in pixels. """
-        return None
+        return sha1(self.data).hexdigest()
 
-    @property
-    def height(self):
-        """ Image height in pixels. """
-        return None
+    def __create_tiff_tags(self) -> PilTiff.ImageFileDirectory_v2:
+        """Create TIFF tags from metadata. """
+        tiff_tags = PilTiff.ImageFileDirectory_v2()
 
-    @property
-    def bit_depth(self):
-        """ Bit depth. """
-        return None
+        # Basic Image Metadata
+        metadata = self.metadata
+        tiff_tags[PilTiff.IMAGEWIDTH] = metadata["width"]
+        tiff_tags[PilTiff.IMAGELENGTH] = metadata["height"]
+        tiff_tags[PilTiff.COMPRESSION] = 1  # raw
+        tiff_tags[PilTiff.RESOLUTION_UNIT] = 3  # cm
+        tiff_tags[PilTiff.IMAGEDESCRIPTION] = self.name
 
-    @property
-    def pixel_type(self):
-        """ Image pixels type: uint, int or float. """
-        return None
+        # Detector Name
+        detector_name = metadata.get("DetectorName")
+        if detector_name:
+            tiff_tags[271] = detector_name  # Tag 271 (MAKE)
 
-    @property
-    def data(self):
-        """ Returns actual image object as numpy array. """
-        return None
+        # Pixel Size (Resolution)
+        pixel_width = metadata.get("PixelSize.Width")  # angstroms
+        pixel_height = metadata.get("PixelSize.Height")
+        if pixel_width and pixel_height:
+            scale = 1e8  # convert to cm
+            tiff_tags[PilTiff.X_RESOLUTION] = (pixel_width * scale, 1)
+            tiff_tags[PilTiff.Y_RESOLUTION] = (pixel_height * scale, 1)
 
-    @property
-    def metadata(self):
-        """ Returns a metadata dict for advanced camera image. """
-        return self._get_metadata(self._img) if self._isAdvanced else None
-
-    def save(self, filename: Path, normalize: bool = False):
-        """ Save acquired image to a file.
-
-        :param filename: File path
-        :type filename: str
-        :param normalize: Normalize image, only for non-MRC format
-        :type normalize: bool
-        """
-        raise NotImplementedError
-
-
-class Image(BaseImage):
-    """ Acquired image object. """
-    def __init__(self,
-                 obj,
-                 name: Optional[str] = None,
-                 isAdvanced: bool = False,
-                 **kwargs):
-        super().__init__(obj, name, isAdvanced, **kwargs)
-
-    def _get_metadata(self, obj) -> Dict:
-        return {item.Key: item.ValueAsString for item in obj.Metadata}
-
-    @property
-    def width(self) -> int:
-        """ Image width in pixels. """
-        return self._img.Width
-
-    @property
-    def height(self) -> int:
-        """ Image height in pixels. """
-        return self._img.Height
-
-    @property
-    def bit_depth(self) -> str:
-        """ Bit depth. """
-        return self._img.BitDepth if self._isAdvanced else self._img.Depth
-
-    @property
-    def pixel_type(self) -> str:
-        """ Image pixels type: uint, int or float. """
-        if self._isAdvanced:
-            return ImagePixelType(self._img.PixelType).name
+        # Bit Depth & Color Interpretation
+        bit_depth = metadata.get("bit_depth", 16)
+        if bit_depth == 24:
+            tiff_tags[PilTiff.BITSPERSAMPLE] = (8, 8, 8)  # 8 bits per channel
+            tiff_tags[PilTiff.PHOTOMETRIC_INTERPRETATION] = 2  # RGB
         else:
-            return ImagePixelType.SIGNED_INT.name
+            tiff_tags[PilTiff.BITSPERSAMPLE] = (bit_depth,)
+            tiff_tags[PilTiff.PHOTOMETRIC_INTERPRETATION] = 1  # BlackIsZero
 
-    @property
-    def data(self):
-        """ Returns actual image object as numpy int32 array. """
-        from comtypes.safearray import safearray_as_ndarray
-        with safearray_as_ndarray:
-            data = self._img.AsSafeArray
-        return data
+        return tiff_tags
 
     def save(self,
-             filename: Path,
-             normalize: bool = False,
+             path: Path,
              overwrite: bool = False) -> None:
-        """ Save acquired image to a file.
+        """ Save acquired image to a file as int16.
 
-        :param filename: File path
-        :type filename: str
-        :param normalize: Normalize image, only for non-MRC format
-        :type normalize: bool
+        :param path: File path
+        :type path: str
         :param overwrite: Overwrite existing file
         :type overwrite: bool
         """
-        fmt = os.path.splitext(filename)[1].upper().replace(".", "")
-        if fmt == "MRC":
-            logging.info("Convert to int16 since MRC does not support int32")
+        ext = Path(path).suffix.lower()
+
+        if ext == ".mrc":
             import mrcfile
-            with mrcfile.new(filename, overwrite=overwrite) as mrc:
-                if self.metadata is not None:
+            with mrcfile.new(path, overwrite=overwrite) as mrc:
+                if 'PixelSize.Width' in self.metadata:
                     mrc.voxel_size = float(self.metadata['PixelSize.Width']) * 1e10
                 mrc.set_data(self.data.astype("int16"))
+
+        elif ext in [".tiff", ".tif", ".png"]:
+            if os.path.exists(path) and not overwrite:
+                raise FileExistsError("File %s already exists, use overwrite flag" % os.path.abspath(path))
+
+            logging.getLogger("PIL").setLevel(logging.INFO)
+            pil_image = PilImage.fromarray(self.data)
+            tiff_tags = self.__create_tiff_tags() if ext != ".png" else None
+            pil_image.save(path, format=None, tiffinfo=tiff_tags)
+
         else:
-            # use scripting method to save in other formats
-            if self._isAdvanced:
-                self._img.SaveToFile(filename)
-            else:
-                try:
-                    fn_format = AcqImageFileFormat[fmt].value
-                except KeyError:
-                    raise NotImplementedError("Format %s is not supported" % fmt)
-                self._img.AsFile(filename, fn_format, normalize)
+            raise NotImplementedError("Unsupported file format: %s" % ext)
+
+        logging.info("File %s saved", os.path.abspath(path))
 
 
 class SpecialObj:

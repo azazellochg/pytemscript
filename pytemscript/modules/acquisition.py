@@ -5,7 +5,7 @@ from datetime import datetime
 from functools import lru_cache
 
 from ..plugins.tecnai_ccd_plugin import TecnaiCCDPlugin
-from ..utils.misc import RequestBody
+from ..utils.misc import RequestBody, convert_image
 from ..utils.enums import AcqImageSize, AcqShutterMode, PlateLabelDateFormat, ScreenPosition
 from .extras import Image, SpecialObj
 
@@ -83,9 +83,9 @@ class AcquisitionObj(SpecialObj):
         acq.RemoveAllAcqDevices()
         acq.AddAcqDeviceByName(cameraName)
         imgs = acq.AcquireImages()
-        img = imgs[0]
+        image = convert_image(imgs[0], name=cameraName)
 
-        return Image(img, name=cameraName)
+        return image
 
     def acquire_advanced(self,
                          cameraName: str,
@@ -98,7 +98,8 @@ class AcquisitionObj(SpecialObj):
         else:
             img = self.com_object.CameraSingleAcquisition.Acquire()
             self.com_object.CameraSingleAcquisition.Wait()
-            return Image(img, name=cameraName, isAdvanced=True)
+            image = convert_image(img, name=cameraName, advanced=True)
+            return image
 
     def restore_shutter(self,
                         cameraName: str,
@@ -393,6 +394,7 @@ class Acquisition:
                                camerasize=camerasize,
                                **kwargs)
             image = self.__client.call(method="exec_special", body=body)
+            logging.info("TEM image acquired on %s", cameraName)
 
             return image
 
@@ -460,6 +462,7 @@ class Acquisition:
                                obj_method="acquire",
                                cameraName=cameraName)
             image = self.__client.call(method="exec_special", body=body)
+            logging.info("TEM image acquired on %s", cameraName)
 
             if prev_shutter_mode is not None:
                 body = RequestBody(attr="tem.Acquisition.Cameras",
@@ -490,6 +493,7 @@ class Acquisition:
                                    cameraName=cameraName,
                                    recording=True)
                 self.__client.call(method="exec_special", body=body)
+                logging.info("TEM image acquired on %s", cameraName)
                 logging.info("Continuous acquisition and offloading job are completed.")
                 return None
             else:
@@ -538,6 +542,7 @@ class Acquisition:
                            obj_method="acquire",
                            cameraName=cameraName)
         image = self.__client.call(method="exec_special", body=body)
+        logging.info("STEM image acquired on %s", cameraName)
 
         return image
 

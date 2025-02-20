@@ -4,6 +4,7 @@ import logging
 from logging.handlers import TimedRotatingFileHandler
 
 from .constants import MAGIC_BYTES
+from .enums import ImagePixelType
 
 
 def rgetattr(obj, attrname, *args, iscallable=False, log=True, **kwargs):
@@ -79,6 +80,47 @@ def receive_data(socket) -> bytes:
         data.extend(chunk)
 
     return data
+
+
+def convert_image(obj,
+                  name: str = None,
+                  width: int = None,
+                  height: int = None,
+                  bit_depth: int = None,
+                  advanced: bool = False,
+                  use_safearray: bool = True):
+    """ Serialize COM image object into an Image.
+
+    :param obj: COM object
+    :param name: optional name for the image
+    :param width: width of the image
+    :param height: height of the image
+    :param bit_depth: bit depth of the image
+    :param advanced: advanced scripting flag
+    :param use_safearray: use safe array method
+    """
+    from pytemscript.modules import Image
+
+    if use_safearray:
+        from comtypes.safearray import safearray_as_ndarray
+        with safearray_as_ndarray:
+            data = obj.AsSafeArray
+    else:
+        data = obj.astype("uint16").reshape(width, height)
+
+    name = name or obj.Name
+
+    metadata = {
+        "width": width or obj.Width,
+        "height": height or obj.Height,
+        "bit_depth": bit_depth or (obj.BitDepth if advanced else obj.Depth),
+        "pixel_type": ImagePixelType(obj.PixelType).name if advanced else ImagePixelType.SIGNED_INT.name,
+    }
+
+    if advanced:
+        metadata.update({item.Key: item.ValueAsString for item in obj.Metadata})
+
+    return Image(data, name, metadata)
 
 
 class RequestBody:
