@@ -96,7 +96,7 @@ class SocketServer:
                 return getattr(self.server_com, method)
             else:
                 return self.server_com.call(method, body)
-        except AttributeError or ValueError:
+        except (AttributeError, ValueError):
             return "ERROR"
 
     def set_socket_options(self):

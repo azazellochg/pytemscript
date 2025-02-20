@@ -77,30 +77,20 @@ def test_acquisition(microscope: Microscope) -> None:
                                               exp_time=0.25,
                                               binning=2)
         if image is not None:
-            print("\tImage name:", image.name)
-            print("\tImage size:", image.width, image.height)
-            print("\tBit depth:", image.bit_depth)
-
-            if image.metadata is not None:
-                print("\tBinning:", image.metadata['Binning.Width'])
-                print("\tExp time:", image.metadata['ExposureTime'])
-                print("\tTimestamp:", image.metadata['TimeStamp'])
-
-            fn = cam_name + ".mrc"
-            print("Saving to ", fn)
-            image.save(filename=fn, normalize=False, overwrite=True)
+            print("Metadata: ", image.metadata)
+            image.save(fn=cam_name+".mrc", overwrite=True)
 
     if stem.is_available:
         stem.enable()
+
         for det in detectors:
             image = acquisition.acquire_stem_image(det,
                                                    size=AcqImageSize.FULL,
                                                    dwell_time=1e-5,
                                                    binning=2)
             if image is not None:
-                fn = det + ".mrc"
-                print("Saving to ", fn)
-                image.save(filename=fn, normalize=False, overwrite=True)
+                image.save(fn=det + ".mrc", overwrite=True)
+
         stem.disable()
 
 

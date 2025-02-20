@@ -71,8 +71,8 @@ def camera_acquire(microscope: Microscope,
                                                      **kwargs)
     if image is not None:
         print_stats(image, binning, exp_time)
-        image.save("test_image_%s.mrc" % cam_name, overwrite=True)
-        image.save("test_image_%s.tif" % cam_name, overwrite=True)
+        image.save(fn="test_image_%s.mrc" % cam_name, overwrite=True)
+        image.save(fn="test_image_%s.tif" % cam_name, overwrite=True)
 
 
 def detector_acquire(microscope: Microscope,
@@ -93,7 +93,7 @@ def detector_acquire(microscope: Microscope,
                                                       binning=binning,
                                                       **kwargs)
     print_stats(image, binning, dwell_time)
-    image.save("test_image_%s.tiff" % cam_name, overwrite=True)
+    image.save(fn="test_image_%s.tiff" % cam_name, overwrite=True)
 
 
 def main(argv: Optional[List] = None) -> None:

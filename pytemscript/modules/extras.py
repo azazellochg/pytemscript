@@ -110,7 +110,7 @@ class Vector:
             raise ValueError("Cannot divide by zero")
         return Vector(self.x / scalar, self.y / scalar)
 
-    def __eq__(self, other: Union['Vector', Tuple]) -> bool:
+    def __eq__(self, other: object) -> bool:
         if isinstance(other, tuple):
             return (self.x, self.y) == other
         elif isinstance(other, Vector):
@@ -174,37 +174,38 @@ class Image:
         return tiff_tags
 
     def save(self,
-             path: Path,
+             fn: Union[Path, str],
              overwrite: bool = False) -> None:
         """ Save acquired image to a file as int16.
 
-        :param path: File path
-        :type path: str
+        :param fn: File path
         :param overwrite: Overwrite existing file
-        :type overwrite: bool
         """
-        ext = Path(path).suffix.lower()
+        if isinstance(fn, str):
+            fn = Path(fn)
+
+        ext = fn.suffix.lower()
 
         if ext == ".mrc":
             import mrcfile
-            with mrcfile.new(path, overwrite=overwrite) as mrc:
+            with mrcfile.new(fn, overwrite=overwrite) as mrc:
                 if 'PixelSize.Width' in self.metadata:
                     mrc.voxel_size = float(self.metadata['PixelSize.Width']) * 1e10
                 mrc.set_data(self.data.astype("int16"))
 
         elif ext in [".tiff", ".tif", ".png"]:
-            if os.path.exists(path) and not overwrite:
-                raise FileExistsError("File %s already exists, use overwrite flag" % os.path.abspath(path))
+            if os.path.exists(fn) and not overwrite:
+                raise FileExistsError("File %s already exists, use overwrite flag" % os.path.abspath(fn))
 
             logging.getLogger("PIL").setLevel(logging.INFO)
             pil_image = PilImage.fromarray(self.data)
             tiff_tags = self.__create_tiff_tags() if ext != ".png" else None
-            pil_image.save(path, format=None, tiffinfo=tiff_tags)
+            pil_image.save(fn, format=None, tiffinfo=tiff_tags)
 
         else:
             raise NotImplementedError("Unsupported file format: %s" % ext)
 
-        logging.info("File %s saved", os.path.abspath(path))
+        logging.info("File %s saved", os.path.abspath(fn))
 
 
 class SpecialObj:

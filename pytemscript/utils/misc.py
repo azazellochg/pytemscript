@@ -83,12 +83,12 @@ def receive_data(socket) -> bytes:
 
 
 def convert_image(obj,
-                  name: str = None,
-                  width: int = None,
-                  height: int = None,
-                  bit_depth: int = None,
-                  advanced: bool = False,
-                  use_safearray: bool = True):
+                  name: Optional[str] = None,
+                  width: Optional[int] = None,
+                  height: Optional[int] = None,
+                  bit_depth: Optional[int] = None,
+                  advanced: Optional[bool] = False,
+                  use_safearray: Optional[bool] = True):
     """ Serialize COM image object into an Image.
 
     :param obj: COM object
