@@ -1,9 +1,10 @@
 from typing import Optional, Any
 import functools
 import logging
+from hashlib import sha1
 from logging.handlers import TimedRotatingFileHandler
 
-from .constants import MAGIC_BYTES
+from .constants import HEADER_DATA, HEADER_MSG
 from .enums import ImagePixelType
 
 
@@ -51,33 +52,52 @@ def setup_logging(fn,
                         handlers=[file_handler, console_handler])
 
 
-def send_data(socket, data: bytes) -> None:
-    """ Assemble data packet and send it over socket. """
+def send_data(sock, data: bytes, datatype="msg") -> None:
+    """ Assemble data packet and send it over socket.
+    type: 2 bytes
+    length of data: 4 bytes
+    checksum: 20 bytes - only if type is "data"
+    data: bytes
+    """
     packet = bytearray()
-    packet.extend(MAGIC_BYTES)
+    packet.extend(HEADER_MSG if datatype == "msg" else HEADER_DATA)
     packet.extend(len(data).to_bytes(4, byteorder="big"))
+
+    if datatype == "data": # add checksum
+        checksum = sha1(data).digest()
+        packet.extend(checksum)
+
     packet.extend(data)
-    socket.sendall(packet)
+    sock.sendall(packet)
 
 
-def receive_data(socket) -> bytes:
+def receive_data(sock) -> bytes:
     """ Received a packet and extract data. """
-    header = socket.recv(6)
+    header = sock.recv(6)
     if len(header) == 0:  # client disconnected
         return b''
     elif len(header) != 6:
         raise ConnectionError("Incomplete header received")
-    if header[:2] != MAGIC_BYTES:
-        raise ConnectionError("Invalid magic bytes received")
+
+    datatype = header[:2]
+    rcv_checksum = None
+    if datatype == HEADER_DATA:
+        rcv_checksum = sock.recv(20)
 
     data_length = int.from_bytes(header[2:], 'big')
 
     data = bytearray()
     while len(data) < data_length:
-        chunk = socket.recv(data_length - len(data))
+        chunk = sock.recv(data_length - len(data))
         if not chunk:
             raise ConnectionError("Connection lost while receiving data")
         data.extend(chunk)
+
+    if datatype == HEADER_DATA:
+        checksum = sha1(data).digest()
+        if checksum != rcv_checksum:
+            raise ConnectionError("Wrong checksum received")
+        logging.debug("Image checksum OK!")
 
     return data
 

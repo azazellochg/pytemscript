@@ -4,7 +4,6 @@ import math
 import logging
 from pathlib import Path
 import numpy as np
-from hashlib import sha1
 
 try:
     import PIL.Image as PilImage
@@ -130,11 +129,6 @@ class Image:
         self.data = data
         self.name = name
         self.metadata = metadata
-
-    @property
-    def checksum(self) -> str:
-        """ Compute checksum of the raw data. """
-        return sha1(self.data).hexdigest()
 
     def __create_tiff_tags(self) -> PilTiff.ImageFileDirectory_v2:
         """Create TIFF tags from metadata. """

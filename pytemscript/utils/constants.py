@@ -12,4 +12,5 @@ FEG_REGISTERS = "FegRegisters.FegReg"
 LICENSE_ADV = "TEMAdvancedScripting.AdvancedInstrumentInternal"
 LICENSE_ADV_CAM = "TEMAdvancedScripting.CameraSettingsInternal"
 
-MAGIC_BYTES = b'\xAB\xCD'
+HEADER_DATA = b'DT'
+HEADER_MSG = b'MS'

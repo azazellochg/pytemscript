@@ -12,12 +12,12 @@ from pytemscript.modules.extras import Image
 def print_stats(image: Image,
                 binning: int,
                 exp_time: float,
-                extra: bool = False) -> None:
+                interactive: bool = False) -> None:
     """ Calculate statistics about the image and display it.
     :param image: Image object
     :param binning: Input binning
     :param exp_time: Input exposure time
-    :param extra: Additional information
+    :param interactive: Show plot and other stats
     """
     img = image.data
     metadata = image.metadata
@@ -31,7 +31,7 @@ def print_stats(image: Image,
     assert img.shape[1] == metadata["width"]
     assert img.shape[0] == metadata["height"]
 
-    if extra:
+    if interactive:
         import matplotlib.pyplot as plt
 
         print("\tMean: ", np.mean(image.data))
