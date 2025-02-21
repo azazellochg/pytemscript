@@ -18,9 +18,11 @@ class Autoloader:
     @property
     @lru_cache(maxsize=1)
     def __adv_available(self) -> bool:
-        body = RequestBody(attr=self.__id_adv, validator=bool)
-
-        return self.__client.call(method="has", body=body)
+        if not self.__client.has_advanced_iface:
+            return False
+        else:
+            body = RequestBody(attr=self.__id_adv, validator=bool)
+            return self.__client.call(method="has", body=body)
 
     @property
     def is_available(self) -> bool:

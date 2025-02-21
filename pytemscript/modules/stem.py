@@ -38,7 +38,7 @@ class Stem:
         body = RequestBody(attr=self.__id + ".InstrumentMode", validator=int)
 
         if self.__client.call(method="get", body=body) == InstrumentMode.STEM:
-            body = RequestBody(attr=self.__id + ".StemMagnification", validator=float)
+            body = RequestBody(attr="tem.Illumination.StemMagnification", validator=float)
             return int(self.__client.call(method="get", body=body))
         else:
             raise RuntimeError(self.__err_msg)

@@ -79,6 +79,8 @@ class Apertures:
     @property
     def vpp_position(self) -> int:
         """ Returns the index of the current VPP preset position. """
+        if not self.__client.has_advanced_iface:
+            raise RuntimeError("No advanced scripting available")
         try:
             body = RequestBody(attr=self.__id_adv + ".GetCurrentPresetPosition", validator=int)
             return self.__client.call(method="get", body=body) + 1
@@ -87,6 +89,8 @@ class Apertures:
 
     def vpp_next_position(self) -> None:
         """ Goes to the next preset location on the VPP aperture. """
+        if not self.__client.has_advanced_iface:
+            raise RuntimeError("No advanced scripting available")
         try:
             body = RequestBody(attr=self.__id_adv + ".SelectNextPresetPosition()")
             self.__client.call(method="exec", body=body)

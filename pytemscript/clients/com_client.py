@@ -185,8 +185,8 @@ class COMClient(BasicClient):
             rsetattr(self._scope, attrname, value)
 
     def disconnect(self):
-        """ Do nothing since COMClient is local. """
-        pass
+        """ Release COM connection. """
+        self._scope._close()
 
     def call(self, method: str, body: RequestBody):
         """ Main method used by modules. """

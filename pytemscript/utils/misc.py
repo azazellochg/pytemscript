@@ -17,7 +17,7 @@ def rgetattr(obj, attrname, *args, iscallable=False, log=True, **kwargs):
         return result(*args, **kwargs) if iscallable else result
 
     except Exception as e:
-        raise AttributeError("AttributeError: %s: %s" % (attrname, e))
+        raise AttributeError("%s: %s" % (attrname, e))
 
 
 def rsetattr(obj, attrname, value):
