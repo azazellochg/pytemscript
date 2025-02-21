@@ -117,16 +117,16 @@ def convert_image(obj,
     :param height: height of the image
     :param bit_depth: bit depth of the image
     :param advanced: advanced scripting flag
-    :param use_safearray: use safe array method
+    :param use_safearray: use safearray method
     """
     from pytemscript.modules import Image
 
     if use_safearray:
         from comtypes.safearray import safearray_as_ndarray
         with safearray_as_ndarray:
-            data = obj.AsSafeArray
+            data = obj.AsSafeArray  # always returns int32 array
     else:
-        data = obj.astype("uint16").reshape(width, height)
+        data = obj.astype("uint16").reshape(height, width).T  # TODO: verify this
 
     name = name or obj.Name
 

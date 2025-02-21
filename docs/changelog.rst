@@ -4,7 +4,7 @@ Changelog
 Version 3.0
 ^^^^^^^^^^^
 
-* New changes are distributed under GPLv3+
+* Fork renamed to pytemscript. New changes are distributed under GPLv3+
 * Complete detailed documentation
 * Complete re-write using comtypes library
 * Standard scripting interface updated to v1.9

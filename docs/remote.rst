@@ -3,7 +3,7 @@
 Remote server
 =============
 
-.. important:: The server is currently in development and not ready to use!
+.. important:: Only socket server is currently available!
 
 If remote scripting of the microscope is required, the pytemscript server must run on the microscope PC.
 The server supports different connection methods:

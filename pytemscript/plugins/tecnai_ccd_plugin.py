@@ -41,8 +41,7 @@ class TecnaiCCDPlugin:
             if kwargs.get('show', False):
                 self._plugin.ShowAcquiredImage()
 
-            image = convert_image(img, name=cameraName, use_safearray=False,
-                                  **self._img_params)
+            image = convert_image(img, name=cameraName, **self._img_params)
             return image
         else:
             raise Exception("Camera is busy acquiring...")

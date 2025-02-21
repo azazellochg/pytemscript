@@ -293,10 +293,6 @@ class AcquisitionObj(SpecialObj):
 
         settings.DwellTime = dwell_time
 
-        logging.info("Max resolution: %s, %s",
-                     settings.MaxResolution.X,
-                     settings.MaxResolution.Y)
-
 
 class Acquisition:
     """ Image acquisition functions.
