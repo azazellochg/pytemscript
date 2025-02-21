@@ -25,20 +25,20 @@ class SocketClient(BasicClient):
                  debug: bool = False):
         self.host = host
         self.port = port
-        self.socket = None
+        self.sock = None
 
         setup_logging("socket_client.log", prefix="[CLIENT]", debug=debug)
         try:
-            self.socket = socket.create_connection((self.host, self.port), timeout=5)
-            self.socket.settimeout(5)
-            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
+            self.sock = socket.create_connection((self.host, self.port), timeout=5)
+            self.sock.settimeout(None)
+            self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
             if sys.platform == "win32":
-                self.socket.ioctl(socket.SIO_KEEPALIVE_VALS, (1, 60 * 1000, 10 * 1000))
+                self.sock.ioctl(socket.SIO_KEEPALIVE_VALS, (1, 60 * 1000, 10 * 1000))
                 # (enable=1, idle time=60 sec, interval=10 sec)
             else:
-                self.socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPIDLE, 60)
-                self.socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPINTVL, 10)
-                self.socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPCNT, 5)
+                self.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPIDLE, 60)
+                self.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPINTVL, 10)
+                self.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPCNT, 5)
         except Exception as e:
             raise RuntimeError("Error communicating with server: %s" % e)
 
@@ -76,14 +76,14 @@ class SocketClient(BasicClient):
 
     def disconnect(self) -> None:
         """ Disconnect from the remote server. """
-        self.socket.close()
-        self.socket = None
+        self.sock.close()
+        self.sock = None
 
     def __send_request(self, payload: Dict):
         """ Send data to the remote server and return response. """
         data = pickle.dumps(payload)
         logging.debug("Sending request: %s", payload)
-        send_data(self.socket, data)
-        response = receive_data(self.socket)
+        send_data(self.sock, data)
+        response = receive_data(self.sock)
 
         return pickle.loads(response)

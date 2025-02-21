@@ -60,16 +60,18 @@ class Microscope:
         self.vacuum = Vacuum(client)
         self.autoloader = Autoloader(client)
         self.stage = Stage(client)
-        self.piezo_stage = PiezoStage(client)
         self.apertures = Apertures(client)
         self.temperature = Temperature(client)
-        self.user_buttons = UserButtons(client)
+
+        if connection == "direct" and self.family != ProductFamily.TECNAI.name:
+            self.user_buttons = UserButtons(client)
 
         if client.has_advanced_iface:
+            self.piezo_stage = PiezoStage(client)
             self.user_door = UserDoor(client)
             self.energy_filter = EnergyFilter(client)
 
-        if kwargs.get("useLD", False):
+        if kwargs.get("useLD", False) and client.has_lowdose_iface:
             self.low_dose = LowDose(client)
 
     @property

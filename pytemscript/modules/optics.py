@@ -33,7 +33,7 @@ class Optics:
     def is_shutter_override_on(self) -> bool:
         """ Determines the state of the shutter override function.
         WARNING: Do not leave the Shutter override on when stopping the script.
-        The microscope operator will be unable to have a beam come down and _has
+        The microscope operator will be unable to have a beam come down and has
         no separate way of seeing that it is blocked by the closed microscope shutter.
         """
         body = RequestBody(attr="tem.BlankerShutter.ShutterOverrideOn", validator=bool)

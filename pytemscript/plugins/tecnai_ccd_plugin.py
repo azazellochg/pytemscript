@@ -1,74 +1,9 @@
 import logging
-import os
 import time
-from pathlib import Path
-from typing import Optional
 
-from ..utils.enums import AcqImageSize, AcqMode, AcqSpeed, ImagePixelType
-from ..modules.extras import BaseImage
-
-
-class Image(BaseImage):
-    """ Acquired image object. """
-    def __init__(self,
-                 obj,
-                 name: Optional[str] = None,
-                 **kwargs):
-        super().__init__(obj, name, isAdvanced=False, **kwargs)
-
-    @property
-    def width(self) -> int:
-        """ Image width in pixels. """
-        return self._kwargs['width']
-
-    @property
-    def height(self) -> int:
-        """ Image height in pixels. """
-        return self._kwargs['height']
-
-    @property
-    def bit_depth(self) -> str:
-        """ Bit depth. """
-        return self._kwargs['bit_depth']
-
-    @property
-    def pixel_type(self) -> str:
-        """ Image pixels type: uint, int or float. """
-        return ImagePixelType.SIGNED_INT.name
-
-    @property
-    def data(self):
-        """ Returns actual image object as numpy uint16 array. """
-        #from comtypes.safearray import safearray_as_ndarray
-        #with safearray_as_ndarray:
-        #    data = self._img
-        #import numpy as np
-        data = self._img.astype("uint16")
-        data.shape = self.width, self.height
-
-        return data
-
-    def save(self,
-             filename: Path,
-             normalize: bool = False,
-             overwrite: bool = False) -> None:
-        """ Save acquired image to a file.
-
-        :param filename: File path
-        :type filename: str
-        :param normalize: Normalize image, only for non-MRC format
-        :type normalize: bool
-        :param overwrite: Overwrite existing file
-        :type overwrite: bool
-        """
-        fmt = os.path.splitext(filename)[1].upper().lstrip(".")
-        if fmt == "MRC":
-            logging.info("Convert to int16 since MRC does not support int32")
-            import mrcfile
-            with mrcfile.new(filename, overwrite=overwrite) as mrc:
-                mrc.set_data(self.data.astype("int16"))
-        else:
-            raise NotImplementedError("Only mrc format is supported")
+from ..utils.enums import AcqImageSize, AcqMode, AcqSpeed
+from ..modules.extras import Image
+from ..utils.misc import convert_image
 
 
 class TecnaiCCDPlugin:
@@ -106,7 +41,9 @@ class TecnaiCCDPlugin:
             if kwargs.get('show', False):
                 self._plugin.ShowAcquiredImage()
 
-            return Image(img, name=cameraName, **self._img_params)
+            image = convert_image(img, name=cameraName, use_safearray=False,
+                                  **self._img_params)
+            return image
         else:
             raise Exception("Camera is busy acquiring...")
 
@@ -117,7 +54,7 @@ class TecnaiCCDPlugin:
                           binning: int,
                           camerasize: int,
                           **kwargs):
-        """ Find the TEM camera and _set its params. """
+        """ Find the TEM camera and set its params. """
         camera_index = self._find_camera(name)
         self._img_params['bit_depth'] = self._plugin.PixelDepth(camera_index)
 

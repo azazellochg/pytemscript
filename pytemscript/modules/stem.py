@@ -14,7 +14,7 @@ class Stem:
 
     @property
     def is_available(self) -> bool:
-        """ Returns whether the microscope _has a STEM system or not. """
+        """ Returns whether the microscope has a STEM system or not. """
         body = RequestBody(attr=self.__id + ".StemAvailable", validator=bool)
 
         return self.__client.call(method="has", body=body)
@@ -38,7 +38,7 @@ class Stem:
         body = RequestBody(attr=self.__id + ".InstrumentMode", validator=int)
 
         if self.__client.call(method="get", body=body) == InstrumentMode.STEM:
-            body = RequestBody(attr=self.__id + ".StemMagnification", validator=float)
+            body = RequestBody(attr="tem.Illumination.StemMagnification", validator=float)
             return int(self.__client.call(method="get", body=body))
         else:
             raise RuntimeError(self.__err_msg)

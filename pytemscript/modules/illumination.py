@@ -94,7 +94,7 @@ class Illumination:
     def rotation_center(self) -> Vector:
         """ Rotation center X and Y in mrad. (read/write)
             Depending on the scripting version,
-            the values might need scaling by 6.0 to _get mrads.
+            the values might need scaling by 6.0 to get mrads.
         """
         rotx = RequestBody(attr=self.__id + ".RotationCenter.X", validator=float)
         roty = RequestBody(attr=self.__id + ".RotationCenter.Y", validator=float)

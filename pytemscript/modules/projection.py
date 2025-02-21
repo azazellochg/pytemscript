@@ -3,7 +3,7 @@ import logging
 
 from ..utils.misc import RequestBody
 from ..utils.enums import (ProjectionMode, ProjectionSubMode, ProjDetectorShiftMode,
-                           ProjectionDetectorShift, LensProg)
+                           ProjectionDetectorShift, LensProg, InstrumentMode)
 from .extras import Vector
 
 
@@ -25,13 +25,19 @@ class Projection:
             body = RequestBody(attr="tem.AutoNormalizeEnabled", value=False)
             self.__client.call(method="set", body=body)
 
+            # make sure we are in TEM mode
+            body = RequestBody(attr="tem.InstrumentModeControl.InstrumentMode",
+                               value=InstrumentMode.TEM)
+            self.__client.call(method="set", body=body)
+            self.mode = ProjectionMode.IMAGING
+
             saved_index = self.magnification_index
             previous_index = None
             index = 0
             while True:
                 self.magnification_index = index
                 index = self.magnification_index
-                if index == previous_index:  # failed to _set new index
+                if index == previous_index:  # failed to set new index
                     break
                 self.__magnifications[self.magnification] = (index, self.magnification_range)
                 previous_index = index

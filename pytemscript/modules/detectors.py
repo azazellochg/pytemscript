@@ -139,9 +139,9 @@ class Detectors:
             body = RequestBody(attr=self.__id + ".CameraContinuousAcquisition",
                                validator=dict,
                                obj_cls=DetectorsObj,
-                               obj_method="show_cameras_cca")
-            tem_cameras =  self.__client.call(method="exec_special", body=body,
-                                              tem_cameras=tem_cameras)
+                               obj_method="show_cameras_cca",
+                               tem_cameras=tem_cameras)
+            tem_cameras =  self.__client.call(method="exec_special", body=body)
 
         return tem_cameras
 
@@ -170,7 +170,7 @@ class Detectors:
     @property
     def film_settings(self) -> Dict:
         """ Returns a dict with film settings.
-        Note: The plate camera _has become obsolete with Win7 so
+        Note: The plate camera has become obsolete with Win7 so
         most of the existing functions are no longer supported.
         """
         if self.__has_film:

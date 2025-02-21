@@ -27,7 +27,7 @@ def test_projection(microscope: Microscope,
     print("\tMagnification:", projection.magnification)
     print("\tMagnificationIndex:", projection.magnification_index)
 
-    # _set first SA mag
+    # set first SA mag
     for key, value in projection.list_magnifications.items():
         if value[1] == ProjectionSubMode.SA.name:
             projection.magnification = key
@@ -68,7 +68,6 @@ def test_acquisition(microscope: Microscope) -> None:
     print("\nTesting acquisition...")
     acquisition = microscope.acquisition
     cameras = microscope.detectors.cameras
-    detectors = microscope.detectors.stem_detectors
     stem = microscope.stem
 
     for cam_name in cameras:
@@ -77,30 +76,22 @@ def test_acquisition(microscope: Microscope) -> None:
                                               exp_time=0.25,
                                               binning=2)
         if image is not None:
-            print("\tImage name:", image.name)
-            print("\tImage size:", image.width, image.height)
-            print("\tBit depth:", image.bit_depth)
-
-            if image.metadata is not None:
-                print("\tBinning:", image.metadata['Binning.Width'])
-                print("\tExp time:", image.metadata['ExposureTime'])
-                print("\tTimestamp:", image.metadata['TimeStamp'])
-
-            fn = cam_name + ".mrc"
-            print("Saving to ", fn)
-            image.save(filename=fn, normalize=False, overwrite=True)
+            print("Metadata: ", image.metadata)
+            image.save(fn=cam_name+".mrc", overwrite=True)
 
     if stem.is_available:
         stem.enable()
+        detectors = microscope.detectors.stem_detectors
+
         for det in detectors:
             image = acquisition.acquire_stem_image(det,
                                                    size=AcqImageSize.FULL,
                                                    dwell_time=1e-5,
                                                    binning=2)
             if image is not None:
-                fn = det + ".mrc"
-                print("Saving to ", fn)
-                image.save(filename=fn, normalize=False, overwrite=True)
+                print("Metadata: ", image.metadata)
+                image.save(fn=det+".mrc", overwrite=True)
+
         stem.disable()
 
 
@@ -365,9 +356,9 @@ def test_user_buttons(microscope: Microscope) -> None:
             print("L1 button was pressed!")
 
     buttons.L1.Assignment = "My function"
-    comtypes.client.GetEvents(buttons.L1, eventHandler)
+    #comtypes.client.GetEvents(buttons.L1, eventHandler)
     # Simulate L1 press
-    buttons.L1.Pressed()
+    #buttons.L1.Pressed()
     # Clear the assignment
     buttons.L1.Assignment = ""
 
@@ -419,12 +410,12 @@ def main(argv: Optional[List] = None) -> None:
 
     print("Starting microscope tests, connection: %s" % args.type)
 
-    full_test = False
+    full_test = True
     test_projection(microscope, has_eftem=False)
     test_detectors(microscope)
     test_vacuum(microscope, buffer_cycle=full_test)
     test_autoloader(microscope, check_loading=full_test, slot=1)
-    test_temperature(microscope, force_refill=full_test)
+    test_temperature(microscope, force_refill=False)
     test_stage(microscope, move_stage=full_test)
     test_optics(microscope)
     test_illumination(microscope)

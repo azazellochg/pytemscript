@@ -5,7 +5,7 @@ from datetime import datetime
 from functools import lru_cache
 
 from ..plugins.tecnai_ccd_plugin import TecnaiCCDPlugin
-from ..utils.misc import RequestBody
+from ..utils.misc import RequestBody, convert_image
 from ..utils.enums import AcqImageSize, AcqShutterMode, PlateLabelDateFormat, ScreenPosition
 from .extras import Image, SpecialObj
 
@@ -74,7 +74,7 @@ class AcquisitionObj(SpecialObj):
         raise ValueError("Unsupported binning value: %d" % binning)
 
     def acquire(self, cameraName: str) -> Image:
-        """ Perform actual acquisition. Camera settings should be _set beforehand.
+        """ Perform actual acquisition. Camera settings should be set beforehand.
 
         :param cameraName: Camera name
         :returns: Image object
@@ -83,9 +83,9 @@ class AcquisitionObj(SpecialObj):
         acq.RemoveAllAcqDevices()
         acq.AddAcqDeviceByName(cameraName)
         imgs = acq.AcquireImages()
-        img = imgs[0]
+        image = convert_image(imgs[0], name=cameraName)
 
-        return Image(img, name=cameraName)
+        return image
 
     def acquire_advanced(self,
                          cameraName: str,
@@ -98,7 +98,8 @@ class AcquisitionObj(SpecialObj):
         else:
             img = self.com_object.CameraSingleAcquisition.Acquire()
             self.com_object.CameraSingleAcquisition.Wait()
-            return Image(img, name=cameraName, isAdvanced=True)
+            image = convert_image(img, name=cameraName, advanced=True)
+            return image
 
     def restore_shutter(self,
                         cameraName: str,
@@ -159,16 +160,16 @@ class AcquisitionObj(SpecialObj):
         if 'pre_exp_time' in kwargs:
             if kwargs['shutter_mode'] != AcqShutterMode.BOTH:
                 raise RuntimeError("Pre-exposures can only be be done "
-                                   "when the shutter mode is _set to BOTH")
+                                   "when the shutter mode is set to BOTH")
             settings.PreExposureTime = kwargs['pre_exp_time']
         if 'pre_exp_pause_time' in kwargs:
             if kwargs['shutter_mode'] != AcqShutterMode.BOTH:
                 raise RuntimeError("Pre-exposures can only be be done when "
-                                   "the shutter mode is _set to BOTH")
+                                   "the shutter mode is set to BOTH")
             settings.PreExposurePauseTime = kwargs['pre_exp_pause_time']
 
         # Set exposure after binning, since it adjusted
-        # automatically when binning is _set
+        # automatically when binning is set
         settings.ExposureTime = exp_time
 
         return prev_shutter_mode
@@ -219,7 +220,7 @@ class AcquisitionObj(SpecialObj):
         settings.ReadoutArea = size
 
         # Set exposure after binning, since it adjusted
-        # automatically when binning is _set
+        # automatically when binning is set
         settings.ExposureTime = exp_time
 
         if 'align_image' in kwargs:
@@ -258,7 +259,7 @@ class AcquisitionObj(SpecialObj):
                          settings.CalculateNumberOfFrames(), output)
             if eer is False:
                 logging.info("MRC format can only contain images of up to "
-                             "16-bits per pixel, to _get true CameraCounts "
+                             "16-bits per pixel, to get true CameraCounts "
                              "multiply pixels by PixelToValueCameraCounts "
                              "factor found in the metadata")
 
@@ -304,7 +305,7 @@ class Acquisition:
     must be running (even if you are using DigitalMicrograph as the CCD server).
 
     If it is necessary to update the acquisition object (e.g. when the STEM detector
-    selection on the TEM UI _has been changed), you have to release and recreate the
+    selection on the TEM UI has been changed), you have to release and recreate the
     main microscope object. If you do not do so, you keep accessing the same
     acquisition object which will not work properly anymore.
     """
@@ -393,6 +394,7 @@ class Acquisition:
                                camerasize=camerasize,
                                **kwargs)
             image = self.__client.call(method="exec_special", body=body)
+            logging.info("TEM image acquired on %s", cameraName)
 
             return image
 
@@ -442,6 +444,7 @@ class Acquisition:
                                cameraName=cameraName,
                                has_cca=self.__has_cca)
             self.__camera_type = self.__client.call(method="exec_special", body=body)
+            logging.debug("Camera type detected for %s: %s", cameraName, self.__camera_type)
 
         if self.__camera_type == "std": # Use standard scripting
             body = RequestBody(attr="tem.Acquisition.Cameras",
@@ -460,6 +463,7 @@ class Acquisition:
                                obj_method="acquire",
                                cameraName=cameraName)
             image = self.__client.call(method="exec_special", body=body)
+            logging.info("TEM image acquired on %s", cameraName)
 
             if prev_shutter_mode is not None:
                 body = RequestBody(attr="tem.Acquisition.Cameras",
@@ -490,6 +494,7 @@ class Acquisition:
                                    cameraName=cameraName,
                                    recording=True)
                 self.__client.call(method="exec_special", body=body)
+                logging.info("TEM image acquired on %s", cameraName)
                 logging.info("Continuous acquisition and offloading job are completed.")
                 return None
             else:
@@ -538,6 +543,7 @@ class Acquisition:
                            obj_method="acquire",
                            cameraName=cameraName)
         image = self.__client.call(method="exec_special", body=body)
+        logging.info("STEM image acquired on %s", cameraName)
 
         return image
 

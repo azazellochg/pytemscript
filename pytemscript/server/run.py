@@ -27,7 +27,7 @@ def main(argv: Optional[List] = None) -> None:
     parser.add_argument("--host", type=str, default='',
                         help="Specify host address on which the server is listening")
     parser.add_argument("--useLD", dest="useLD",
-                        default=True, action='store_true',
+                        default=False, action='store_true',
                         help="Connect to LowDose server on microscope PC (limited control only)")
     parser.add_argument("--useTecnaiCCD", dest="useTecnaiCCD",
                         default=False, action='store_true',

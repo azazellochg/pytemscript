@@ -3,46 +3,52 @@ import logging
 from typing import Optional, List
 import numpy as np
 import math
-import matplotlib.pyplot as plt
 
 from pytemscript.microscope import Microscope
 from pytemscript.utils.enums import *
 from pytemscript.modules.extras import Image
 
 
-def print_stats(cam_name: str,
-                image: Image,
+def print_stats(image: Image,
                 binning: int,
-                exp_time: float) -> None:
+                exp_time: float,
+                interactive: bool = False) -> None:
     """ Calculate statistics about the image and display it.
-    :param cam_name: Camera / detector name
     :param image: Image object
     :param binning: Input binning
     :param exp_time: Input exposure time
+    :param interactive: Show plot and other stats
     """
+    img = image.data
     metadata = image.metadata
-    if metadata is not None:
-        print("\tTimestamp: ", metadata['TimeStamp'])
+
+    print("Metadata: ", metadata)
+
+    if 'TimeStamp' in metadata:
         assert int(metadata['Binning.Width']) == binning
         assert math.isclose(float(metadata['ExposureTime']), exp_time, abs_tol=0.01)
 
-    print("\tBit depth: ", image.bit_depth)
-    print("\tSize: ", image.data.shape[1], image.data.shape[0])
-    print("\tMean: ", np.mean(image.data))
-    vmin = np.percentile(image.data, 3)
-    vmax = np.percentile(image.data, 97)
-    print("\tStdDev: ", np.std(image.data))
+    assert img.shape[1] == metadata["width"]
+    assert img.shape[0] == metadata["height"]
 
-    logging.getLogger("matplotlib").setLevel(logging.INFO)
+    if interactive:
+        import matplotlib.pyplot as plt
 
-    plt.imshow(image.data, interpolation="nearest", cmap="gray",
-               vmin=vmin, vmax=vmax)
-    print("\tStdDev: ", np.std(image.data))
-    plt.colorbar()
-    plt.suptitle(cam_name)
-    plt.ion()
-    plt.show()
-    plt.pause(1.0)
+        print("\tMean: ", np.mean(image.data))
+        vmin = np.percentile(image.data, 3)
+        vmax = np.percentile(image.data, 97)
+        print("\tStdDev: ", np.std(image.data))
+
+        logging.getLogger("matplotlib").setLevel(logging.INFO)
+
+        plt.imshow(image.data, interpolation="nearest", cmap="gray",
+                   vmin=vmin, vmax=vmax)
+        print("\tStdDev: ", np.std(image.data))
+        plt.colorbar()
+        plt.suptitle(image.name)
+        plt.ion()
+        plt.show()
+        plt.pause(1.0)
 
 
 def camera_acquire(microscope: Microscope,
@@ -64,7 +70,9 @@ def camera_acquire(microscope: Microscope,
                                                      binning=binning,
                                                      **kwargs)
     if image is not None:
-        print_stats("TEM camera: " + cam_name, image, binning, exp_time)
+        print_stats(image, binning, exp_time)
+        image.save(fn="test_image_%s.mrc" % cam_name, overwrite=True)
+        image.save(fn="test_image_%s.tif" % cam_name, overwrite=True)
 
 
 def detector_acquire(microscope: Microscope,
@@ -84,7 +92,8 @@ def detector_acquire(microscope: Microscope,
                                                       dwell_time=dwell_time,
                                                       binning=binning,
                                                       **kwargs)
-    print_stats("STEM detector: " + cam_name, image, binning, dwell_time)
+    print_stats(image, binning, dwell_time)
+    image.save(fn="test_image_%s.tiff" % cam_name, overwrite=True)
 
 
 def main(argv: Optional[List] = None) -> None:
@@ -101,10 +110,13 @@ def main(argv: Optional[List] = None) -> None:
                         help="Specify port on which the server is listening")
     parser.add_argument("--host", type=str, default='127.0.0.1',
                         help="Specify host address on which the server is listening")
+    parser.add_argument("-d", "--debug", dest="debug",
+                        default=False, action='store_true',
+                        help="Enable debug mode")
     args = parser.parse_args(argv)
 
     microscope = Microscope(connection=args.type, host=args.host,
-                            port=args.port, debug=True)
+                            port=args.port, debug=args.debug)
 
     print("Starting acquisition tests, connection: %s" % args.type)
 

@@ -1,7 +1,6 @@
 import threading
 import logging
 import platform
-import sys
 import atexit
 import comtypes
 import comtypes.client
@@ -41,7 +40,7 @@ class COMBase:
             logging.info("Connected to %s", progId)
             return obj
         except Exception as e:
-            logging.info("Could not connect to %s: %s", progId, str(e))
+            logging.warning("Could not connect to %s: %s", progId, str(e))
             return None
 
     def _initialize(self, useLD: bool, useTecnaiCCD: bool):
@@ -67,16 +66,6 @@ class COMBase:
 
         if self.tem is None:
             raise RuntimeError("Failed to create COM object.")
-
-    @staticmethod
-    def handle_com_error(com_error):
-        """ Try catching COM error. """
-        try:
-            default = TEMScriptingError.E_NOT_OK.value
-            err = TEMScriptingError(int(getattr(com_error, 'hresult', default))).name
-            logging.error('COM error: %s', err)
-        except ValueError:
-            logging.error('Exception : %s', sys.exc_info()[1])
 
     def _close(self):
         """ Release COM objects. """
@@ -116,7 +105,7 @@ class COMClient(BasicClient):
         self._scope = COMBase(useLD, useTecnaiCCD)
 
         if useTecnaiCCD and self._scope.tecnai_ccd is None:
-            raise RuntimeError("Could not use Tecnai CCD plugin, please _set useTecnaiCCD=False")
+            raise RuntimeError("Could not use Tecnai CCD plugin, please set useTecnaiCCD=False")
 
         self.cache = dict()
 
@@ -196,8 +185,8 @@ class COMClient(BasicClient):
             rsetattr(self._scope, attrname, value)
 
     def disconnect(self):
-        """ Do nothing since COMClient is local. """
-        pass
+        """ Release COM connection. """
+        self._scope._close()
 
     def call(self, method: str, body: RequestBody):
         """ Main method used by modules. """
@@ -225,5 +214,17 @@ class COMClient(BasicClient):
                 return response
 
             except Exception as e:
-                logging.error(e)
+                self.handle_com_error(e)
                 raise e
+
+    @staticmethod
+    def handle_com_error(com_error):
+        """ Try catching COM error. """
+        try:
+            error_code = TEMScriptingError(int(com_error.args[0])).name
+            error_msg = com_error.args[2][0].split("]")[-1]
+        except (ValueError, IndexError, TypeError):
+            error_code = TEMScriptingError.E_NOT_OK.name
+            error_msg = str(com_error)
+
+        logging.error("%s: %s", error_code, error_msg)

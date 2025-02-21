@@ -102,7 +102,7 @@ class Gun:
         Disabling/enabling can only be done via the button on the
         system on/off-panel, not via script. When switching on
         the high tension, this function cannot check if and
-        when the _set value is actually reached. (read/write)
+        when the set value is actually reached. (read/write)
         """
         body = RequestBody(attr=self.__id + ".HTState", validator=int)
         result = self.__client.call(method="get", body=body)
