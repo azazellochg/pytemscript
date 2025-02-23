@@ -130,7 +130,7 @@ class Image:
         self.name = name
         self.metadata = metadata
 
-    def __create_tiff_tags(self) -> PilTiff.ImageFileDirectory_v2:
+    def __create_tiff_tags(self):
         """Create TIFF tags from metadata. """
         tiff_tags = PilTiff.ImageFileDirectory_v2()
 

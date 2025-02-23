@@ -109,6 +109,7 @@ class AcquisitionObj(SpecialObj):
         for cam in self.com_object:
             if cam.Info.Name == cameraName:
                 camera = cam
+                break
         if camera is None:
             raise KeyError("No camera with name %s. If using standard scripting the "
                            "camera must be selected in the microscope user interface" % cameraName)
@@ -121,6 +122,7 @@ class AcquisitionObj(SpecialObj):
         for cam in self.com_object:
             if cam.Info.Name == cameraName:
                 camera = cam
+                break
         if camera is None:
             raise KeyError("No camera with name %s. If using standard scripting the "
                            "camera must be selected in the microscope user interface" % cameraName)
@@ -137,6 +139,7 @@ class AcquisitionObj(SpecialObj):
         for cam in self.com_object:
             if cam.Info.Name == cameraName:
                 self.current_camera = cam
+                break
         if self.current_camera is None:
             raise KeyError("No camera with name %s. If using standard scripting the "
                            "camera must be selected in the microscope user interface" % cameraName)
@@ -186,10 +189,12 @@ class AcquisitionObj(SpecialObj):
             for cam in self.com_object.CameraContinuousAcquisition.SupportedCameras:
                 if cam.Name == cameraName:
                     self.current_camera = cam
+                    break
         else:  # csa
             for cam in self.com_object.CameraSingleAcquisition.SupportedCameras:
                 if cam.Name == cameraName:
                     self.current_camera = cam
+                    break
 
         if self.current_camera is None:
             raise KeyError("No camera with name %s. If using standard scripting the "
