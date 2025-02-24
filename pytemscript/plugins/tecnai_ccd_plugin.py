@@ -34,7 +34,7 @@ class TecnaiCCDPlugin:
             #img = self._plugin.AcquireFrontImage()  # safe array
             #img = self._plugin.FrontImage  # variant
             #img = self._plugin.AcquireImageShown()
-            # img = self._plugin.AcquireDarkSubtractedImage() # variant
+            #img = self._plugin.AcquireDarkSubtractedImage() # variant
 
             img = self._plugin.AcquireRawImage()  # variant
 
@@ -98,8 +98,6 @@ class TecnaiCCDPlugin:
         self._img_params['height'] = self._plugin.CameraBottom - self._plugin.CameraTop
 
     def _run_command(self, command: str, *args):
-        #check = 'if(DoesFunctionExist("%s")) Exit(0) else Exit(1)'
-        #exists = self._plugin.ExecuteScript(check % command)
         exists = self._plugin.ExecuteScript('DoesFunctionExist("%s")' % command)
 
         if exists:

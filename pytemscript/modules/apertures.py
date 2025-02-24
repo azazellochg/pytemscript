@@ -1,4 +1,5 @@
 from typing import Dict
+from collections import OrderedDict
 from functools import lru_cache
 
 from .extras import SpecialObj
@@ -11,7 +12,7 @@ class AperturesObj(SpecialObj):
 
     def show(self) -> Dict:
         """ Returns a dict with apertures information. """
-        apertures = {}
+        apertures = OrderedDict()
         for ap in self.com_object:
             apertures[MechanismId(ap.Id).name] = {
                 "retractable": ap.IsRetractable,

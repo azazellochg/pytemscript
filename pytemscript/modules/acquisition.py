@@ -4,7 +4,6 @@ import logging
 from datetime import datetime
 from functools import lru_cache
 
-from ..plugins.tecnai_ccd_plugin import TecnaiCCDPlugin
 from ..utils.misc import RequestBody, convert_image
 from ..utils.enums import AcqImageSize, AcqShutterMode, PlateLabelDateFormat, ScreenPosition
 from .extras import Image, SpecialObj
@@ -378,6 +377,7 @@ class Acquisition:
                                "pass useTecnaiCCD=True to the Microscope() ?")
         else:
             logging.info("Using TecnaiCCD plugin for Gatan camera")
+            from ..plugins.tecnai_ccd_plugin import TecnaiCCDPlugin
             # Get camera size from std scripting
             body = RequestBody(attr="tem.Acquisition.Cameras",
                                obj_cls=AcquisitionObj,

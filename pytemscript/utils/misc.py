@@ -126,7 +126,7 @@ def convert_image(obj,
         with safearray_as_ndarray:
             data = obj.AsSafeArray  # always returns int32 array
     else:
-        data = obj.astype("uint16").reshape(height, width).T  # TODO: verify this
+        data = obj.AsSafeArray.reshape(height, width)  # TODO: verify this
 
     name = name or obj.Name
 

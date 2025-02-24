@@ -4,6 +4,7 @@ import math
 import logging
 from pathlib import Path
 import numpy as np
+from collections import OrderedDict
 
 try:
     import PIL.Image as PilImage
@@ -236,7 +237,7 @@ class StageObj(SpecialObj):
         If retrieving velocity, return the speed of the piezo stage instead.
         x,y,z are in um/s and a,b in deg/s
         """
-        pos = {key: getattr(self.com_object, key.upper()) * 1e6 for key in 'xyz'}
+        pos = OrderedDict({key: getattr(self.com_object, key.upper()) * 1e6 for key in 'xyz'})
         if a:
             pos['a'] = math.degrees(self.com_object.A)
             pos['b'] = None
@@ -247,7 +248,7 @@ class StageObj(SpecialObj):
 
     def limits(self) -> Dict:
         """ Returns a dict with stage move limits. """
-        limits = {}
+        limits = OrderedDict()
         for axis in 'xyzab':
             data = self.com_object.AxisData(StageAxes[axis.upper()].value)
             limits[axis] = {

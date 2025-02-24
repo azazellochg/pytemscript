@@ -1,6 +1,13 @@
 import argparse
 from typing import Optional, List
 from time import sleep
+import sys
+
+if sys.version_info >= (3, 5):
+    from math import isclose
+else:
+    def isclose(a, b, rel_tol=1e-09, abs_tol=0.0):
+        return abs(a-b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
 
 from pytemscript.microscope import Microscope
 from pytemscript.modules import Vector
@@ -21,7 +28,7 @@ def test_projection(microscope: Microscope,
 
     orig_def = projection.defocus
     projection.defocus = -3.0
-    assert projection.defocus == -3.0
+    assert isclose(projection.defocus, -3.0, abs_tol=1e-5)
     projection.defocus = orig_def
 
     print("\tMagnification:", projection.magnification)
@@ -248,7 +255,7 @@ def test_illumination(microscope: Microscope) -> None:
 
     orig_int = illum.intensity
     illum.intensity = 0.44
-    assert illum.intensity == 0.44
+    assert isclose(illum.intensity, 0.44, abs_tol=1e-5)
     illum.intensity = orig_int
 
     print("\tIntensityZoomEnabled:", illum.intensity_zoom)
@@ -272,7 +279,7 @@ def test_illumination(microscope: Microscope) -> None:
 
         orig_illum = illum.illuminated_area
         illum.illuminated_area = 1.0
-        assert illum.illuminated_area == 1.0
+        assert isclose(illum.illuminated_area, 1.0, abs_tol=1e-5)
         illum.illuminated_area = orig_illum
 
 
