@@ -237,7 +237,7 @@ class StageObj(SpecialObj):
         If retrieving velocity, return the speed of the piezo stage instead.
         x,y,z are in um/s and a,b in deg/s
         """
-        pos = OrderedDict({key: getattr(self.com_object, key.upper()) * 1e6 for key in 'xyz'})
+        pos = OrderedDict((key, getattr(self.com_object, key.upper()) * 1e6) for key in 'xyz')
         if a:
             pos['a'] = math.degrees(self.com_object.A)
             pos['b'] = None
