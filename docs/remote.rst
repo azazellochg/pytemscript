@@ -52,3 +52,8 @@ The interface is essentially the same as for the local client:
     microscope = Microscope(connection="socket", host="127.0.0.1", port=39000)
     ...
     microscope.disconnect()
+
+Logging
+-------
+
+Diagnostic messages are saved to ``socket_client.log`` and ``socket_server.log`` as well as printed to the console. Log files are rotated weekly at midnight.
