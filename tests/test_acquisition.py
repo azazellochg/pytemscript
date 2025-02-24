@@ -120,8 +120,8 @@ def main(argv: Optional[List] = None) -> None:
 
     print("Starting acquisition tests, connection: %s" % args.type)
 
-    cameras = microscope.detectors.cameras
-    print("Available detectors:\n", cameras)
+    cameras = microscope.acquisition.cameras
+    print("Available cameras:\n", cameras)
 
     if "BM-Ceta" in cameras:
         camera_acquire(microscope, "BM-Ceta", exp_time=1, binning=2)
@@ -133,7 +133,7 @@ def main(argv: Optional[List] = None) -> None:
 
     if microscope.stem.is_available:
         microscope.stem.enable()
-        detectors = microscope.detectors.stem_detectors
+        detectors = microscope.acquisition.stem_detectors
         if "BF" in detectors:
             detector_acquire(microscope, "BF", dwell_time=1e-5, binning=2)
         microscope.stem.disable()

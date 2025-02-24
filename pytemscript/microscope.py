@@ -29,7 +29,7 @@ class Microscope:
 
     """
     __slots__ = ("__connection", "__client",
-                 "acquisition", "detectors", "gun", "optics", "stem", "vacuum",
+                 "acquisition", "gun", "optics", "stem", "vacuum",
                  "autoloader", "stage", "piezo_stage", "apertures", "temperature",
                  "user_buttons", "user_door", "energy_filter", "low_dose")
 
@@ -53,7 +53,6 @@ class Microscope:
         client = self.__client
 
         self.acquisition = Acquisition(client)
-        self.detectors = Detectors(client)
         self.gun = Gun(client)
         self.optics = Optics(client, self.condenser_system)
         self.stem = Stem(client)

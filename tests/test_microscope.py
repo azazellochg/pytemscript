@@ -74,8 +74,11 @@ def test_acquisition(microscope: Microscope) -> None:
     """
     print("\nTesting acquisition...")
     acquisition = microscope.acquisition
-    cameras = microscope.detectors.cameras
+    cameras = acquisition.cameras
     stem = microscope.stem
+
+    print("\tFilm settings:", acquisition.film_settings)
+    print("\tCameras:", cameras)
 
     for cam_name in cameras:
         image = acquisition.acquire_tem_image(cam_name,
@@ -88,7 +91,8 @@ def test_acquisition(microscope: Microscope) -> None:
 
     if stem.is_available:
         stem.enable()
-        detectors = microscope.detectors.stem_detectors
+        detectors = acquisition.stem_detectors
+        print("\tSTEM detectors:", detectors)
 
         for det in detectors:
             image = acquisition.acquire_stem_image(det,
@@ -203,22 +207,6 @@ def test_stage(microscope: Microscope,
     print("\tMoveTo() to original position")
     stage.move_to(**pos)
     print("\tPosition:", stage.position)
-
-
-def test_detectors(microscope: Microscope) -> None:
-    """ Test all cameras / detectors.
-    :param microscope: Microscope object
-    """
-    print("\nTesting cameras...")
-    dets = microscope.detectors
-    print("\tFilm settings:", dets.film_settings)
-    print("\tCameras:", dets.cameras)
-
-    stem = microscope.stem
-    if stem.is_available:
-        stem.enable()
-        print("\tSTEM detectors:", dets.stem_detectors)
-        stem.disable()
 
 
 def test_optics(microscope: Microscope) -> None:
@@ -419,7 +407,6 @@ def main(argv: Optional[List] = None) -> None:
 
     full_test = True
     test_projection(microscope, has_eftem=False)
-    test_detectors(microscope)
     test_vacuum(microscope, buffer_cycle=full_test)
     test_autoloader(microscope, check_loading=full_test, slot=1)
     test_temperature(microscope, force_refill=False)

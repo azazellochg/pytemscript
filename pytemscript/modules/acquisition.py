@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Dict
 import time
 import logging
 from datetime import datetime
@@ -15,6 +15,18 @@ class AcquisitionObj(SpecialObj):
         super().__init__(com_object)
         self.current_camera = None
 
+    def show_film_settings(self) -> Dict:
+        """ Returns a dict with film settings. """
+        film = self.com_object
+        return {
+            "stock": film.Stock,  # Int
+            "exposure_time": film.ManualExposureTime,
+            "film_text": film.FilmText,
+            "exposure_number": film.ExposureNumber,
+            "user_code": film.Usercode,  # 3 digits
+            "screen_current": film.ScreenCurrent * 1e9  # check if works without film
+        }
+
     def acquire_film(self,
                      film_text: str,
                      exp_time: float) -> None:
@@ -29,48 +41,75 @@ class AcquisitionObj(SpecialObj):
         film.ManualExposureTime = exp_time
         film.TakeExposure()
 
-    def find_camera_type(self,
-                         cameraName: str,
-                         has_cca: bool = False) -> str:
-        """ Find camera type by name. """
-        if has_cca:
-            for cam in self.com_object.CameraContinuousAcquisition.SupportedCameras:
-                if cam.Name == cameraName:
-                    return "cca"
-        else:
-            for cam in self.com_object.CameraSingleAcquisition.SupportedCameras:
-                if cam.Name == cameraName:
-                    return "csa"
+    def show_stem_detectors(self) -> Dict:
+        """ Returns a dict with STEM detectors parameters. """
+        stem_detectors = dict()
+        for d in self.com_object:
+            info = d.Info
+            name = info.Name
+            stem_detectors[name] = {
+                "binnings": [int(b) for b in info.Binnings]
+            }
+        return stem_detectors
 
-        return "std"
+    def show_cameras(self) -> Dict:
+        """ Returns a dict with parameters for all TEM cameras. """
+        tem_cameras = dict()
+        for cam in self.com_object:
+            info = cam.Info
+            param = cam.AcqParams
+            name = info.Name
+            tem_cameras[name] = {
+                "supports_csa": False,
+                "supports_cca": False,
+                "height": info.Height,
+                "width": info.Width,
+                "pixel_size(um)": (info.PixelSize.X / 1e-6, info.PixelSize.Y / 1e-6),
+                "binnings": [int(b) for b in info.Binnings],
+                "shutter_modes": [AcqShutterMode(x).name for x in info.ShutterModes],
+                "pre_exposure_limits(s)": (param.MinPreExposureTime, param.MaxPreExposureTime),
+                "pre_exposure_pause_limits(s)": (param.MinPreExposurePauseTime,
+                                                 param.MaxPreExposurePauseTime)
+            }
 
-    def _check_binning(self,
-                       binning: int,
-                       is_advanced: bool = False,
-                       recording: bool = False):
-        """ Check if input binning is in SupportedBinnings.
+        return tem_cameras
 
-        :param binning: Input binning
-        :type binning: int
-        :param is_advanced: Is this an advanced camera?
-        :type is_advanced: bool
-        :returns: Binning object
-        """
-        if is_advanced:
-            if recording:
-                param = self.com_object.CameraContinuousAcquisition.CameraSettings.Capabilities
-            else:
-                param = self.com_object.CameraSingleAcquisition.CameraSettings.Capabilities
-            for b in param.SupportedBinnings:
-                if int(b.Width) == int(binning):
-                    return b
-        else:
-            info = self.current_camera.Info
-            for b in info.Binnings:
-                if int(b) == int(binning):
-                    return b
+    def show_cameras_csa(self) -> Dict:
+        """ Returns a dict with parameters for all TEM cameras that support CSA. """
+        csa_cameras = dict()
+        for cam in self.com_object.SupportedCameras:
+            self.com_object.Camera = cam
+            param = self.com_object.CameraSettings.Capabilities
+            csa_cameras[cam.Name] = {
+                "supports_csa": True,
+                "supports_cca": False,
+                "height": cam.Height,
+                "width": cam.Width,
+                "pixel_size(um)": (cam.PixelSize.Width / 1e-6, cam.PixelSize.Height / 1e-6),
+                "binnings": [int(b.Width) for b in param.SupportedBinnings],
+                "exposure_time_range(s)": (param.ExposureTimeRange.Begin,
+                                           param.ExposureTimeRange.End),
+                "supports_dose_fractions": param.SupportsDoseFractions,
+                "max_number_of_fractions": param.MaximumNumberOfDoseFractions,
+                "supports_drift_correction": param.SupportsDriftCorrection,
+                "supports_electron_counting": param.SupportsElectronCounting,
+                "supports_eer": getattr(param, 'SupportsEER', False)
+            }
 
-        raise ValueError("Unsupported binning value: %d" % binning)
+        return csa_cameras
+
+    def show_cameras_cca(self, tem_cameras: Dict) -> Dict:
+        """ Update input dict with parameters for all TEM cameras that support CCA. """
+        for cam in self.com_object.SupportedCameras:
+            if cam.Name in tem_cameras:
+                self.com_object.Camera = cam
+                param = self.com_object.CameraSettings.Capabilities
+                tem_cameras[cam.Name].update({
+                    "supports_cca": True,
+                    "supports_recording": getattr(param, 'SupportsRecording', False)
+                })
+
+        return tem_cameras
 
     def acquire(self, cameraName: str) -> Image:
         """ Perform actual acquisition. Camera settings should be set beforehand.
@@ -115,19 +154,6 @@ class AcquisitionObj(SpecialObj):
 
         camera.Info.ShutterMode = prev_shutter_mode
 
-    def find_camera_size(self, cameraName: str) -> int:
-        """ Find camera size by name. Only used by Tecnai CCD plugin. """
-        camera = None
-        for cam in self.com_object:
-            if cam.Info.Name == cameraName:
-                camera = cam
-                break
-        if camera is None:
-            raise KeyError("No camera with name %s. If using standard scripting the "
-                           "camera must be selected in the microscope user interface" % cameraName)
-
-        return int(camera.Info.Width)
-
     def set_tem_presets(self,
                         cameraName: str,
                         size: AcqImageSize = AcqImageSize.FULL,
@@ -139,6 +165,7 @@ class AcquisitionObj(SpecialObj):
             if cam.Info.Name == cameraName:
                 self.current_camera = cam
                 break
+
         if self.current_camera is None:
             raise KeyError("No camera with name %s. If using standard scripting the "
                            "camera must be selected in the microscope user interface" % cameraName)
@@ -147,7 +174,6 @@ class AcquisitionObj(SpecialObj):
         settings = self.current_camera.AcqParams
         settings.ImageSize = size
 
-        binning = self._check_binning(binning)
         settings.Binning = binning
         prev_shutter_mode = None
 
@@ -170,8 +196,7 @@ class AcquisitionObj(SpecialObj):
                                    "the shutter mode is set to BOTH")
             settings.PreExposurePauseTime = kwargs['pre_exp_pause_time']
 
-        # Set exposure after binning, since it adjusted
-        # automatically when binning is set
+        # Set exposure after binning, since it adjusted automatically when binning is set
         settings.ExposureTime = exp_time
 
         return prev_shutter_mode
@@ -181,15 +206,15 @@ class AcquisitionObj(SpecialObj):
                                  size: AcqImageSize = AcqImageSize.FULL,
                                  exp_time: float = 1,
                                  binning: int = 1,
-                                 camera_type: str = "csa",
+                                 use_cca: bool = False,
                                  **kwargs) -> None:
         eer = kwargs.get("eer")
-        if camera_type == "cca":
+        if use_cca:
             for cam in self.com_object.CameraContinuousAcquisition.SupportedCameras:
                 if cam.Name == cameraName:
                     self.current_camera = cam
                     break
-        else:  # csa
+        else: # CSA
             for cam in self.com_object.CameraSingleAcquisition.SupportedCameras:
                 if cam.Name == cameraName:
                     self.current_camera = cam
@@ -206,7 +231,6 @@ class AcquisitionObj(SpecialObj):
             self.com_object.CameraContinuousAcquisition.Camera = self.current_camera
             settings = self.com_object.CameraContinuousAcquisition.CameraSettings
             capabilities = settings.Capabilities
-            binning = self._check_binning(binning, True, True)
             if hasattr(capabilities, 'SupportsRecording') and capabilities.SupportsRecording:
                 settings.RecordingDuration = kwargs['recording']
             else:
@@ -216,15 +240,10 @@ class AcquisitionObj(SpecialObj):
             self.com_object.CameraSingleAcquisition.Camera = self.current_camera
             settings = self.com_object.CameraSingleAcquisition.CameraSettings
             capabilities = settings.Capabilities
-            binning = self._check_binning(binning, True)
 
-        if binning:
-            settings.Binning = binning
-
+        settings.Binning = binning
         settings.ReadoutArea = size
-
-        # Set exposure after binning, since it adjusted
-        # automatically when binning is set
+        # Set exposure after binning, since it adjusted automatically when binning is set
         settings.ExposureTime = exp_time
 
         if 'align_image' in kwargs:
@@ -288,13 +307,9 @@ class AcquisitionObj(SpecialObj):
         if 'contrast' in kwargs:
             info.Contrast = kwargs['contrast']
 
-        settings = self.com_object.AcqParams  # self._tem_acq.StemAcqParams
+        settings = self.com_object.AcqParams  # StemAcqParams
         settings.ImageSize = size
-
-        binning = self._check_binning(binning)
-        if binning:
-            settings.Binning = binning
-
+        settings.Binning = binning
         settings.DwellTime = dwell_time
 
 
@@ -309,12 +324,11 @@ class Acquisition:
     main microscope object. If you do not do so, you keep accessing the same
     acquisition object which will not work properly anymore.
     """
-    __slots__ = ("__client", "__id_adv", "__camera_type")
+    __slots__ = ("__client", "__id_adv")
 
     def __init__(self, client):
         self.__client = client
         self.__id_adv = "tem_adv.Acquisitions"
-        self.__camera_type = "std"
 
     @property
     @lru_cache(maxsize=1)
@@ -339,7 +353,25 @@ class Acquisition:
 
         return self.__client.call(method="has", body=body)
 
-    def _check_prerequisites(self) -> None:
+    @staticmethod
+    def __find_camera(cameraName: str,
+                      cameras_dict: Dict,
+                      binning: int) -> Dict:
+        """ Check camera name and supported binning. """
+        camera_dict = cameras_dict.get(cameraName)
+
+        if camera_dict is None:
+            raise KeyError("No camera with name %s. If using standard scripting the "
+                           "camera must be selected in the microscope user interface" % cameraName)
+
+        if binning not in camera_dict["binnings"]:
+            raise ValueError("Unsupported binning value: %d" % binning)
+
+
+
+        return camera_dict
+
+    def __check_prerequisites(self) -> None:
         """ Check if buffer cycle or LN filling is
         running before acquisition call. """
         counter = 0
@@ -366,24 +398,19 @@ class Acquisition:
                     logging.info("Checking dewars levels...")
                     break
 
-    def _acquire_with_tecnaiccd(self,
-                                cameraName: str,
-                                size: AcqImageSize,
-                                exp_time: float,
-                                binning: int,
-                                **kwargs):
+    def __acquire_with_tecnaiccd(self,
+                                 cameraName: str,
+                                 size: AcqImageSize,
+                                 exp_time: float,
+                                 binning: int,
+                                 camerasize: int,
+                                 **kwargs) -> Image:
         if not self.__client.has_ccd_iface:
             raise RuntimeError("Tecnai CCD plugin not found, did you "
                                "pass useTecnaiCCD=True to the Microscope() ?")
         else:
             logging.info("Using TecnaiCCD plugin for Gatan camera")
             from ..plugins.tecnai_ccd_plugin import TecnaiCCDPlugin
-            # Get camera size from std scripting
-            body = RequestBody(attr="tem.Acquisition.Cameras",
-                               obj_cls=AcquisitionObj,
-                               obj_method="find_camera_size",
-                               cameraName=cameraName)
-            camerasize = self.__client.call(method="exec_special", body=body)
 
             body = RequestBody(attr="tecnai_ccd",
                                obj_cls=TecnaiCCDPlugin,
@@ -429,25 +456,19 @@ class Acquisition:
             >>> print(img.width)
             4096
         """
-        if kwargs.get("use_tecnaiccd", False):
-            return self._acquire_with_tecnaiccd(cameraName, size, exp_time,
-                                                binning, **kwargs)
+        camera_dict = self.__find_camera(cameraName, self.cameras, binning)
 
-        if kwargs.get("recording", False) and not self.__has_cca:
+        if kwargs.get("use_tecnaiccd", False):
+            return self.__acquire_with_tecnaiccd(cameraName, size, exp_time,
+                                                 binning, camera_dict["width"],
+                                                 **kwargs)
+
+        if kwargs.get("recording", False) and not camera_dict.get("supports_recording", False):
             raise NotImplementedError("Recording / continuous acquisition is not available")
 
-        if self.__client.has_advanced_iface:
-            # update camera type
-            body = RequestBody(attr=self.__id_adv,
-                               validator=str,
-                               obj_cls=AcquisitionObj,
-                               obj_method="find_camera_type",
-                               cameraName=cameraName,
-                               has_cca=self.__has_cca)
-            self.__camera_type = self.__client.call(method="exec_special", body=body)
-            logging.debug("Camera type detected for %s: %s", cameraName, self.__camera_type)
+        csa, cca = camera_dict["supports_csa"], camera_dict["supports_cca"]
 
-        if self.__camera_type == "std": # Use standard scripting
+        if not csa: # Use standard scripting
             body = RequestBody(attr="tem.Acquisition.Cameras",
                                obj_cls=AcquisitionObj,
                                obj_method="set_tem_presets",
@@ -458,7 +479,7 @@ class Acquisition:
                                **kwargs)
             prev_shutter_mode = self.__client.call(method="exec_special", body=body)
 
-            self._check_prerequisites()
+            self.__check_prerequisites()
             body = RequestBody(attr="tem.Acquisition",
                                obj_cls=AcquisitionObj,
                                obj_method="acquire",
@@ -484,7 +505,7 @@ class Acquisition:
                                size=size,
                                exp_time=exp_time,
                                binning=binning,
-                               camera_type=self.__camera_type,
+                               use_cca=cca,
                                **kwargs)
             self.__client.call(method="exec_special", body=body)
 
@@ -527,6 +548,8 @@ class Acquisition:
         :keyword float contrast: Contrast setting
         :returns: Image object
         """
+        camera_dict = self.__find_camera(cameraName, self.stem_detectors, binning)
+
         body = RequestBody(attr="tem.Acquisition.Detectors",
                            obj_cls=AcquisitionObj,
                            obj_method="set_stem_presets",
@@ -537,7 +560,7 @@ class Acquisition:
                            **kwargs)
         self.__client.call(method="exec_special", body=body)
 
-        self._check_prerequisites()
+        self.__check_prerequisites()
         body = RequestBody(attr="tem.Acquisition",
                            validator=Image,
                            obj_cls=AcquisitionObj,
@@ -570,3 +593,74 @@ class Acquisition:
             logging.info("Film exposure completed")
         else:
             raise RuntimeError("Plate is not available or stock is empty!")
+
+    @property
+    def film_settings(self) -> Dict:
+        """ Returns a dict with film settings.
+        Note: The plate camera has become obsolete with Win7 so
+        most of the existing functions are no longer supported.
+        """
+        if self.__has_film:
+            body = RequestBody(attr="tem.Camera",
+                               validator=dict,
+                               obj_cls=AcquisitionObj,
+                               obj_method="show_film_settings")
+            return self.__client.call(method="exec_special", body=body)
+        else:
+            logging.error("No film/plate device detected.")
+            return {}
+
+    @property
+    def screen(self) -> str:
+        """ Fluorescent screen position. (read/write)"""
+        body = RequestBody(attr="tem.Camera.MainScreen", validator=int)
+        result = self.__client.call(method="get", body=body)
+
+        return ScreenPosition(result).name
+
+    @screen.setter
+    def screen(self, value: ScreenPosition) -> None:
+        body = RequestBody(attr="tem.Camera.MainScreen", value=value)
+        self.__client.call(method="set", body=body)
+
+    @property
+    @lru_cache(maxsize=1)
+    def stem_detectors(self) -> Dict:
+        """ Returns a dict with STEM detectors parameters. """
+        body = RequestBody(attr="tem.Acquisition.Detectors",
+                           validator=dict,
+                           obj_cls=AcquisitionObj,
+                           obj_method="show_stem_detectors")
+        return self.__client.call(method="exec_special", body=body)
+
+    @property
+    @lru_cache(maxsize=1)
+    def cameras(self) -> Dict:
+        """ Returns a dict with parameters for all TEM cameras. """
+        body = RequestBody(attr="tem.Acquisition.Cameras",
+                           validator=dict,
+                           obj_cls=AcquisitionObj,
+                           obj_method="show_cameras")
+        tem_cameras = self.__client.call(method="exec_special", body=body)
+
+        if not self.__client.has_advanced_iface:
+            return tem_cameras
+
+        # CSA is supported by Ceta 1, Ceta 2, Falcon 3, Falcon 4
+        body = RequestBody(attr=self.__id_adv + ".CameraSingleAcquisition",
+                           validator=dict,
+                           obj_cls=AcquisitionObj,
+                           obj_method="show_cameras_csa")
+        csa_cameras = self.__client.call(method="exec_special", body=body)
+        tem_cameras.update(csa_cameras)
+
+        # CCA is supported by Ceta 2
+        if self.__has_cca:
+            body = RequestBody(attr=self.__id_adv + ".CameraContinuousAcquisition",
+                               validator=dict,
+                               obj_cls=AcquisitionObj,
+                               obj_method="show_cameras_cca",
+                               tem_cameras=tem_cameras)
+            tem_cameras =  self.__client.call(method="exec_special", body=body)
+
+        return tem_cameras
