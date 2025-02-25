@@ -131,14 +131,16 @@ def convert_image(obj,
     name = name or obj.Name
 
     metadata = {
-        "width": width or obj.Width,
-        "height": height or obj.Height,
-        "bit_depth": bit_depth or (obj.BitDepth if advanced else obj.Depth),
+        "width": width or int(obj.Width),
+        "height": height or int(obj.Height),
+        "bit_depth": int(bit_depth or (obj.BitDepth if advanced else obj.Depth)),
         "pixel_type": ImagePixelType(obj.PixelType).name if advanced else ImagePixelType.SIGNED_INT.name,
     }
 
     if advanced:
         metadata.update({item.Key: item.ValueAsString for item in obj.Metadata})
+    if "BitsPerPixel" in metadata:
+        metadata["bit_depth"] = int(metadata["BitsPerPixel"])
 
     return Image(data, name, metadata)
 

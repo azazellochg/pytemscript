@@ -4,6 +4,7 @@ import math
 import logging
 from pathlib import Path
 import numpy as np
+from functools import lru_cache
 from collections import OrderedDict
 
 try:
@@ -132,6 +133,7 @@ class Image:
         self.metadata = metadata
         self.timestamp = datetime.now()
 
+    @lru_cache(maxsize=1)
     def __create_tiff_tags(self):
         """Create TIFF tags from metadata. """
         tiff_tags = PilTiff.ImageFileDirectory_v2()
@@ -143,7 +145,14 @@ class Image:
         tiff_tags[PilTiff.COMPRESSION] = 1  # raw
         tiff_tags[PilTiff.RESOLUTION_UNIT] = 3  # cm
         tiff_tags[PilTiff.IMAGEDESCRIPTION] = self.name
-        tiff_tags[PilTiff.DATE_TIME] = self.timestamp.strftime("%Y:%m:%d %H:%M:%S")
+
+        timestamp = metadata.get("TimeStamp")
+        if timestamp is not None:
+            timestamp = int(timestamp[:-6])  # discard microseconds
+            dt = datetime.fromtimestamp(timestamp)
+            tiff_tags[PilTiff.DATE_TIME] = dt.strftime("%Y:%m:%d %H:%M:%S")
+        else:
+            tiff_tags[PilTiff.DATE_TIME] = self.timestamp.strftime("%Y:%m:%d %H:%M:%S")
 
         # Detector Name
         detector_name = metadata.get("DetectorName")
@@ -151,12 +160,15 @@ class Image:
             tiff_tags[271] = detector_name  # Tag 271 (MAKE)
 
         # Pixel Size (Resolution)
-        pixel_width = metadata.get("PixelSize.Width")  # angstroms
+        pixel_width = metadata.get("PixelSize.Width")  # meters
         pixel_height = metadata.get("PixelSize.Height")
         if pixel_width and pixel_height:
-            scale = 1e8  # convert to cm
-            tiff_tags[PilTiff.X_RESOLUTION] = (pixel_width * scale, 1)
-            tiff_tags[PilTiff.Y_RESOLUTION] = (pixel_height * scale, 1)
+            # convert to dots per cm
+            dpcm_width = 1 / (float(pixel_width) * 100)
+            dpcm_height = 1 / (float(pixel_height) * 100)
+
+            tiff_tags[PilTiff.X_RESOLUTION] = (int(dpcm_width), 1)
+            tiff_tags[PilTiff.Y_RESOLUTION] = (int(dpcm_height), 1)
 
         # Bit Depth & Color Interpretation
         bit_depth = metadata.get("bit_depth", 16)

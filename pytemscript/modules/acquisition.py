@@ -24,7 +24,7 @@ class AcquisitionObj(SpecialObj):
             "film_text": film.FilmText,
             "exposure_number": film.ExposureNumber,
             "user_code": film.Usercode,  # 3 digits
-            "screen_current": film.ScreenCurrent * 1e9  # check if works without film
+            "screen_current": film.ScreenCurrent * 1e9
         }
 
     def acquire_film(self,
@@ -239,7 +239,11 @@ class AcquisitionObj(SpecialObj):
             settings = self.com_object.CameraSingleAcquisition.CameraSettings
             capabilities = settings.Capabilities
 
-        settings.Binning = binning
+        # Unfortunately, settings.Binning is an interface, not a simple int
+        for b in capabilities.SupportedBinnings:
+            if int(b.Width) == int(binning):
+                settings.Binning = b
+
         settings.ReadoutArea = size
         # Set exposure after binning, since it adjusted automatically when binning is set
         settings.ExposureTime = exp_time
