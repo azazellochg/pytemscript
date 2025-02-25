@@ -109,7 +109,7 @@ def convert_image(obj,
                   bit_depth: Optional[int] = None,
                   advanced: Optional[bool] = False,
                   use_safearray: Optional[bool] = True):
-    """ Serialize COM image object into an Image.
+    """ Serialize COM image object into an uint16 Image.
 
     :param obj: COM object
     :param name: optional name for the image
@@ -124,9 +124,9 @@ def convert_image(obj,
     if use_safearray:
         from comtypes.safearray import safearray_as_ndarray
         with safearray_as_ndarray:
-            data = obj.AsSafeArray.astype("int16")  # AsSafeArray always returns int32 array
+            data = obj.AsSafeArray.astype("uint16")  # AsSafeArray always returns int32 array
     else:
-        data = obj.AsSafeArray.astype("int16")
+        data = obj.AsSafeArray.astype("uint16")
 
     name = name or obj.Name
 

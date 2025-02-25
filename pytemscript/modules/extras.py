@@ -160,12 +160,8 @@ class Image:
 
         # Bit Depth & Color Interpretation
         bit_depth = metadata.get("bit_depth", 16)
-        if bit_depth == 24:
-            tiff_tags[PilTiff.BITSPERSAMPLE] = (8, 8, 8)  # 8 bits per channel
-            tiff_tags[PilTiff.PHOTOMETRIC_INTERPRETATION] = 2  # RGB
-        else:
-            tiff_tags[PilTiff.BITSPERSAMPLE] = (bit_depth,)
-            tiff_tags[PilTiff.PHOTOMETRIC_INTERPRETATION] = 1  # BlackIsZero
+        tiff_tags[PilTiff.BITSPERSAMPLE] = (bit_depth,)
+        tiff_tags[PilTiff.PHOTOMETRIC_INTERPRETATION] = 1  # BlackIsZero
 
         return tiff_tags
 
@@ -194,7 +190,7 @@ class Image:
                 raise FileExistsError("File %s already exists, use overwrite flag" % fn.resolve())
 
             logging.getLogger("PIL").setLevel(logging.INFO)
-            pil_image = PilImage.fromarray(self.data)
+            pil_image = PilImage.fromarray(self.data, mode='I;16')
             tiff_tags = self.__create_tiff_tags() if ext != ".png" else None
             pil_image.save(fn, format=None, tiffinfo=tiff_tags)
 
