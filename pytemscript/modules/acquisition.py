@@ -300,12 +300,10 @@ class AcquisitionObj(SpecialObj):
         if self.current_camera is None:
             raise KeyError("No STEM detector with name %s" % cameraName)
 
-        info = self.current_camera.Info
-
         if 'brightness' in kwargs:
-            info.Brightness = kwargs['brightness']
+            self.current_camera.Info.Brightness = kwargs['brightness']
         if 'contrast' in kwargs:
-            info.Contrast = kwargs['contrast']
+            self.current_camera.Info.Contrast = kwargs['contrast']
 
         settings = self.com_object.AcqParams  # StemAcqParams
         settings.ImageSize = size
@@ -366,8 +364,6 @@ class Acquisition:
 
         if binning not in camera_dict["binnings"]:
             raise ValueError("Unsupported binning value: %d" % binning)
-
-
 
         return camera_dict
 
