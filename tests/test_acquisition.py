@@ -2,7 +2,13 @@ import argparse
 import logging
 from typing import Optional, List
 import numpy as np
-import math
+import sys
+
+if sys.version_info >= (3, 5):
+    from math import isclose
+else:
+    def isclose(a, b, rel_tol=1e-09, abs_tol=0.0):
+        return abs(a-b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
 
 from pytemscript.microscope import Microscope
 from pytemscript.utils.enums import *
@@ -26,7 +32,7 @@ def print_stats(image: Image,
 
     if 'TimeStamp' in metadata:
         assert int(metadata['Binning.Width']) == binning
-        assert math.isclose(float(metadata['ExposureTime']), exp_time, abs_tol=0.01)
+        assert isclose(float(metadata['ExposureTime']), exp_time, abs_tol=0.01)
 
     assert img.shape[1] == metadata["width"]
     assert img.shape[0] == metadata["height"]

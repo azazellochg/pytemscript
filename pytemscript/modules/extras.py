@@ -38,7 +38,7 @@ class Vector:
     """
     __slots__ = ("x", "y", "__min", "__max")
 
-    def __init__(self, x: float, y: float):
+    def __init__(self, x: float, y: float) -> None:
         self.x = x
         self.y = y
         self.__min = None
@@ -126,7 +126,7 @@ class Image:
     def __init__(self,
                  data: np.ndarray,
                  name: str,
-                 metadata: Dict):
+                 metadata: Dict) -> None:
         self.data = data
         self.name = name
         self.metadata = metadata
@@ -188,8 +188,8 @@ class Image:
                 mrc.set_data(self.data.astype("int16"))
 
         elif ext in [".tiff", ".tif", ".png"]:
-            if os.path.exists(fn) and not overwrite:
-                raise FileExistsError("File %s already exists, use overwrite flag" % os.path.abspath(fn))
+            if fn.exists() and not overwrite:
+                raise FileExistsError("File %s already exists, use overwrite flag" % fn.resolve())
 
             logging.getLogger("PIL").setLevel(logging.INFO)
             pil_image = PilImage.fromarray(self.data)
@@ -199,7 +199,7 @@ class Image:
         else:
             raise NotImplementedError("Unsupported file format: %s" % ext)
 
-        logging.info("File saved: %s", os.path.abspath(fn))
+        logging.info("File saved: %s", fn.resolve())
 
 
 class SpecialObj:

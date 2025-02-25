@@ -33,7 +33,7 @@ class Microscope:
                  "autoloader", "stage", "piezo_stage", "apertures", "temperature",
                  "user_buttons", "user_door", "energy_filter", "low_dose")
 
-    def __init__(self, connection: str = "direct", *args, **kwargs):
+    def __init__(self, connection: str = "direct", *args, **kwargs) -> None:
         self.__connection = connection
         if connection == "direct":
             from .clients.com_client import COMClient
