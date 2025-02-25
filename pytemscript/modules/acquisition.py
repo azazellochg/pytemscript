@@ -47,9 +47,7 @@ class AcquisitionObj(SpecialObj):
         for d in self.com_object:
             info = d.Info
             name = info.Name
-            stem_detectors[name] = {
-                "binnings": [int(b) for b in info.Binnings]
-            }
+            stem_detectors[name] = {"binnings": [int(b) for b in info.Binnings]}
         return stem_detectors
 
     def show_cameras(self) -> Dict:
@@ -441,6 +439,7 @@ class Acquisition:
         :keyword bool electron_counting: Use counting mode. Advanced cameras only.
         :keyword bool eer: Use EER mode. Advanced cameras only.
         :keyword list frame_ranges: List of tuple frame ranges that define the intermediate images, e.g. [(1,2), (2,3)]. Advanced cameras only.
+        :keyword float recording: minimum amount of time the acquisition will take, as it will take as much complete frames with the set exposure time as is needed to get to the set RecordingDuration. E.g. if the exposure time is 0.5 and the RecordingDuration is 2.3, there will be an acquisition of 2.5 (5 frames). Advanced cameras only.
         :keyword bool use_tecnaiccd: Use Tecnai CCD plugin to acquire image via Digital Micrograph, only for Gatan cameras. Requires Microscope() initialized with useTecnaiCCD=True
         :returns: Image object
 

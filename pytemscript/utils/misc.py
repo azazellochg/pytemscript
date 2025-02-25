@@ -124,9 +124,9 @@ def convert_image(obj,
     if use_safearray:
         from comtypes.safearray import safearray_as_ndarray
         with safearray_as_ndarray:
-            data = obj.AsSafeArray  # always returns int32 array
+            data = obj.AsSafeArray.astype("int16")  # AsSafeArray always returns int32 array
     else:
-        data = obj.AsSafeArray.reshape(height, width)  # TODO: verify this
+        data = obj.AsSafeArray.astype("int16")
 
     name = name or obj.Name
 

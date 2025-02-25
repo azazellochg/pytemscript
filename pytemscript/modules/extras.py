@@ -1,5 +1,5 @@
 from typing import Optional, Dict, Tuple, Union
-import os.path
+from datetime import datetime
 import math
 import logging
 from pathlib import Path
@@ -124,12 +124,13 @@ class Vector:
 class Image:
     """ Acquired image basic object. """
     def __init__(self,
-                 data: np.ndarray,
+                 data: np.ndarray,  # int16
                  name: str,
                  metadata: Dict) -> None:
         self.data = data
         self.name = name
         self.metadata = metadata
+        self.timestamp = datetime.now()
 
     def __create_tiff_tags(self):
         """Create TIFF tags from metadata. """
@@ -142,6 +143,7 @@ class Image:
         tiff_tags[PilTiff.COMPRESSION] = 1  # raw
         tiff_tags[PilTiff.RESOLUTION_UNIT] = 3  # cm
         tiff_tags[PilTiff.IMAGEDESCRIPTION] = self.name
+        tiff_tags[PilTiff.DATE_TIME] = self.timestamp.strftime("%Y:%m:%d %H:%M:%S")
 
         # Detector Name
         detector_name = metadata.get("DetectorName")
@@ -185,7 +187,7 @@ class Image:
             with mrcfile.new(fn, overwrite=overwrite) as mrc:
                 if 'PixelSize.Width' in self.metadata:
                     mrc.voxel_size = float(self.metadata['PixelSize.Width']) * 1e10
-                mrc.set_data(self.data.astype("int16"))
+                mrc.set_data(self.data)
 
         elif ext in [".tiff", ".tif", ".png"]:
             if fn.exists() and not overwrite:

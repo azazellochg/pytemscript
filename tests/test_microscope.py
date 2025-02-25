@@ -87,7 +87,7 @@ def test_acquisition(microscope: Microscope) -> None:
                                               binning=2)
         if image is not None:
             print("Metadata: ", image.metadata)
-            image.save(fn=cam_name+".mrc", overwrite=True)
+            image.save(fn="test_image_%s.mrc" % cam_name, overwrite=True)
 
     if stem.is_available:
         stem.enable()
@@ -101,7 +101,7 @@ def test_acquisition(microscope: Microscope) -> None:
                                                    binning=2)
             if image is not None:
                 print("Metadata: ", image.metadata)
-                image.save(fn=det+".mrc", overwrite=True)
+                image.save(fn="test_image_%s.mrc" % det, overwrite=True)
 
         stem.disable()
 
