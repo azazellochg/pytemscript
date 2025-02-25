@@ -109,7 +109,7 @@ def convert_image(obj,
                   bit_depth: Optional[int] = None,
                   advanced: Optional[bool] = False,
                   use_safearray: Optional[bool] = True):
-    """ Serialize COM image object into an Image.
+    """ Serialize COM image object into an uint16 Image.
 
     :param obj: COM object
     :param name: optional name for the image
@@ -117,28 +117,30 @@ def convert_image(obj,
     :param height: height of the image
     :param bit_depth: bit depth of the image
     :param advanced: advanced scripting flag
-    :param use_safearray: use safe array method
+    :param use_safearray: use safearray method
     """
     from pytemscript.modules import Image
 
     if use_safearray:
         from comtypes.safearray import safearray_as_ndarray
         with safearray_as_ndarray:
-            data = obj.AsSafeArray
+            data = obj.AsSafeArray.astype("uint16")  # AsSafeArray always returns int32 array
     else:
-        data = obj.astype("uint16").reshape(width, height)
+        data = obj.AsSafeArray.astype("uint16")
 
     name = name or obj.Name
 
     metadata = {
-        "width": width or obj.Width,
-        "height": height or obj.Height,
-        "bit_depth": bit_depth or (obj.BitDepth if advanced else obj.Depth),
+        "width": width or int(obj.Width),
+        "height": height or int(obj.Height),
+        "bit_depth": int(bit_depth or (obj.BitDepth if advanced else obj.Depth)),
         "pixel_type": ImagePixelType(obj.PixelType).name if advanced else ImagePixelType.SIGNED_INT.name,
     }
 
     if advanced:
         metadata.update({item.Key: item.ValueAsString for item in obj.Metadata})
+    if "BitsPerPixel" in metadata:
+        metadata["bit_depth"] = int(metadata["BitsPerPixel"])
 
     return Image(data, name, metadata)
 

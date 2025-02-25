@@ -34,14 +34,16 @@ The documentation can be found at https://pytemscript.readthedocs.io
 Installation
 ------------
 
-.. warning:: The project is still in development phase, no beta version has been released yet. Installing from sources is recommended.
-
 Requirements:
 
     * python >= 3.4
     * comtypes
     * mrcfile
     * numpy
+
+- *Windows XP*: latest available Python is 3.4. Check out requirements-3.4.txt file for help on specific libraries versions.
+- *Windows 7*: latest available Python is 3.8
+
 
 Installation from PyPI on Windows
 #################################

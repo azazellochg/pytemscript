@@ -2,7 +2,13 @@ import argparse
 import logging
 from typing import Optional, List
 import numpy as np
-import math
+import sys
+
+if sys.version_info >= (3, 5):
+    from math import isclose
+else:
+    def isclose(a, b, rel_tol=1e-09, abs_tol=0.0):
+        return abs(a-b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
 
 from pytemscript.microscope import Microscope
 from pytemscript.utils.enums import *
@@ -26,7 +32,7 @@ def print_stats(image: Image,
 
     if 'TimeStamp' in metadata:
         assert int(metadata['Binning.Width']) == binning
-        assert math.isclose(float(metadata['ExposureTime']), exp_time, abs_tol=0.01)
+        assert isclose(float(metadata['ExposureTime']), exp_time, abs_tol=0.01)
 
     assert img.shape[1] == metadata["width"]
     assert img.shape[0] == metadata["height"]
@@ -120,8 +126,8 @@ def main(argv: Optional[List] = None) -> None:
 
     print("Starting acquisition tests, connection: %s" % args.type)
 
-    cameras = microscope.detectors.cameras
-    print("Available detectors:\n", cameras)
+    cameras = microscope.acquisition.cameras
+    print("Available cameras:\n", cameras)
 
     if "BM-Ceta" in cameras:
         camera_acquire(microscope, "BM-Ceta", exp_time=1, binning=2)
@@ -133,7 +139,7 @@ def main(argv: Optional[List] = None) -> None:
 
     if microscope.stem.is_available:
         microscope.stem.enable()
-        detectors = microscope.detectors.stem_detectors
+        detectors = microscope.acquisition.stem_detectors
         if "BF" in detectors:
             detector_acquire(microscope, "BF", dwell_time=1e-5, binning=2)
         microscope.stem.disable()

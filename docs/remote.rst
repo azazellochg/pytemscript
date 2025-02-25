@@ -3,7 +3,7 @@
 Remote server
 =============
 
-.. important:: The server is currently in development and not ready to use!
+.. important:: Only socket server is currently available!
 
 If remote scripting of the microscope is required, the pytemscript server must run on the microscope PC.
 The server supports different connection methods:
@@ -52,3 +52,8 @@ The interface is essentially the same as for the local client:
     microscope = Microscope(connection="socket", host="127.0.0.1", port=39000)
     ...
     microscope.disconnect()
+
+Logging
+-------
+
+Diagnostic messages are saved to ``socket_client.log`` and ``socket_server.log`` as well as printed to the console. Log files are rotated weekly at midnight.

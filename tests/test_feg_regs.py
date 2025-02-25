@@ -38,7 +38,11 @@ def main():
     print("\tC3 aperture", opts[8])
     print("\tObj aperture", opts[9])
     print("\tSA aperture", opts[10])
-    print("\tCondenser stigmator", opts[11])
+
+    try:
+        print("\tCondenser stigmator", opts[11])
+    except IndexError:
+        pass
 
     feg = obj.GetRegisterList()[0]
     settings = obj.GetRegisterValues(feg[0])

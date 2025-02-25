@@ -1,4 +1,5 @@
 from typing import Dict
+from collections import OrderedDict
 import logging
 
 from ..utils.misc import RequestBody
@@ -15,7 +16,7 @@ class Projection:
         self.__client = client
         self.__id = "tem.Projection"
         self.__err_msg = "Microscope is not in diffraction mode"
-        self.__magnifications = {}
+        self.__magnifications = OrderedDict()
         self.__find_magnifications()
 
     def __find_magnifications(self) -> None:

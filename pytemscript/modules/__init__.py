@@ -1,7 +1,6 @@
 from .acquisition import Acquisition
 from .apertures import Apertures
 from .autoloader import Autoloader
-from .detectors import Detectors
 from .energyfilter import EnergyFilter
 from .gun import Gun
 from .illumination import Illumination
