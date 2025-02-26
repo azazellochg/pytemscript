@@ -129,6 +129,8 @@ def main(argv: Optional[List] = None) -> None:
     cameras = microscope.acquisition.cameras
     print("Available cameras:\n", cameras)
 
+    if "BM-Orius" in cameras:
+        camera_acquire(microscope, "BM-Orius", exp_time=0.25, binning=1)
     if "BM-Ceta" in cameras:
         camera_acquire(microscope, "BM-Ceta", exp_time=1, binning=2)
     if "BM-Falcon" in cameras:
@@ -140,8 +142,8 @@ def main(argv: Optional[List] = None) -> None:
     if microscope.stem.is_available:
         microscope.stem.enable()
         detectors = microscope.acquisition.stem_detectors
-        if "BF" in detectors:
-            detector_acquire(microscope, "BF", dwell_time=1e-5, binning=2)
+        for d in detectors:
+            detector_acquire(microscope, d, dwell_time=1e-6, binning=2)
         microscope.stem.disable()
 
 
