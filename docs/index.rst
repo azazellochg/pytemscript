@@ -7,7 +7,7 @@ limited to the functionality of the original scripting interfaces. For detailed 
 about TEM scripting see the documentation accompanying your microscope.
 
 Within the ``pytemscript`` package two implementations for the high level microscope interface are provided:
-one for running scripts directly on the microscope PC and one to run scripts remotely over network (not yet available).
+one for running scripts directly on the microscope PC and one to run scripts remotely over network.
 
 Currently the ``pytemscript`` package requires Python 3.4 or higher. The current plan is to keep the minimum
 supported Python version at 3.4, since this is the latest Python version supporting Windows XP.

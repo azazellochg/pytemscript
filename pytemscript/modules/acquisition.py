@@ -547,7 +547,7 @@ class Acquisition:
         :keyword float contrast: Contrast setting
         :returns: Image object
         """
-        camera_dict = self.__find_camera(cameraName, self.stem_detectors, binning)
+        _ = self.__find_camera(cameraName, self.stem_detectors, binning)
 
         body = RequestBody(attr="tem.Acquisition.Detectors",
                            obj_cls=AcquisitionObj,

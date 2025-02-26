@@ -39,7 +39,8 @@ setup(name='pytemscript',
       keywords='TEM python',
       install_requires=[requirements],
       extras_require={
-          "extra": ["matplotlib", "mypy"]
+          "extra": ["matplotlib", "mypy"],
+          "utapi": ["grpcio", "grpcio-tools", "google-protobuf"]
       },
       entry_points={'console_scripts': [
           'pytemscript-server = pytemscript.server.run:main',
