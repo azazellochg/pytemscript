@@ -8,7 +8,7 @@ from .utils.enums import ProductFamily, CondenserLensSystem
 class Microscope:
     """ Main client interface exposing available methods and properties.
 
-    :param connection: Client connection: direct, grpc, zmq or socket. Defaults to direct.
+    :param connection: Client connection: direct, socket or utapi. Defaults to direct.
     :type connection: str
     :keyword str host: Remote hostname or IP address
     :keyword int port: Remote port number
@@ -38,12 +38,9 @@ class Microscope:
         if connection == "direct":
             from .clients.com_client import COMClient
             self.__client = COMClient(*args, **kwargs)
-        elif connection == 'grpc':
-            from .clients.grpc_client import GRPCClient
-            self.__client = GRPCClient(*args, **kwargs)
-        elif connection == 'zmq':
-            from .clients.zmq_client import ZMQClient
-            self.__client = ZMQClient(*args, **kwargs)
+        elif connection == 'utapi':
+            from .clients.utapi_client import UTAPIClient
+            self.__client = UTAPIClient(*args, **kwargs)
         elif connection == 'socket':
             from .clients.socket_client import SocketClient
             self.__client = SocketClient(*args, **kwargs)

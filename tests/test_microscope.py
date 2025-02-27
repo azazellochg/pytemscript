@@ -384,13 +384,13 @@ def test_general(microscope: Microscope,
 def main(argv: Optional[List] = None) -> None:
     """ Test all aspects of the microscope interface. """
     parser = argparse.ArgumentParser(
-        description="This test can use local or remote client. In the latter case "
+        description="This test can use local or remote client. If using socket client, "
                     "pytemscript-server must be already running",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("-t", "--type", type=str,
-                        choices=["direct", "socket", "zmq", "grpc"],
+                        choices=["direct", "socket", "utapi"],
                         default="direct",
-                        help="Connection type: direct, socket, zmq or grpc")
+                        help="Connection type: direct, socket or utapi")
     parser.add_argument("-p", "--port", type=int, default=39000,
                         help="Specify port on which the server is listening")
     parser.add_argument("--host", type=str, default='127.0.0.1',

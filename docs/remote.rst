@@ -1,50 +1,39 @@
 .. _remote:
 
-Remote server
-=============
+Remote execution
+================
 
-.. important:: Only socket server is currently available!
+Two options are available to execute the API commands remotely:
 
-If remote scripting of the microscope is required, the pytemscript server must run on the microscope PC.
-The server supports different connection methods:
+ * socket-based server and client
+ * UTAPI client
 
- * socket-based (port 39000)
- * ZMQ (port 5555)
- * GRPC (port 50051)
+Socket-based client
+-------------------
 
-If you would like to use ZMQ server, you need to install ZMQ server on the microscope PC and ``pyzmq`` on the client PC (via pip: `py -m pip install pyzmq`).
-
-If you would like to use GRPC server, you need to install it via pip (`py -m pip install grpcio`) on both client and server PC.
+In this mode the pytemscript socket server must run on the microscope PC (Windows).
+By default, it will listen for clients on port 39000.
 
 .. warning::
 
     The server provides no means of security or authorization control itself.
     Thus it is highly recommended to let the server only listen to internal networks or at least route it through a reverse proxy, which implements sufficient security.
 
-Running the server
-------------------
-
-The pytemscript server is started on the microscope PC by the ``pytemscript-server`` command:
+To launch the server, simply run ``pytemscript-server`` command:
 
 .. code-block:: none
 
-    usage: pytemscript-server [-h] [-t {socket,zmq,grpc}] [-p PORT] [--host HOST] [--useLD] [--useTecnaiCCD] [-d]
+    usage: pytemscript-server [-h] [-p PORT] [--host HOST] [--useLD] [--useTecnaiCCD] [-d]
 
     optional arguments:
     -h, --help                      show this help message and exit
-    -t, --type {socket,zmq,grpc}    Server type to use: socket, zmq or grpc (default: socket)
     -p, --port PORT                 Specify port on which the server is listening (default: 39000)
     --host HOST                     Specify host address on which the server is listening (default: 127.0.0.1)
     --useLD                         Connect to LowDose server on microscope PC (limited control only) (default: False)
     --useTecnaiCCD                  Connect to TecnaiCCD plugin on microscope PC that controls Digital Micrograph (may be faster than via TIA / std scripting) (default: False)
     -d, --debug                     Enable debug mode (default: False)
 
-Default connection type is the socket listening on port 39000.
-
-Connecting to the server
-------------------------
-
-The interface is essentially the same as for the local client:
+Then you can connect to the server as shown below:
 
 .. code-block:: python
 
@@ -53,7 +42,33 @@ The interface is essentially the same as for the local client:
     ...
     microscope.disconnect()
 
-Logging
--------
-
 Diagnostic messages are saved to ``socket_client.log`` and ``socket_server.log`` as well as printed to the console. Log files are rotated weekly at midnight.
+
+UTAPI client
+------------
+
+.. warning:: Under development
+
+TFS is actively developing new (licensed) UTAPI interface that is aimed to eventually replace both standard and
+advanced scripting. It is only available on microscopes operating Windows 10. To verify,
+you can search for ``utapi_server.exe`` in the Task Manager. The server is listening for clients on port
+**46699**. Under the hood UTAPI utilizes gRPC (Google Remote Procedure Calls) framework that uses protocol
+buffers for communication.
+
+Here we provide a Python client that converts API commands to UTAPI calls.
+The client requires extra dependencies to be installed:
+
+.. code-block:: python
+
+    py -m pip install grpcio grpcio-tools google-protobuf
+
+You can connect using UTAPI client as shown below:
+
+.. code-block:: python
+
+    from pytemscript.microscope import Microscope
+    microscope = Microscope(connection="utapi", host="192.168.0.1")
+    ...
+    microscope.disconnect()
+
+Diagnostic messages are saved to ``utapi_client.log`` as well as printed to the console. Log files are rotated weekly at midnight.

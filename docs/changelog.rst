@@ -25,7 +25,6 @@ Version 3.0
 * TODO:
 
     - UTAPI support
-    - support for GRPC and ZMQ clients
 
 Version 2.0.0
 ^^^^^^^^^^^^^
