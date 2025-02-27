@@ -31,7 +31,7 @@ Two acquisition functions: :meth:`~pytemscript.modules.Acquisition.acquire_tem_i
 that has the following methods and properties:
 
 .. autoclass:: pytemscript.modules.Image
-    :members: width, height, bit_depth, pixel_type, data, save, name, metadata
+    :members: data, save, name, metadata
 
 Vectors
 -------

@@ -45,7 +45,7 @@ if sys.version_info < (3, 5):
           ],
           extras_require={
               "extra": ["matplotlib", "mypy"],
-              "utapi": ["grpcio", "grpcio-tools", "google-protobuf"]
+              "utapi": ["grpcio", "grpcio-tools", "protobuf"]
           },
           entry_points={'console_scripts': [
               'pytemscript-server = pytemscript.server.run:main',
@@ -85,7 +85,7 @@ else:
           install_requires=[requirements],
           extras_require={
               "extra": ["matplotlib", "mypy"],
-              "utapi": ["grpcio", "grpcio-tools", "google-protobuf"]
+              "utapi": ["grpcio", "grpcio-tools", "protobuf"]
           },
           entry_points={'console_scripts': [
               'pytemscript-server = pytemscript.server.run:main',

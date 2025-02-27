@@ -50,7 +50,7 @@ UTAPI client
 .. warning:: Under development
 
 TFS is actively developing new (licensed) UTAPI interface that is aimed to eventually replace both standard and
-advanced scripting. It is only available on microscopes operating Windows 10. To verify,
+advanced scripting. It is only available for TEM server version 7.18 and newer. To verify,
 you can search for ``utapi_server.exe`` in the Task Manager. The server is listening for clients on port
 **46699**. Under the hood UTAPI utilizes gRPC (Google Remote Procedure Calls) framework that uses protocol
 buffers for communication.
@@ -60,7 +60,7 @@ The client requires extra dependencies to be installed:
 
 .. code-block:: python
 
-    py -m pip install grpcio grpcio-tools google-protobuf
+    py -m pip install grpcio grpcio-tools protobuf
 
 You can connect using UTAPI client as shown below:
 

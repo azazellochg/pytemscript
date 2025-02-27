@@ -109,7 +109,7 @@ def convert_image(obj,
                   bit_depth: Optional[int] = None,
                   advanced: Optional[bool] = False,
                   use_safearray: Optional[bool] = True):
-    """ Serialize COM image object into an uint16 Image.
+    """ Convert COM image object into an uint16 Image.
 
     :param obj: COM object
     :param name: optional name for the image
