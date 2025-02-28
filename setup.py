@@ -50,7 +50,8 @@ if sys.version_info < (3, 5):
           entry_points={'console_scripts': [
               'pytemscript-server = pytemscript.server.run:main',
               'pytemscript-test = tests.test_microscope:main',
-              'pytemscript-test-acquisition = tests.test_acquisition:main'
+              'pytemscript-test-acquisition = tests.test_acquisition:main',
+              'pytemscript-test-events = tests.test_events:main'
           ]},
           url="https://github.com/azazellochg/pytemscript",
     )
@@ -90,7 +91,8 @@ else:
           entry_points={'console_scripts': [
               'pytemscript-server = pytemscript.server.run:main',
               'pytemscript-test = tests.test_microscope:main',
-              'pytemscript-test-acquisition = tests.test_acquisition:main'
+              'pytemscript-test-acquisition = tests.test_acquisition:main',
+              'pytemscript-test-events = tests.test_events:main'
           ]},
           url="https://github.com/azazellochg/pytemscript",
           project_urls={
