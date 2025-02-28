@@ -96,7 +96,7 @@ Relative to TEM V1.9 standard scripting adapter:
     * Projection
     * Stage
     * TemperatureControl
-    * UserButtons (only local client)
+    * UserButtons (with event handling)
     * Vacuum
 
 Relative to TEM V1.2 advanced scripting adapter:

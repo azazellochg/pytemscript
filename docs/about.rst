@@ -16,22 +16,27 @@ Python wrapper to the COM interface.
 Microscope class
 ----------------
 
-The :ref:`microscope` class provides the main interface to the microscope.
+The :ref:`microscope` class provides the main interface to the microscope. It can be used to connect and operate the instrument directly or over the network.
+
+Events
+------
+
+You can receive events from user buttons when using the local client on the microscope PC. See :ref:`events` page for details.
 
 Enumerations
 ------------
 
-Many of the attributes return values from enumerations. The complete list can be found in the :ref:`enumerations` section.
+Many of the attributes set and return values from enumerations. The complete list can be found on the :ref:`enumerations` page.
 
 Images
 ------
 
-Two acquisition functions: :meth:`~pytemscript.modules.Acquisition.acquire_tem_image` and
+Two main acquisition functions: :meth:`~pytemscript.modules.Acquisition.acquire_tem_image` and
 :meth:`~pytemscript.modules.Acquisition.acquire_stem_image` return an :class:`Image` object
 that has the following methods and properties:
 
 .. autoclass:: pytemscript.modules.Image
-    :members: data, save, name, metadata
+    :members: save
 
 Vectors
 -------

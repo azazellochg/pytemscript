@@ -11,7 +11,7 @@ from .projection import Projection
 from .stage import Stage
 from .stem import Stem
 from .temperature import Temperature
-from .userbuttons import UserButtons
+from .userbuttons import UserButtons, ButtonHandler
 from .userdoor import UserDoor
 from .extras import Image, Vector
 from .vacuum import Vacuum

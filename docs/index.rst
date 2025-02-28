@@ -27,6 +27,7 @@ The documentation can be found at https://pytemscript.readthedocs.io
    self
    about
    microscope
+   events
    enumerations
    remote
    changelog
@@ -93,7 +94,7 @@ Relative to TEM V1.9 standard scripting adapter:
     * Projection
     * Stage
     * TemperatureControl
-    * UserButtons (no event handling)
+    * UserButtons (with event handling)
     * Vacuum
 
 Relative to TEM V1.2 advanced scripting adapter:
