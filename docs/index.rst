@@ -7,7 +7,7 @@ limited to the functionality of the original scripting interfaces. For detailed 
 about TEM scripting see the documentation accompanying your microscope.
 
 Within the ``pytemscript`` package two implementations for the high level microscope interface are provided:
-one for running scripts directly on the microscope PC and one to run scripts remotely over network (not yet available).
+one for running scripts directly on the microscope PC and one to run scripts remotely over network.
 
 Currently the ``pytemscript`` package requires Python 3.4 or higher. The current plan is to keep the minimum
 supported Python version at 3.4, since this is the latest Python version supporting Windows XP.
@@ -27,6 +27,7 @@ The documentation can be found at https://pytemscript.readthedocs.io
    self
    about
    microscope
+   events
    enumerations
    remote
    changelog
@@ -34,14 +35,16 @@ The documentation can be found at https://pytemscript.readthedocs.io
 Installation
 ------------
 
-.. warning:: The project is still in development phase, no beta version has been released yet. Installing from sources is recommended.
-
 Requirements:
 
     * python >= 3.4
     * comtypes
     * mrcfile
     * numpy
+
+- *Windows XP*: latest available Python is 3.4. Check out requirements-3.4.txt file for help on specific libraries versions.
+- *Windows 7*: latest available Python is 3.8
+
 
 Installation from PyPI on Windows
 #################################
@@ -91,7 +94,7 @@ Relative to TEM V1.9 standard scripting adapter:
     * Projection
     * Stage
     * TemperatureControl
-    * UserButtons (no event handling)
+    * UserButtons (with event handling)
     * Vacuum
 
 Relative to TEM V1.2 advanced scripting adapter:

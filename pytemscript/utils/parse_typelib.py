@@ -30,7 +30,7 @@ def list_typelib_details(prog_id: str):
     typeinfo = com_obj.GetTypeInfo(0)
     typelib = typeinfo.GetContainingTypeLib()[0]
     lib_attr = typelib.GetLibAttr()
-    typelib_version = ".".join([lib_attr.wMajorVerNum, lib_attr.wMinorVerNum])
+    typelib_version = "%d.%d" % (lib_attr.wMajorVerNum, lib_attr.wMinorVerNum)
 
     enums = constants.enums
     interfaces = {}

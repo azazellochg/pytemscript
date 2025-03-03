@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from typing import Dict
 
 from ..utils.enums import VacuumStatus, GaugeStatus, GaugePressureLevel
@@ -10,7 +11,7 @@ class GaugesObj(SpecialObj):
 
     def show(self) -> Dict:
         """ Returns a dict with vacuum gauges information. """
-        gauges = {}
+        gauges = OrderedDict()
         for g in self.com_object:
             # g.Read()
             if g.Status == GaugeStatus.UNDEFINED:

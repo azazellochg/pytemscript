@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pytemscript"
+dynamic = ["version"]
+authors = [
+{name = "Grigory Sharov", email = "gsharov@mrc-lmb.cam.ac.uk"},
+{name = "Tore Niermann", email = "tore.niermann@tu-berlin.de"}
+]
+description = "TEM Scripting adapter for FEI/TFS microscopes"
+readme = {file = "README.rst", content-type = "text/x-rst"}
+requires-python = ">=3.8"
+keywords = ["TEM python"]
+classifiers=[
+              'Development Status :: 4 - Beta',
+              'Intended Audience :: Science/Research',
+              'Intended Audience :: Developers',
+              'Operating System :: OS Independent',
+              'Programming Language :: Python :: 3',
+              'Topic :: Scientific/Engineering',
+              'Topic :: Software Development :: Libraries',
+              'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
+              'Operating System :: OS Independent'
+]
+license = {file = "LICENSE"}
+dependencies = [
+"comtypes>=1.1.13; platform_system == 'Windows'",
+"mrcfile",
+"numpy",
+"pillow"
+]
+
+[project.optional-dependencies]
+extra = ["matplotlib", "mypy"]
+utapi = ["grpcio", "grpcio-tools", "protobuf"]
+
+[project.urls]
+Homepage = "https://github.com/azazellochg/pytemscript"
+Issues = "https://github.com/azazellochg/pytemscript/issues"
+
+[project.scripts]
+pytemscript-server = "pytemscript.server.run:main"
+pytemscript-test = "tests.test_microscope:main"
+pytemscript-test-acquisition = "tests.test_acquisition:main"
+
+[tool.setuptools.dynamic]
+version = {attr = "pytemscript.__version__"}

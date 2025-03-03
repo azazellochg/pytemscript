@@ -1,6 +1,13 @@
 import argparse
 from typing import Optional, List
 from time import sleep
+import sys
+
+if sys.version_info >= (3, 5):
+    from math import isclose
+else:
+    def isclose(a, b, rel_tol=1e-09, abs_tol=0.0):
+        return abs(a-b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
 
 from pytemscript.microscope import Microscope
 from pytemscript.modules import Vector
@@ -21,7 +28,7 @@ def test_projection(microscope: Microscope,
 
     orig_def = projection.defocus
     projection.defocus = -3.0
-    assert projection.defocus == -3.0
+    assert isclose(projection.defocus, -3.0, abs_tol=1e-5)
     projection.defocus = orig_def
 
     print("\tMagnification:", projection.magnification)
@@ -67,8 +74,11 @@ def test_acquisition(microscope: Microscope) -> None:
     """
     print("\nTesting acquisition...")
     acquisition = microscope.acquisition
-    cameras = microscope.detectors.cameras
+    cameras = acquisition.cameras
     stem = microscope.stem
+
+    print("\tFilm settings:", acquisition.film_settings)
+    print("\tCameras:", cameras)
 
     for cam_name in cameras:
         image = acquisition.acquire_tem_image(cam_name,
@@ -77,11 +87,12 @@ def test_acquisition(microscope: Microscope) -> None:
                                               binning=2)
         if image is not None:
             print("Metadata: ", image.metadata)
-            image.save(fn=cam_name+".mrc", overwrite=True)
+            image.save(fn="test_image_%s.mrc" % cam_name, overwrite=True)
 
     if stem.is_available:
         stem.enable()
-        detectors = microscope.detectors.stem_detectors
+        detectors = acquisition.stem_detectors
+        print("\tSTEM detectors:", detectors)
 
         for det in detectors:
             image = acquisition.acquire_stem_image(det,
@@ -90,7 +101,7 @@ def test_acquisition(microscope: Microscope) -> None:
                                                    binning=2)
             if image is not None:
                 print("Metadata: ", image.metadata)
-                image.save(fn=det+".mrc", overwrite=True)
+                image.save(fn="test_image_%s.mrc" % det, overwrite=True)
 
         stem.disable()
 
@@ -198,22 +209,6 @@ def test_stage(microscope: Microscope,
     print("\tPosition:", stage.position)
 
 
-def test_detectors(microscope: Microscope) -> None:
-    """ Test all cameras / detectors.
-    :param microscope: Microscope object
-    """
-    print("\nTesting cameras...")
-    dets = microscope.detectors
-    print("\tFilm settings:", dets.film_settings)
-    print("\tCameras:", dets.cameras)
-
-    stem = microscope.stem
-    if stem.is_available:
-        stem.enable()
-        print("\tSTEM detectors:", dets.stem_detectors)
-        stem.disable()
-
-
 def test_optics(microscope: Microscope) -> None:
     """ Test optics module attrs.
     :param microscope: Microscope object
@@ -248,7 +243,7 @@ def test_illumination(microscope: Microscope) -> None:
 
     orig_int = illum.intensity
     illum.intensity = 0.44
-    assert illum.intensity == 0.44
+    assert isclose(illum.intensity, 0.44, abs_tol=1e-5)
     illum.intensity = orig_int
 
     print("\tIntensityZoomEnabled:", illum.intensity_zoom)
@@ -272,7 +267,7 @@ def test_illumination(microscope: Microscope) -> None:
 
         orig_illum = illum.illuminated_area
         illum.illuminated_area = 1.0
-        assert illum.illuminated_area == 1.0
+        assert isclose(illum.illuminated_area, 1.0, abs_tol=1e-5)
         illum.illuminated_area = orig_illum
 
 
@@ -389,13 +384,13 @@ def test_general(microscope: Microscope,
 def main(argv: Optional[List] = None) -> None:
     """ Test all aspects of the microscope interface. """
     parser = argparse.ArgumentParser(
-        description="This test can use local or remote client. In the latter case "
+        description="This test can use local or remote client. If using socket client, "
                     "pytemscript-server must be already running",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("-t", "--type", type=str,
-                        choices=["direct", "socket", "zmq", "grpc"],
+                        choices=["direct", "socket", "utapi"],
                         default="direct",
-                        help="Connection type: direct, socket, zmq or grpc")
+                        help="Connection type: direct, socket or utapi")
     parser.add_argument("-p", "--port", type=int, default=39000,
                         help="Specify port on which the server is listening")
     parser.add_argument("--host", type=str, default='127.0.0.1',
@@ -412,7 +407,6 @@ def main(argv: Optional[List] = None) -> None:
 
     full_test = True
     test_projection(microscope, has_eftem=False)
-    test_detectors(microscope)
     test_vacuum(microscope, buffer_cycle=full_test)
     test_autoloader(microscope, check_loading=full_test, slot=1)
     test_temperature(microscope, force_refill=False)
