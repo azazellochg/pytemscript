@@ -1,4 +1,4 @@
-from typing import Optional, Dict, Tuple, Union
+from typing import Optional, Dict, Tuple, Union, List
 from datetime import datetime
 import math
 import logging
@@ -123,7 +123,15 @@ class Vector:
 
 
 class Image:
-    """ Acquired image basic object. """
+    """ Acquired image basic object.
+
+    :param data: int16 numpy array
+    :type data: numpy.ndarray
+    :param name: name of the image
+    :type name: str
+    :param metadata: image metadata
+    :type metadata: dict
+    """
     def __init__(self,
                  data: np.ndarray,  # int16
                  name: str,
@@ -181,6 +189,8 @@ class Image:
              fn: Union[Path, str],
              overwrite: bool = False) -> None:
         """ Save acquired image to a file as int16.
+        Supported formats: mrc, tiff, tif, png.
+        To save in non-mrc format you will need pillow package installed.
 
         :param fn: File path
         :param overwrite: Overwrite existing file

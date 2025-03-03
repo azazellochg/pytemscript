@@ -63,6 +63,7 @@ class COMBase:
             if self.tecnai_ccd is None:
                 self.tecnai_ccd = self._createCOMObject(SCRIPTING_TECNAI_CCD2)
             import comtypes.gen.TECNAICCDLib
+            self.tia = self._createCOMObject(SCRIPTING_TIA)
 
         if self.tem is None:
             raise RuntimeError("Failed to create COM object.")
@@ -124,6 +125,11 @@ class COMClient(BasicClient):
     def has_ccd_iface(self) -> bool:
         return self._scope.tecnai_ccd is not None
 
+    @property
+    @lru_cache(maxsize=1)
+    def has_tia_iface(self) -> bool:
+        return self._scope.tia is not None
+
     def _get(self, attrname):
         return rgetattr(self._scope, attrname)
 
@@ -163,7 +169,10 @@ class COMClient(BasicClient):
         if obj_cls is None or obj_method is None:
             raise AttributeError("obj_class and obj_method must be specified")
 
-        com_obj = rgetattr(self._scope, attrname)
+        if attrname is None:  # plugin case
+            com_obj = self._scope
+        else:
+            com_obj = rgetattr(self._scope, attrname)
         obj_instance = obj_cls(com_obj)
         method = getattr(obj_instance, obj_method)
 

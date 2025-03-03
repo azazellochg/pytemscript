@@ -107,6 +107,7 @@ def convert_image(obj,
                   width: Optional[int] = None,
                   height: Optional[int] = None,
                   bit_depth: Optional[int] = None,
+                  pixel_size: Optional[float] = None,
                   advanced: Optional[bool] = False,
                   use_safearray: Optional[bool] = True):
     """ Convert COM image object into an uint16 Image.
@@ -116,6 +117,7 @@ def convert_image(obj,
     :param width: width of the image
     :param height: height of the image
     :param bit_depth: bit depth of the image
+    :param pixel_size: pixel size of the image
     :param advanced: advanced scripting flag
     :param use_safearray: use safearray method
     """
@@ -136,7 +138,9 @@ def convert_image(obj,
         "bit_depth": int(bit_depth or (obj.BitDepth if advanced else obj.Depth)),
         "pixel_type": ImagePixelType(obj.PixelType).name if advanced else ImagePixelType.SIGNED_INT.name,
     }
-
+    if pixel_size is not None:
+        metadata["PixelSize.Width"] = pixel_size
+        metadata["PixelSize.Height"] = pixel_size
     if advanced:
         metadata.update({item.Key: item.ValueAsString for item in obj.Metadata})
     if "BitsPerPixel" in metadata:
@@ -148,7 +152,7 @@ def convert_image(obj,
 class RequestBody:
     """ Dataclass-like structure of a request passed to the client. """
     def __init__(self,
-                 attr: str = "",
+                 attr: Optional[str] = None,
                  validator: Optional[Any] = None,
                  **kwargs) -> None:
         self.attr = attr

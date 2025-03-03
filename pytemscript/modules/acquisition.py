@@ -410,7 +410,7 @@ class Acquisition:
             logging.info("Using TecnaiCCD plugin for Gatan camera")
             from ..plugins.tecnai_ccd_plugin import TecnaiCCDPlugin
 
-            body = RequestBody(attr="tecnai_ccd",
+            body = RequestBody(attr=None,
                                obj_cls=TecnaiCCDPlugin,
                                obj_method="acquire_image",
                                cameraName=cameraName,
