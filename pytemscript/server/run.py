@@ -17,10 +17,6 @@ def main(argv: Optional[List] = None) -> None:
     parser = argparse.ArgumentParser(
         description="This server should be started on the microscope PC",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("-t", "--type", type=str,
-                        choices=["socket", "zmq", "grpc"],
-                        default="socket",
-                        help="Server type to use: socket, zmq or grpc")
     parser.add_argument("-p", "--port", type=int,
                         default=39000,
                         help="Specify port on which the server is listening")
@@ -41,18 +37,7 @@ def main(argv: Optional[List] = None) -> None:
     if platform.system() != "Windows":
         raise NotImplementedError("This server should be started on the microscope PC (Windows only)")
 
-    if args.type == 'grpc':
-        from .grpc_server import serve
-        server = serve(args)
-        server.start()
-        server.wait_for_termination()
-    elif args.type == 'zmq':
-        from .zmq_server import ZMQServer
-        server = ZMQServer(args)
-        signal.signal(signal.SIGINT, handle_signal(server))
-        server.start()
-    elif args.type == 'socket':
-        from .socket_server import SocketServer
-        server = SocketServer(args)
-        signal.signal(signal.SIGINT, handle_signal(server))
-        server.start()
+    from .socket_server import SocketServer
+    server = SocketServer(args)
+    signal.signal(signal.SIGINT, handle_signal(server))
+    server.start()

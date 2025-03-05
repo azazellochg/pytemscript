@@ -9,7 +9,6 @@ Below are the main class properties, each represented by a separate class:
     * acquisition = :meth:`~pytemscript.modules.Acquisition`
     * apertures = :meth:`~pytemscript.modules.Apertures`
     * autoloader = :meth:`~pytemscript.modules.Autoloader`
-    * detectors = :meth:`~pytemscript.modules.Detectors`
     * energy_filter = :meth:`~pytemscript.modules.EnergyFilter`
     * gun = :meth:`~pytemscript.modules.Gun`
     * optics = :meth:`~pytemscript.modules.Optics`
@@ -35,4 +34,4 @@ Documentation
 -------------
 
 .. automodule:: pytemscript.modules
-    :members: Acquisition, Apertures, Autoloader, Detectors, EnergyFilter, Gun, Optics, Illumination, Projection, PiezoStage, Stage, Stem, Temperature, UserButtons, UserDoor, Vacuum
+    :members: Acquisition, Apertures, Autoloader, EnergyFilter, Gun, Optics, Illumination, Projection, PiezoStage, Stage, Stem, Temperature, UserButtons, UserDoor, Vacuum

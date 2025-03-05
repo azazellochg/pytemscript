@@ -1,9 +1,11 @@
 from typing import Optional, Dict, Tuple, Union
-import os.path
+from datetime import datetime
 import math
 import logging
 from pathlib import Path
 import numpy as np
+from functools import lru_cache
+from collections import OrderedDict
 
 try:
     import PIL.Image as PilImage
@@ -37,7 +39,7 @@ class Vector:
     """
     __slots__ = ("x", "y", "__min", "__max")
 
-    def __init__(self, x: float, y: float):
+    def __init__(self, x: float, y: float) -> None:
         self.x = x
         self.y = y
         self.__min = None
@@ -121,16 +123,26 @@ class Vector:
 
 
 class Image:
-    """ Acquired image basic object. """
+    """ Acquired image basic object.
+
+    :param data: int16 numpy array
+    :type data: numpy.ndarray
+    :param name: name of the image
+    :type name: str
+    :param metadata: image metadata
+    :type metadata: dict
+    """
     def __init__(self,
-                 data: np.ndarray,
+                 data: np.ndarray,  # int16
                  name: str,
-                 metadata: Dict):
+                 metadata: Dict) -> None:
         self.data = data
         self.name = name
         self.metadata = metadata
+        self.timestamp = datetime.now()
 
-    def __create_tiff_tags(self) -> PilTiff.ImageFileDirectory_v2:
+    @lru_cache(maxsize=1)
+    def __create_tiff_tags(self):
         """Create TIFF tags from metadata. """
         tiff_tags = PilTiff.ImageFileDirectory_v2()
 
@@ -142,27 +154,34 @@ class Image:
         tiff_tags[PilTiff.RESOLUTION_UNIT] = 3  # cm
         tiff_tags[PilTiff.IMAGEDESCRIPTION] = self.name
 
+        timestamp = metadata.get("TimeStamp")
+        if timestamp is not None:
+            timestamp = int(timestamp[:-6])  # discard microseconds
+            dt = datetime.fromtimestamp(timestamp)
+            tiff_tags[PilTiff.DATE_TIME] = dt.strftime("%Y:%m:%d %H:%M:%S")
+        else:
+            tiff_tags[PilTiff.DATE_TIME] = self.timestamp.strftime("%Y:%m:%d %H:%M:%S")
+
         # Detector Name
         detector_name = metadata.get("DetectorName")
         if detector_name:
             tiff_tags[271] = detector_name  # Tag 271 (MAKE)
 
         # Pixel Size (Resolution)
-        pixel_width = metadata.get("PixelSize.Width")  # angstroms
+        pixel_width = metadata.get("PixelSize.Width")  # meters
         pixel_height = metadata.get("PixelSize.Height")
         if pixel_width and pixel_height:
-            scale = 1e8  # convert to cm
-            tiff_tags[PilTiff.X_RESOLUTION] = (pixel_width * scale, 1)
-            tiff_tags[PilTiff.Y_RESOLUTION] = (pixel_height * scale, 1)
+            # convert to dots per cm
+            dpcm_width = 1 / (float(pixel_width) * 100)
+            dpcm_height = 1 / (float(pixel_height) * 100)
+
+            tiff_tags[PilTiff.X_RESOLUTION] = (int(dpcm_width), 1)
+            tiff_tags[PilTiff.Y_RESOLUTION] = (int(dpcm_height), 1)
 
         # Bit Depth & Color Interpretation
         bit_depth = metadata.get("bit_depth", 16)
-        if bit_depth == 24:
-            tiff_tags[PilTiff.BITSPERSAMPLE] = (8, 8, 8)  # 8 bits per channel
-            tiff_tags[PilTiff.PHOTOMETRIC_INTERPRETATION] = 2  # RGB
-        else:
-            tiff_tags[PilTiff.BITSPERSAMPLE] = (bit_depth,)
-            tiff_tags[PilTiff.PHOTOMETRIC_INTERPRETATION] = 1  # BlackIsZero
+        tiff_tags[PilTiff.BITSPERSAMPLE] = (bit_depth,)
+        tiff_tags[PilTiff.PHOTOMETRIC_INTERPRETATION] = 1  # BlackIsZero
 
         return tiff_tags
 
@@ -170,6 +189,8 @@ class Image:
              fn: Union[Path, str],
              overwrite: bool = False) -> None:
         """ Save acquired image to a file as int16.
+        Supported formats: mrc, tiff, tif, png.
+        To save in non-mrc format you will need pillow package installed.
 
         :param fn: File path
         :param overwrite: Overwrite existing file
@@ -184,21 +205,21 @@ class Image:
             with mrcfile.new(fn, overwrite=overwrite) as mrc:
                 if 'PixelSize.Width' in self.metadata:
                     mrc.voxel_size = float(self.metadata['PixelSize.Width']) * 1e10
-                mrc.set_data(self.data.astype("int16"))
+                mrc.set_data(self.data)
 
         elif ext in [".tiff", ".tif", ".png"]:
-            if os.path.exists(fn) and not overwrite:
-                raise FileExistsError("File %s already exists, use overwrite flag" % os.path.abspath(fn))
+            if fn.exists() and not overwrite:
+                raise FileExistsError("File %s already exists, use overwrite flag" % fn.resolve())
 
             logging.getLogger("PIL").setLevel(logging.INFO)
-            pil_image = PilImage.fromarray(self.data)
+            pil_image = PilImage.fromarray(self.data, mode='I;16')
             tiff_tags = self.__create_tiff_tags() if ext != ".png" else None
             pil_image.save(fn, format=None, tiffinfo=tiff_tags)
 
         else:
             raise NotImplementedError("Unsupported file format: %s" % ext)
 
-        logging.info("File saved: %s", os.path.abspath(fn))
+        logging.info("File saved: %s", fn.resolve())
 
 
 class SpecialObj:
@@ -236,7 +257,7 @@ class StageObj(SpecialObj):
         If retrieving velocity, return the speed of the piezo stage instead.
         x,y,z are in um/s and a,b in deg/s
         """
-        pos = {key: getattr(self.com_object, key.upper()) * 1e6 for key in 'xyz'}
+        pos = OrderedDict((key, getattr(self.com_object, key.upper()) * 1e6) for key in 'xyz')
         if a:
             pos['a'] = math.degrees(self.com_object.A)
             pos['b'] = None
@@ -247,7 +268,7 @@ class StageObj(SpecialObj):
 
     def limits(self) -> Dict:
         """ Returns a dict with stage move limits. """
-        limits = {}
+        limits = OrderedDict()
         for axis in 'xyzab':
             data = self.com_object.AxisData(StageAxes[axis.upper()].value)
             limits[axis] = {
