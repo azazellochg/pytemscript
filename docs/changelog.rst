@@ -13,6 +13,7 @@ Version 3.0
 * Initial support for remote execution (socket-based server and client)
 * New utility object: Vector
 * Validation of returned data types
+* Added button events handling
 * Development and testing are performed on:
 
     - Tecnai Spirit (WinXP, Python 3.4)
@@ -22,9 +23,12 @@ Version 3.0
     - Tundra (Win10, Python 3.11)
     - Titan Krios G1 (Win7, Python 3.6), G2, G3i (Win10, Python 3.8), G4 (Win10, Python 3.8)
 
-* TODO:
+* Future plans:
 
-    - UTAPI support
+    - UTAPI client
+    - SerialEM client to use with FEI-SEMserver?
+    - Acquisition series
+    -
 
 Version 2.0.0
 ^^^^^^^^^^^^^
@@ -79,7 +83,7 @@ Version 1.0.3
 Version 1.0.2
 ^^^^^^^^^^^^^
 
-* Renamed project to pytemscript.
+* Renamed project to temscript.
 * Created documentation.
 
 Version 1.0.1

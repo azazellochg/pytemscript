@@ -6,7 +6,7 @@ from pytemscript.modules import ButtonHandler
 
 
 def main() -> None:
-    """ Testing acquisition functions. """
+    """ Testing button events handling. """
 
     microscope = Microscope()
     acquisition = microscope.acquisition
@@ -22,9 +22,9 @@ def main() -> None:
         else:
             raise RuntimeError(f"Unknown screen position: {current_pos}")
 
-        print("Toggling screen lift..")
         acquisition.screen = new_pos
-        print("OK\nNew screen position:", acquisition.screen)
+        print("New screen position:", new_pos)
+        assert new_pos == acquisition.screen
 
     event_handler = ButtonHandler(buttons.L1,
                                   lambda: screen_toggle(),
