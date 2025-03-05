@@ -1,4 +1,4 @@
-from typing import Optional, Dict, Tuple, Union, List
+from typing import Optional, Dict, Tuple, Union
 from datetime import datetime
 import math
 import logging

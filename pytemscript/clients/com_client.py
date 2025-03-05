@@ -36,7 +36,7 @@ class COMBase:
     def _createCOMObject(progId: str):
         """ Connect to a COM interface. """
         try:
-            obj = comtypes.client.CreateObject(progId)
+            obj = comtypes.client.CreateObject(progId, clsctx=com_module.CLSCTX_ALL)
             logging.info("Connected to %s", progId)
             return obj
         except Exception as e:
@@ -46,7 +46,8 @@ class COMBase:
     def _initialize(self, useLD: bool, useTecnaiCCD: bool):
         """ Wrapper to create interfaces as requested. """
         try:
-            com_module.CoInitializeEx(com_module.COINIT_MULTITHREADED)
+            flags = com_module.COINIT_APARTMENTTHREADED | com_module.COINIT_DISABLE_OLE1DDE
+            com_module.CoInitializeEx(flags)
         except OSError:
             com_module.CoInitialize()
 
