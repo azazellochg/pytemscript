@@ -175,8 +175,8 @@ class Image:
             dpcm_width = 1 / (float(pixel_width) * 100)
             dpcm_height = 1 / (float(pixel_height) * 100)
 
-            tiff_tags[PilTiff.X_RESOLUTION] = (int(dpcm_width), 1)
-            tiff_tags[PilTiff.Y_RESOLUTION] = (int(dpcm_height), 1)
+            tiff_tags[PilTiff.X_RESOLUTION] = int(dpcm_width)
+            tiff_tags[PilTiff.Y_RESOLUTION] = int(dpcm_height)
 
         # Bit Depth & Color Interpretation
         bit_depth = metadata.get("bit_depth", 16)

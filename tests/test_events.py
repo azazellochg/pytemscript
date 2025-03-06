@@ -15,16 +15,16 @@ def main() -> None:
 
     def screen_toggle():
         current_pos = acquisition.screen
-        if current_pos == ScreenPosition.UP:
+        if current_pos == ScreenPosition.UP.name:
             new_pos = ScreenPosition.DOWN
-        elif current_pos == ScreenPosition.DOWN:
+        elif current_pos == ScreenPosition.DOWN.name:
             new_pos = ScreenPosition.UP
         else:
-            raise RuntimeError(f"Unknown screen position: {current_pos}")
+            raise RuntimeError("Unknown screen position: %s" % current_pos)
 
         acquisition.screen = new_pos
         print("New screen position:", new_pos)
-        assert new_pos == acquisition.screen
+        assert new_pos.name == acquisition.screen
 
     event_handler = ButtonHandler(buttons.L1,
                                   lambda: screen_toggle(),
