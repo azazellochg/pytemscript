@@ -265,28 +265,41 @@ class AcquisitionObj(SpecialObj):
                 settings.EER = eer
                 if eer and not settings.ElectronCounting:
                     raise RuntimeError("Electron counting should be enabled when using EER")
-                if eer and 'frame_ranges' in kwargs:
-                    raise RuntimeError("No frame ranges allowed when using EER")
+                if eer and 'group_frames' in kwargs:
+                    raise RuntimeError("No frame grouping allowed when using EER")
             else:
                 raise NotImplementedError("This camera does not support EER")
 
-        if 'frame_ranges' in kwargs:  # a list of tuples
-            dfd = settings.DoseFractionsDefinition
-            dfd.Clear()
-            for i in kwargs['frame_ranges']:
-                dfd.AddRange(i[0], i[1])
-
+        if 'save_frames' in kwargs:
+            total = settings.CalculateNumberOfFrames()
             now = datetime.now()
             settings.SubPathPattern = cameraName + "_" + now.strftime("%d%m%Y_%H%M%S")
             output = settings.PathToImageStorage + settings.SubPathPattern
 
-            logging.info("Movie of %s frames will be saved to: %s.mrc",
-                         settings.CalculateNumberOfFrames(), output)
-            if eer is False:
+            if eer is None:
+                group = kwargs.get('group_frames', 1)
+                if group < 1:
+                    raise ValueError("Frame group size must be at least 1")
+                if group > total:
+                    raise ValueError("Frame group size cannot exceed maximum possible "
+                                     "number of frames: %d. Change exposure time." % total)
+
+                dfd = settings.DoseFractionsDefinition
+                dfd.Clear()
+                frame_ranges = [(i, min(i + group, total)) for i in range(0, total-1, group)]
+                for i in frame_ranges:
+                    dfd.AddRange(i[0], i[1])
+
+                logging.info("Movie of %d fractions (%d frames, group=%d) "
+                             "will be saved to: %s.mrc",
+                             len(frame_ranges), total, group, output)
                 logging.info("MRC format can only contain images of up to "
                              "16-bits per pixel, to get true CameraCounts "
                              "multiply pixels by PixelToValueCameraCounts "
                              "factor found in the metadata")
+            else:
+                logging.info("Movie of %d frames will be saved to: %s.eer",
+                             total, output)
 
     def set_stem_presets(self,
                          cameraName: str,
@@ -442,7 +455,8 @@ class Acquisition:
         :keyword bool align_image: Whether frame alignment (i.e. drift correction) is to be applied to the final image as well as the intermediate images. Advanced cameras only.
         :keyword bool electron_counting: Use counting mode. Advanced cameras only.
         :keyword bool eer: Use EER mode. Advanced cameras only.
-        :keyword list frame_ranges: List of tuple frame ranges that define the intermediate images, e.g. [(1,2), (2,3)]. Advanced cameras only.
+        :keyword bool save_frames: Use to save movies. Advanced cameras only.
+        :keyword bool group_frames: Group frames into fractions of this size. Advanced cameras only.
         :keyword float recording: minimum amount of time the acquisition will take, as it will take as much complete frames with the set exposure time as is needed to get to the set RecordingDuration. E.g. if the exposure time is 0.5 and the RecordingDuration is 2.3, there will be an acquisition of 2.5 (5 frames). Advanced cameras only.
         :keyword bool use_tecnaiccd: Use Tecnai CCD plugin to acquire image via Digital Micrograph, only for Gatan cameras. Requires Microscope() initialized with useTecnaiCCD=True
         :returns: Image object

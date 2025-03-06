@@ -137,7 +137,7 @@ def main(argv: Optional[List] = None) -> None:
         camera_acquire(microscope, "BM-Falcon", exp_time=0.5, binning=2)
         camera_acquire(microscope, "BM-Falcon", exp_time=3, binning=1,
                        align_image=True, electron_counting=True,
-                       frame_ranges=[(1, 2), (2, 3)])
+                       save_frames=True, group_frames=2)
 
     if microscope.stem.is_available:
         microscope.stem.enable()
