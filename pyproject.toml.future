@@ -26,7 +26,7 @@ classifiers=[
 ]
 license = {file = "LICENSE"}
 dependencies = [
-"comtypes>=1.1.13; platform_system == 'Windows'",
+"comtypes>=1.2.1; platform_system == 'Windows'",
 "mrcfile",
 "numpy",
 "pillow"
