@@ -32,17 +32,19 @@ jobs:
       with:
         miniconda-version: "latest"
         activate-environment: test
-        channels: conda-forge
+        channels: conda-forge, defaults
         python-version: ${{ matrix.python-version }}
         auto-activate-base: false
-    - name: Test installation
+    - name: Test installation with python 3.4
+      if: ${{ matrix.python-version == '3.4' }}
       run: |
         export LD_LIBRARY_PATH="/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH"
+        conda install -c conda-forge pip=19.1.1
         pip install .
-        export PACKAGE_VERSION=$(python -c "import $FOLDER_WITH_VERSION; print('v'+$FOLDER_WITH_VERSION.__version__);")
-        echo Built $FOLDER_WITH_VERSION version $PACKAGE_VERSION
-    - name: Build
+    - name: Test installation with newer python
       if: ${{ matrix.python-version != '3.4' }}
       run: |
+        export LD_LIBRARY_PATH="/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH"
         pip install build wheel
+        pip install .
         python -m build --no-isolation
