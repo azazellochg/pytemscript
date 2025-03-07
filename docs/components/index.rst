@@ -1,17 +1,45 @@
-About
-=====
+Components
+==========
+
+This section covers the main components of Pytemscript.
 
 The COM interface
 -----------------
 
-The methods and classes represent the COM objects exposed by the *Scripting* interface.
-The interface is described in detail in the scripting manual of your microscope
-(usually in the file ``scripting.pdf`` located in the ``C:\Titan\Tem_help\manual`` or
+As a user, you don't have to deal with the COM objects directly. Below we provide a list of objects exposed
+by the scripting interfaces and implemented in ``pytemscript`` API.
+The scripting manual of your microscope (``scripting.pdf``) can be located in the ``C:\Titan\Tem_help\manual`` or
 ``C:\Tecnai\tem_help\manual`` directories). Advanced scripting manual can be found in
 ``C:\Titan\Scripting\Advanced TEM Scripting User Guide.pdf``.
 
-The manual is your ultimate reference, this documentation will only describe the
-Python wrapper to the COM interface.
+Relative to TEM V1.9 standard scripting adapter:
+
+    * Acquisition
+    * ApertureMechanismCollection (untested)
+    * AutoLoader
+    * BlankerShutter
+    * Camera
+    * Configuration
+    * Gun
+    * Gun1 (untested)
+    * Illumination
+    * InstrumentModeControl
+    * Projection
+    * Stage
+    * TemperatureControl
+    * UserButtons (with event handling)
+    * Vacuum
+
+Relative to TEM V1.2 advanced scripting adapter:
+
+    * Acquisitions
+    * Autoloader
+    * EnergyFilter (untested)
+    * Phaseplate
+    * PiezoStage (untested)
+    * Source (untested)
+    * TemperatureControl
+    * UserDoorHatch (untested)
 
 Microscope class
 ----------------
@@ -26,7 +54,8 @@ You can receive events from user buttons when using the local client on the micr
 Enumerations
 ------------
 
-Many of the attributes set and return values from enumerations. The complete list can be found on the :ref:`enumerations` page.
+Many of the attributes set and return values from enumerations. This minimizes typos when dealing with integer or string static values.
+The complete list can be found on the :ref:`enumerations` page.
 
 Images
 ------

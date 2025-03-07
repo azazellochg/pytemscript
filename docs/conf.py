@@ -55,4 +55,4 @@ pygments_style = 'sphinx'
 # a list of builtin themes.
 #
 html_theme = 'sphinx_rtd_theme'
-html_theme_options = {'sticky_navigation': False}
+html_theme_options = {'sticky_navigation': False, 'collapse_navigation': False, 'navigation_depth': 2}

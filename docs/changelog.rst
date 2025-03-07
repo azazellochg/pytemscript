@@ -26,9 +26,7 @@ Version 3.0
 * Future plans:
 
     - UTAPI client
-    - SerialEM client to use with FEI-SEMserver?
     - Acquisition series
-    -
 
 Version 2.0.0
 ^^^^^^^^^^^^^

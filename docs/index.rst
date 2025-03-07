@@ -1,16 +1,15 @@
 Introduction
 ------------
 
-The ``pytemscript`` package provides a Python wrapper for both standard and advanced scripting
-interfaces of Thermo Fisher Scientific and FEI microscopes. The functionality is
-limited to the functionality of the original scripting interfaces. For detailed information
+``Pytemscript`` is a Python package designed around standard and advanced scripting
+interfaces of Thermo Fisher Scientific and FEI transmisson electron microscopes. The functionality is
+limited to the functionality of the original COM scripting interfaces. For detailed information
 about TEM scripting see the documentation accompanying your microscope.
 
-Within the ``pytemscript`` package two implementations for the high level microscope interface are provided:
-one for running scripts directly on the microscope PC and one to run scripts remotely over network.
-
-Currently the ``pytemscript`` package requires Python 3.4 or higher. The current plan is to keep the minimum
-supported Python version at 3.4, since this is the latest Python version supporting Windows XP.
+The ``pytemscript`` package provides a client API to connect both locally and remotely to the microscope PC.
+Currently, the minimum supported Python version is 3.4, so you should be able to control TEM instruments
+operating Windows XP or newer OS. This allows us to support scripting on a wide range of TEM platforms
+including Tecnai, Talos and Titan.
 
 This is a GPL fork of the original BSD-licensed project: https://github.com/niermann/temscript
 New changes and this whole product is distributed under either version 3 of the GPL License, or
@@ -25,94 +24,15 @@ The documentation can be found at https://pytemscript.readthedocs.io
    :maxdepth: 1
 
    self
-   about
-   microscope
-   events
-   enumerations
+   installation
+   components/index
    remote
    changelog
-
-Installation
-------------
-
-Requirements:
-
-    * python >= 3.4
-    * comtypes
-    * mrcfile
-    * numpy
-
-- *Windows XP*: latest available Python is 3.4. Check out requirements-3.4.txt file for help on specific libraries versions.
-- *Windows 7*: latest available Python is 3.8
-
-
-Installation from PyPI on Windows
-#################################
-
-This assumes you have connection to the internet.
-
-Execute from the command line (assuming you have your Python interpreter in the path):
-
-.. code-block:: python
-
-    py -m pip install --upgrade pip
-    py -m pip install pytemscript
-
-Offline-Installation from wheels file on Windows
-################################################
-
-This assumes you have downloaded the wheels file <downloaded-wheels-file>.whl for temscript and comtypes into the current folder.
-
-Execute from the command line (assuming you have your Python interpreter in the path:
-
-.. code-block:: python
-
-    py -m pip install numpy comtypes mrcfile pytemscript --no-index --find-links .
-
-If you want to install pytemscript from sources (you still need to download comtypes \*.whl):
-
-.. code-block:: python
-
-    py -m pip install numpy comtypes mrcfile --no-index --find-links .
-    py -m pip install -e <source_directory>
-
-Supported functions of the COM interface
-----------------------------------------
-
-Relative to TEM V1.9 standard scripting adapter:
-
-    * Acquisition
-    * ApertureMechanismCollection (untested)
-    * AutoLoader
-    * BlankerShutter
-    * Camera
-    * Configuration
-    * Gun
-    * Gun1 (untested)
-    * Illumination
-    * InstrumentModeControl
-    * Projection
-    * Stage
-    * TemperatureControl
-    * UserButtons (with event handling)
-    * Vacuum
-
-Relative to TEM V1.2 advanced scripting adapter:
-
-    * Acquisitions
-    * Autoloader
-    * EnergyFilter (untested)
-    * Phaseplate
-    * PiezoStage (untested)
-    * Source (untested)
-    * TemperatureControl
-    * UserDoorHatch (untested)
 
 Quick example
 -------------
 
-Execute this on the microscope PC (with ``pytemscript`` package installed) to create an instance of the local
-:class:`Microscope` interface:
+Execute this on the microscope PC to create an instance of the local :ref:`microscope`:
 
 .. code-block:: python
 
@@ -144,16 +64,6 @@ Take an image:
                                                      exp_time=0.5,
                                                      binning=2)
     image.save("img.mrc")
-
-Testing
--------
-
-The package provides a few command-line scripts to test the microscope interface connection and image acquisition:
-
-.. code-block:: python
-
-    pytemscript-test -h
-    pytemscript-test-acquisition
 
 Disclaimer
 ----------
