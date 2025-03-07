@@ -131,6 +131,8 @@ class Image:
     :type name: str
     :param metadata: image metadata
     :type metadata: dict
+    :param timestamp: acquisition timestamp in "%Y:%m:%d %H:%M:%S" format
+    :type timestamp: str
     """
     def __init__(self,
                  data: np.ndarray,  # int16
@@ -139,7 +141,14 @@ class Image:
         self.data = data
         self.name = name
         self.metadata = metadata
-        self.timestamp = datetime.now()
+
+        timestamp = metadata.get("TimeStamp")
+        if timestamp is not None:
+            timestamp = int(timestamp[:-6])  # discard microseconds
+            dt = datetime.fromtimestamp(timestamp)
+            self.timestamp = dt.strftime("%Y:%m:%d %H:%M:%S")
+        else:
+            self.timestamp = datetime.now().strftime("%Y:%m:%d %H:%M:%S")
 
     @lru_cache(maxsize=1)
     def __create_tiff_tags(self):
@@ -153,14 +162,7 @@ class Image:
         tiff_tags[PilTiff.COMPRESSION] = 1  # raw
         tiff_tags[PilTiff.RESOLUTION_UNIT] = 3  # cm
         tiff_tags[PilTiff.IMAGEDESCRIPTION] = self.name
-
-        timestamp = metadata.get("TimeStamp")
-        if timestamp is not None:
-            timestamp = int(timestamp[:-6])  # discard microseconds
-            dt = datetime.fromtimestamp(timestamp)
-            tiff_tags[PilTiff.DATE_TIME] = dt.strftime("%Y:%m:%d %H:%M:%S")
-        else:
-            tiff_tags[PilTiff.DATE_TIME] = self.timestamp.strftime("%Y:%m:%d %H:%M:%S")
+        tiff_tags[PilTiff.DATE_TIME] = self.timestamp
 
         # Detector Name
         detector_name = metadata.get("DetectorName")

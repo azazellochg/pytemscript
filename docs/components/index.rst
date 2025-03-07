@@ -9,7 +9,7 @@ The COM interface
 As a user, you don't have to deal with the COM objects directly. Below we provide a list of objects exposed
 by the scripting interfaces and implemented in ``pytemscript`` API.
 The scripting manual of your microscope (``scripting.pdf``) can be located in the ``C:\Titan\Tem_help\manual`` or
-``C:\Tecnai\tem_help\manual`` directories). Advanced scripting manual can be found in
+``C:\Tecnai\tem_help\manual`` directory. Advanced scripting manual can be found in
 ``C:\Titan\Scripting\Advanced TEM Scripting User Guide.pdf``.
 
 Relative to TEM V1.9 standard scripting adapter:
