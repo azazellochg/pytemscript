@@ -60,7 +60,7 @@ The client requires extra dependencies to be installed:
 
 .. code-block:: python
 
-    py -m pip install grpcio grpcio-tools protobuf
+    py -m pip install pytemscript[utapi]
 
 You can connect using UTAPI client as shown below:
 
