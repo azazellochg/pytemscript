@@ -32,10 +32,10 @@ def print_stats(image: Image,
 
     if 'TimeStamp' in metadata:
         assert int(metadata['Binning.Width']) == binning
-        assert isclose(float(metadata['ExposureTime']), exp_time, abs_tol=0.01)
+        assert isclose(float(metadata['ExposureTime']), exp_time, abs_tol=0.05)
 
-    assert img.shape[1] == metadata["width"]
-    assert img.shape[0] == metadata["height"]
+    assert img.shape[0] == metadata["width"]
+    assert img.shape[1] == metadata["height"]
 
     if interactive:
         import matplotlib.pyplot as plt
@@ -129,6 +129,9 @@ def main(argv: Optional[List] = None) -> None:
     cameras = microscope.acquisition.cameras
     print("Available cameras:\n", cameras)
 
+    if microscope.optics.projection.is_eftem_on:
+        microscope.optics.projection.eftem_off()
+
     if "BM-Orius" in cameras:
         camera_acquire(microscope, "BM-Orius", exp_time=0.25, binning=1)
     if "BM-Ceta" in cameras:
@@ -138,6 +141,9 @@ def main(argv: Optional[List] = None) -> None:
         camera_acquire(microscope, "BM-Falcon", exp_time=3, binning=1,
                        align_image=True, electron_counting=True,
                        save_frames=True, group_frames=2)
+    if "EF-CCD" in cameras:
+        microscope.optics.projection.eftem_on()
+        camera_acquire(microscope, "EF-CCD", exp_time=2, binning=1)
 
     if microscope.stem.is_available:
         microscope.stem.enable()

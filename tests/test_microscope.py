@@ -239,36 +239,45 @@ def test_illumination(microscope: Microscope) -> None:
     assert illum.spotsize == 5
     illum.spotsize = orig_spot
 
-    print("\tIntensity:", illum.intensity)
+    if microscope.condenser_system == CondenserLensSystem.TWO_CONDENSER_LENSES.name:
+        print("\tIntensity:", illum.intensity)
 
-    orig_int = illum.intensity
-    illum.intensity = 0.44
-    assert isclose(illum.intensity, 0.44, abs_tol=1e-5)
-    illum.intensity = orig_int
+        orig_int = illum.intensity
+        illum.intensity = 0.44
+        assert isclose(illum.intensity, 0.44, abs_tol=1e-5)
+        illum.intensity = orig_int
 
-    print("\tIntensityZoomEnabled:", illum.intensity_zoom)
-    print("\tIntensityLimitEnabled:", illum.intensity_limit)
-    print("\tShift:", illum.beam_shift)
+        print("\tIntensityZoomEnabled:", illum.intensity_zoom)
+        print("\tIntensityLimitEnabled:", illum.intensity_limit)
 
-    illum.beam_shift = Vector(0.5, 0.5)
-    illum.beam_shift = Vector(0, 0)
-
-    #print("\tTilt:", illum.beam_tilt)
-    print("\tRotationCenter:", illum.rotation_center)
-    print("\tCondenserStigmator:", illum.condenser_stigmator)
-    #print("\tDFMode:", illum.dark_field)
-
-    if microscope.condenser_system == CondenserLensSystem.THREE_CONDENSER_LENSES:
+    elif microscope.condenser_system == CondenserLensSystem.THREE_CONDENSER_LENSES.name:
         print("\tCondenserMode:", illum.condenser_mode)
+        print("\tIntensityZoomEnabled:", illum.intensity_zoom)
         print("\tIlluminatedArea:", illum.illuminated_area)
+
+        illum.condenser_mode = CondenserMode.PROBE
         print("\tProbeDefocus:", illum.probe_defocus)
         print("\tConvergenceAngle:", illum.convergence_angle)
+
+        illum.condenser_mode = CondenserMode.PARALLEL
         print("\tC3ImageDistanceParallelOffset:", illum.C3ImageDistanceParallelOffset)
 
         orig_illum = illum.illuminated_area
         illum.illuminated_area = 1.0
         assert isclose(illum.illuminated_area, 1.0, abs_tol=1e-5)
         illum.illuminated_area = orig_illum
+
+    print("\tShift:", illum.beam_shift)
+
+    illum.beam_shift = Vector(0.5, 0.5)
+    illum.beam_shift = Vector(0, 0)
+
+    print("\tCondenserStigmator:", illum.condenser_stigmator)
+    print("\tRotationCenter:", illum.rotation_center)
+
+    if microscope.family != ProductFamily.TECNAI.name:
+        print("\tTilt:", illum.beam_tilt)
+        print("\tDFMode:", illum.dark_field)
 
 
 def test_stem(microscope: Microscope) -> None:
@@ -370,7 +379,7 @@ def test_general(microscope: Microscope,
           microscope.optics.is_shutter_override_on)
     print("\tCondenser system:", microscope.condenser_system)
 
-    if microscope.family == ProductFamily.TITAN:
+    if microscope.family == ProductFamily.TITAN.name:
         assert microscope.condenser_system == CondenserLensSystem.THREE_CONDENSER_LENSES.name
     else:
         assert microscope.condenser_system == CondenserLensSystem.TWO_CONDENSER_LENSES.name
