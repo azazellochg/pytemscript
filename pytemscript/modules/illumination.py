@@ -51,7 +51,7 @@ class Illumination:
 
     @property
     def intensity_zoom(self) -> bool:
-        """ Intensity zoom. Set to False to disable. (read/write)"""
+        """ Intensity zoom (AutoZoom on Krios). Set to False to disable. (read/write)"""
         body = RequestBody(attr=self.__id + ".IntensityZoomEnabled", validator=bool)
 
         return self.__client.call(method="get", body=body)
@@ -64,14 +64,19 @@ class Illumination:
     @property
     def intensity_limit(self) -> bool:
         """ Intensity limit. Set to False to disable. (read/write)"""
-        body = RequestBody(attr=self.__id + ".IntensityLimitEnabled", validator=bool)
-
-        return self.__client.call(method="get", body=body)
+        if self.__has_3cond:
+            raise NotImplementedError("Intensity limit exists only on 2-condenser lens systems.")
+        else:
+            body = RequestBody(attr=self.__id + ".IntensityLimitEnabled", validator=bool)
+            return self.__client.call(method="get", body=body)
 
     @intensity_limit.setter
     def intensity_limit(self, value: bool) -> None:
-        body = RequestBody(attr=self.__id + ".IntensityLimitEnabled", value=bool(value))
-        self.__client.call(method="set", body=body)
+        if self.__has_3cond:
+            raise NotImplementedError("Intensity limit exists only on 2-condenser lens systems.")
+        else:
+            body = RequestBody(attr=self.__id + ".IntensityLimitEnabled", value=bool(value))
+            self.__client.call(method="set", body=body)
 
     @property
     def beam_shift(self) -> Vector:
@@ -127,17 +132,17 @@ class Illumination:
 
     @property
     def illuminated_area(self) -> float:
-        """ Illuminated area. Works only on 3-condenser lens systems. (read/write)"""
+        """ Illuminated area in um. Works only on 3-condenser lens systems. (read/write)"""
         if self.__has_3cond:
             body = RequestBody(attr=self.__id + ".IlluminatedArea", validator=float)
-            return self.__client.call(method="get", body=body)
+            return self.__client.call(method="get", body=body) * 1e6
         else:
             raise NotImplementedError("Illuminated area exists only on 3-condenser lens systems.")
 
     @illuminated_area.setter
     def illuminated_area(self, value: float) -> None:
         if self.__has_3cond:
-            body = RequestBody(attr=self.__id + ".IlluminatedArea", value=value)
+            body = RequestBody(attr=self.__id + ".IlluminatedArea", value=value*1e-6)
             self.__client.call(method="set", body=body)
         else:
             raise NotImplementedError("Illuminated area exists only on 3-condenser lens systems.")
@@ -145,53 +150,65 @@ class Illumination:
     @property
     def probe_defocus(self) -> float:
         """ Probe defocus. Works only on 3-condenser lens systems in probe mode. (read/write)"""
+        if not self.__has_3cond:
+            raise NotImplementedError("Probe defocus exists only on 3-condenser lens systems.")
         if self.condenser_mode == CondenserMode.PROBE.name:
             body = RequestBody(attr=self.__id + ".ProbeDefocus", validator=float)
             return self.__client.call(method="get", body=body)
         else:
-            raise NotImplementedError("Probe defocus exists only on 3-condenser lens systems.")
+            raise RuntimeError("Condenser is not in Probe mode.")
 
     @probe_defocus.setter
     def probe_defocus(self, value: float) -> None:
+        if not self.__has_3cond:
+            raise NotImplementedError("Probe defocus exists only on 3-condenser lens systems.")
         if self.condenser_mode == CondenserMode.PROBE.name:
             body = RequestBody(attr=self.__id + ".ProbeDefocus", value=value)
             self.__client.call(method="set", body=body)
         else:
-            raise NotImplementedError("Probe defocus exists only on 3-condenser lens systems.")
+            raise RuntimeError("Condenser is not in Probe mode.")
 
     @property
     def convergence_angle(self) -> float:
         """ Convergence angle. Works only on 3-condenser lens systems in probe mode. (read/write)"""
+        if not self.__has_3cond:
+            raise NotImplementedError("Probe defocus exists only on 3-condenser lens systems.")
         if self.condenser_mode == CondenserMode.PROBE.name:
             body = RequestBody(attr=self.__id + ".ConvergenceAngle", validator=float)
             return self.__client.call(method="get", body=body)
         else:
-            raise NotImplementedError("Convergence angle exists only on 3-condenser lens systems.")
+            raise RuntimeError("Condenser is not in Probe mode.")
 
     @convergence_angle.setter
     def convergence_angle(self, value: float) -> None:
+        if not self.__has_3cond:
+            raise NotImplementedError("Probe defocus exists only on 3-condenser lens systems.")
         if self.condenser_mode == CondenserMode.PROBE.name:
             body = RequestBody(attr=self.__id + ".ConvergenceAngle", value=value)
             self.__client.call(method="set", body=body)
         else:
-            raise NotImplementedError("Convergence angle exists only on 3-condenser lens systems.")
+            raise RuntimeError("Condenser is not in Probe mode.")
 
     @property
     def C3ImageDistanceParallelOffset(self) -> float:
         """ C3 image distance parallel offset. Works only on 3-condenser lens systems. (read/write)"""
-        if self.__has_3cond:
+        if not self.__has_3cond:
+            raise NotImplementedError("C3ImageDistanceParallelOffset exists only on 3-condenser lens systems.")
+        if self.condenser_mode == CondenserMode.PARALLEL.name:
             body = RequestBody(attr=self.__id + ".C3ImageDistanceParallelOffset", validator=float)
             return self.__client.call(method="get", body=body)
         else:
-            raise NotImplementedError("C3ImageDistanceParallelOffset exists only on 3-condenser lens systems.")
+            raise RuntimeError("Condenser is not in Probe mode.")
 
     @C3ImageDistanceParallelOffset.setter
     def C3ImageDistanceParallelOffset(self, value: float) -> None:
-        if self.__has_3cond:
+        if not self.__has_3cond:
+            raise NotImplementedError("C3ImageDistanceParallelOffset exists only on 3-condenser lens systems.")
+        if self.condenser_mode == CondenserMode.PARALLEL.name:
             body = RequestBody(attr=self.__id + ".C3ImageDistanceParallelOffset", value=value)
             self.__client.call(method="set", body=body)
         else:
-            raise NotImplementedError("C3ImageDistanceParallelOffset exists only on 3-condenser lens systems.")
+            raise RuntimeError("Condenser is not in PARALLEL mode.")
 
     @property
     def mode(self) -> str:
