@@ -47,7 +47,7 @@ Diagnostic messages are saved to ``socket_client.log`` and ``socket_server.log``
 UTAPI client
 ------------
 
-.. warning:: Under development
+.. warning:: Under development, currently not available
 
 TFS is actively developing new (licensed) UTAPI interface that is aimed to eventually replace both standard and
 advanced scripting. It is only available for TEM server version 7.18 and newer. To verify,
