@@ -118,8 +118,13 @@ class AcquisitionObj(SpecialObj):
         acq = self.com_object
         acq.RemoveAllAcqDevices()
         acq.AddAcqDeviceByName(cameraName)
+        t0 = time.time()
         imgs = acq.AcquireImages()
+        t1 = time.time()
         image = convert_image(imgs[0], name=cameraName)
+        t2 = time.time()
+        logging.debug("\tAcquisition took %f s" % (t1 - t0))
+        logging.debug("\tConverting image took %f s" %(t2 - t1))
 
         return image
 
@@ -129,12 +134,17 @@ class AcquisitionObj(SpecialObj):
         """ Perform actual acquisition with advanced scripting. """
         if recording:
             self.com_object.CameraContinuousAcquisition.Start()
-            self.com_object.CameraContinuousAcquisition.Wait()
+            #self.com_object.CameraContinuousAcquisition.Wait()
             return None
         else:
+            t0 = time.time()
             img = self.com_object.CameraSingleAcquisition.Acquire()
-            self.com_object.CameraSingleAcquisition.Wait()
+            t1 = time.time()
+            #self.com_object.CameraSingleAcquisition.Wait()
             image = convert_image(img, name=cameraName, advanced=True)
+            t2 = time.time()
+            logging.debug("\tAcquisition took %f s" % (t1 - t0))
+            logging.debug("\tConverting image took %f s" % (t2 - t1))
             return image
 
     def restore_shutter(self,
@@ -304,7 +314,7 @@ class AcquisitionObj(SpecialObj):
     def set_stem_presets(self,
                          cameraName: str,
                          size: AcqImageSize = AcqImageSize.FULL,
-                         dwell_time: float = 1E-5,
+                         dwell_time: float = 1e-5,
                          binning: int = 1,
                          **kwargs) -> None:
 
@@ -527,10 +537,9 @@ class Acquisition:
                                    obj_cls=AcquisitionObj,
                                    obj_method="acquire_advanced",
                                    cameraName=cameraName,
-                                   recording=True)
+                                   recording=kwargs["recording"])
                 self.__client.call(method="exec_special", body=body)
                 logging.info("TEM image acquired on %s", cameraName)
-                logging.info("Continuous acquisition and offloading job are completed.")
                 return None
             else:
                 body = RequestBody(attr=self.__id_adv,
@@ -544,7 +553,7 @@ class Acquisition:
     def acquire_stem_image(self,
                            cameraName: str,
                            size: AcqImageSize,
-                           dwell_time: float = 1E-5,
+                           dwell_time: float = 1e-5,
                            binning: int = 1,
                            **kwargs) -> Image:
         """ Acquire a STEM image.
