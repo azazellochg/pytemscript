@@ -18,15 +18,15 @@ jobs:
         shell: bash -el {0}
     strategy:
       fail-fast: false
-      max-parallel: 6
+      max-parallel: 5
       matrix:
-        python-version: ["3.4", "3.8", "3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: 3.x
+        python-version: 3.12
     - name: Create a conda env called test with a specific python version
       uses: conda-incubator/setup-miniconda@v3
       with:
@@ -35,14 +35,7 @@ jobs:
         channels: conda-forge, defaults
         python-version: ${{ matrix.python-version }}
         auto-activate-base: false
-    - name: Test installation with python 3.4
-      if: ${{ matrix.python-version == '3.4' }}
-      run: |
-        export LD_LIBRARY_PATH="/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH"
-        conda install -c conda-forge pip=19.1.1
-        pip install .
-    - name: Test installation with newer python
-      if: ${{ matrix.python-version != '3.4' }}
+    - name: Test installation and building
       run: |
         export LD_LIBRARY_PATH="/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH"
         pip install build wheel
