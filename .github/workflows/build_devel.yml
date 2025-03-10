@@ -1,0 +1,50 @@
+# Workflow to build package for different python version
+name: build devel
+
+# Triggers the workflow on push to the devel branch
+on:
+  push:
+    branches: [ devel ]
+
+env:
+  FOLDER_WITH_VERSION: pytemscript
+
+jobs:
+  build:
+    runs-on: "ubuntu-latest"
+    defaults:
+      run:
+        # Do not ignore bash profile files, required for conda activation
+        shell: bash -el {0}
+    strategy:
+      fail-fast: false
+      max-parallel: 6
+      matrix:
+        python-version: ["3.4", "3.8", "3.9", "3.10", "3.11", "3.12"]
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: 3.x
+    - name: Create a conda env called test with a specific python version
+      uses: conda-incubator/setup-miniconda@v3
+      with:
+        miniconda-version: "latest"
+        activate-environment: test
+        channels: conda-forge, defaults
+        python-version: ${{ matrix.python-version }}
+        auto-activate-base: false
+    - name: Test installation with python 3.4
+      if: ${{ matrix.python-version == '3.4' }}
+      run: |
+        export LD_LIBRARY_PATH="/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH"
+        conda install -c conda-forge pip=19.1.1
+        pip install .
+    - name: Test installation with newer python
+      if: ${{ matrix.python-version != '3.4' }}
+      run: |
+        export LD_LIBRARY_PATH="/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH"
+        pip install build wheel
+        pip install .
+        python -m build --no-isolation
