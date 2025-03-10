@@ -3,8 +3,6 @@
 Installation
 ============
 
-.. note:: *Windows XP*: latest available Python is 3.4. *Windows 7*: latest available Python is 3.8
-
 Requirements:
 
     * python 3.4 or newer
@@ -13,10 +11,10 @@ Requirements:
     * numpy
     * pillow (to save non-MRC files)
 
-Installation from PyPI on Windows
-#################################
+Online installation on Windows
+##############################
 
-This assumes you have connection to the internet. Execute from the command line
+This assumes you have connection to the Internet. Execute from the command line
 (assuming you have your Python interpreter in the path):
 
 .. code-block:: python
@@ -24,30 +22,53 @@ This assumes you have connection to the internet. Execute from the command line
     py -m pip install --upgrade pip
     py -m pip install pytemscript
 
-Offline-Installation from wheels file on Windows
-################################################
+Offline installation on Windows 7 or 10
+#######################################
 
-This assumes you have downloaded the wheels file <downloaded-wheels-file>.whl for
-temscript and comtypes into the current folder. Execute from the command line
-(assuming you have your Python interpreter in the path):
-
-.. code-block:: python
-
-    py -m pip install numpy comtypes mrcfile pytemscript --no-index --find-links .
-
-If you want to install pytemscript from sources (you still need to download comtypes \*.whl):
+The command below will download pytemscript and its dependencies on a computer connected to the Internet. We assume your microscope PC runs Windows 7 or Windows 10
+64-bit OS. You need to know the Python version on the microscope PC (example below is for 3.8):
 
 .. code-block:: python
 
-    py -m pip install numpy comtypes mrcfile --no-index --find-links .
+    pip download -d . pytemscript --python-version 38 --only-binary=:all: --platform win_amd64
+
+Copy downloaded \*.whl files to the target PC and install them:
+
+.. code-block:: python
+
+    py -m pip install pytemscript --no-index --find-links .
+
+If you want to install pytemscript from sources instead, download them from GitHub. You will still need the wheel files for dependencies:
+
+.. code-block:: python
+
+    py -m pip install numpy comtypes mrcfile pillow --no-index --find-links .
     py -m pip install -e <source_directory>
 
 Installation on Linux
 #####################
 
 This assumes you want to setup a remote client and have already installed pytemscript on the microscope PC (Windows)
-which will run a :ref:`server <remote>`.
-The installation commands are the same as above, just instead of `py -m pip install` simply use `pip install`.
+which will run a :ref:`server <remote>`. The installation commands are the same as above:
+
+.. code-block:: python
+
+    pip install pytemscript
+
+Installation on Windows XP 32-bit
+#################################
+
+Latest supported Python version on Windows XP is 3.4. Download pytemscript and its dependencies on a computer connected to the Internet:
+
+.. code-block:: python
+
+    pip download -d . pytemscript --python-version 34 --only-binary=:all: --platform win32
+
+Copy downloaded \*.whl files to the target PC and install them:
+
+.. code-block:: python
+
+    py -m pip install pytemscript --no-index --find-links .
 
 Testing
 -------
