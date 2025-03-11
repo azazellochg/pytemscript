@@ -10,7 +10,6 @@ from ..utils.misc import convert_image
 class TecnaiCCDPlugin:
     """ Main class that uses FEI Tecnai CCD plugin on microscope PC. """
     def __init__(self, com_iface):
-            self.tia_plugin = com_iface.tia
             self.ccd_plugin = com_iface.tecnai_ccd
             self._img_params = dict()
 
@@ -30,38 +29,23 @@ class TecnaiCCDPlugin:
                       **kwargs) -> Image:
         self._set_camera_param(cameraName, size, exp_time, binning, camerasize, **kwargs)
         if not self.ccd_plugin.IsAcquiring:
-            #img = self._ccd_plugin.AcquireImageNotShown(id=1)
-            #self._ccd_plugin.AcquireAndShowImage(mode)
-            #img = self._ccd_plugin.AcquireImage() # variant
-            #img = self._ccd_plugin.AcquireFrontImage()  # safe array
-            #img = self._ccd_plugin.FrontImage  # variant
-            #img = self._ccd_plugin.AcquireImageShown()
-            #img = self._ccd_plugin.AcquireDarkSubtractedImage() # variant
+            #img = self.ccd_plugin.AcquireImageNotShown(id=1)
+            #self.ccd_plugin.AcquireAndShowImage(mode)
+            #img = self.ccd_plugin.AcquireImage() # variant
+            #img = self.ccd_plugin.AcquireFrontImage()  # safe array
+            #img = self.ccd_plugin.FrontImage  # variant
+            #img = self.ccd_plugin.AcquireImageShown()
+            #img = self.ccd_plugin.AcquireDarkSubtractedImage() # variant
 
-            img = self.ccd_plugin.AcquireRawImage()  # variant
+            img = self.ccd_plugin.AcquireRawImage()  # variant / tuple
 
             if kwargs.get('show', False):
                 self.ccd_plugin.ShowAcquiredImage()
 
-            pixel_size = self._get_pixel_size()
-            self._img_params["pixel_size"] = pixel_size
-
-            image = convert_image(img, name=cameraName, **self._img_params)
+            image = convert_image(img, name=cameraName, use_safearray=False, **self._img_params)
             return image
         else:
             raise Exception("Camera is busy acquiring...")
-
-    def _get_pixel_size(self, isSpectrum=False) -> Optional[float]:
-        """ Fetch pixel size (in meters) from TIA image. """
-        if self.tia_plugin is not None:
-            if isSpectrum:
-                return self.tia_plugin.ScanningServer().ScanResolution
-            else:
-                window = self.tia_plugin.ActiveDisplayWindow()
-                dsp = window.FindDisplay(window.DisplayNames[0])
-                return dsp.image.calibration.deltaX
-        else:
-            return None
 
     def _set_camera_param(self,
                           name: str,

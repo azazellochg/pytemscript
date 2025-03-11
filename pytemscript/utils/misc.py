@@ -1,5 +1,6 @@
 from typing import Optional, Any
 import functools
+import numpy as np
 import logging
 from hashlib import sha1
 from logging.handlers import TimedRotatingFileHandler
@@ -128,7 +129,7 @@ def convert_image(obj,
         with safearray_as_ndarray:
             data = obj.AsSafeArray.astype("uint16")  # AsSafeArray always returns int32 array
     else:
-        data = obj.AsSafeArray.astype("uint16")
+        data = np.array(obj, dtype="uint16")
 
     name = name or obj.Name
 

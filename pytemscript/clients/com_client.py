@@ -63,8 +63,6 @@ class COMBase:
             self.tecnai_ccd = self._createCOMObject(SCRIPTING_TECNAI_CCD)
             if self.tecnai_ccd is None:
                 self.tecnai_ccd = self._createCOMObject(SCRIPTING_TECNAI_CCD2)
-            import comtypes.gen.TECNAICCDLib
-            self.tia = self._createCOMObject(SCRIPTING_TIA)
 
         if self.tem is None:
             raise RuntimeError("Failed to create COM object.")
