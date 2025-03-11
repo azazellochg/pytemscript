@@ -1,5 +1,3 @@
-.. _installation:
-
 Installation
 ============
 
@@ -49,7 +47,7 @@ Installation on Linux
 #####################
 
 This assumes you want to setup a remote client and have already installed pytemscript on the microscope PC (Windows)
-which will run a :ref:`server <remote>`. The installation commands are the same as above:
+which will run a `server <remote.html>`_. The installation commands are the same as above:
 
 .. code-block:: python
 

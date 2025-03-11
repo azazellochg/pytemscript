@@ -44,24 +44,24 @@ Relative to TEM V1.2 advanced scripting adapter:
 Microscope class
 ----------------
 
-The :ref:`microscope` class provides the main interface to the microscope. It is used to connect to the instrument locally or over the network.
+The `microscope <microscope.html>`_ class provides the main interface to the microscope. It is used to connect to the instrument locally or over the network.
 
 Events
 ------
 
-You can receive events from hand panel buttons when using the local client on the microscope PC. See :ref:`events` page for details.
+You can receive events from hand panel buttons when using the local client on the microscope PC. See `events <events.html>`_ page for details.
 
 Enumerations
 ------------
 
 Many of the attributes set and return values from enumerations. This minimizes typos when dealing with integer or string static values.
-The complete list can be found on the :ref:`enumerations` page.
+The complete list can be found on the `enumerations <enumerations.html>`_ page.
 
 Images
 ------
 
 Two main acquisition methods :meth:`~pytemscript.modules.Acquisition.acquire_tem_image` and
-:meth:`~pytemscript.modules.Acquisition.acquire_stem_image` return an :class:`Image` object
+:meth:`~pytemscript.modules.Acquisition.acquire_stem_image` return an :meth:`~pytemscript.modules.Image` object
 that has the following methods and properties:
 
 .. autoclass:: pytemscript.modules.Image
@@ -71,7 +71,7 @@ Vectors
 -------
 
 Some attributes handle two dimensional vectors that have X and Y values (e.g. image shift or gun tilt). These
-attributes accept and return a :class:`Vector` of two floats. Vectors can be multiplied, subtracted etc.:
+attributes accept and return a :meth:`~pytemscript.modules.Vector` of two floats. Vectors can be multiplied, subtracted etc.:
 
 .. code-block:: python
 

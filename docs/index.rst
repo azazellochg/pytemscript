@@ -26,13 +26,14 @@ The documentation can be found at https://pytemscript.readthedocs.io
    self
    installation
    components/index
+   getting_started
    remote
    changelog
 
 Quick example
 -------------
 
-Execute this on the microscope PC to create an instance of the local :ref:`microscope`:
+Execute this on the microscope PC to create an instance of the local :meth:`~pytemscript.microscope.Microscope`:
 
 .. code-block:: python
 

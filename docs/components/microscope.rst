@@ -1,5 +1,3 @@
-.. _microscope:
-
 Microscope class
 ================
 

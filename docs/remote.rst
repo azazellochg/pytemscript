@@ -1,5 +1,3 @@
-.. _remote:
-
 Remote execution
 ================
 
