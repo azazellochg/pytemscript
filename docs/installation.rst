@@ -75,5 +75,6 @@ The package provides a few command-line scripts to test the microscope interface
 
 .. code-block:: python
 
-    pytemscript-test -h
+    pytemscript-test
     pytemscript-test-acquisition
+    pytemscript-test-events
