@@ -124,11 +124,6 @@ class COMClient(BasicClient):
     def has_ccd_iface(self) -> bool:
         return self._scope.tecnai_ccd is not None
 
-    @property
-    @lru_cache(maxsize=1)
-    def has_tia_iface(self) -> bool:
-        return self._scope.tia is not None
-
     def _get(self, attrname):
         return rgetattr(self._scope, attrname)
 
