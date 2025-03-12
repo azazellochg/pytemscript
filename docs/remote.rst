@@ -42,6 +42,8 @@ Then you can connect to the server as shown below:
 
 Diagnostic messages are saved to ``socket_client.log`` and ``socket_server.log`` as well as printed to the console. Log files are rotated weekly at midnight.
 
+To shutdown pytemscript-server, press Ctrl+C in the console.
+
 UTAPI client
 ------------
 
@@ -53,8 +55,7 @@ you can search for ``utapi_server.exe`` in the Task Manager. The server is liste
 **46699**. Under the hood UTAPI utilizes gRPC (Google Remote Procedure Calls) framework that uses protocol
 buffers for communication.
 
-Here we provide a Python client that converts API commands to UTAPI calls.
-The client requires extra dependencies to be installed:
+Pytemscript converts its API commands to UTAPI calls. The client requires extra dependencies to be installed:
 
 .. code-block:: python
 
