@@ -1,5 +1,6 @@
 from typing import Optional, Any
 import functools
+import numpy as np
 import logging
 from hashlib import sha1
 from logging.handlers import TimedRotatingFileHandler
@@ -107,38 +108,44 @@ def convert_image(obj,
                   width: Optional[int] = None,
                   height: Optional[int] = None,
                   bit_depth: Optional[int] = None,
+                  pixel_size: Optional[float] = None,
                   advanced: Optional[bool] = False,
                   use_safearray: Optional[bool] = True):
-    """ Serialize COM image object into an Image.
+    """ Convert COM image object into an uint16 Image.
 
     :param obj: COM object
     :param name: optional name for the image
     :param width: width of the image
     :param height: height of the image
     :param bit_depth: bit depth of the image
+    :param pixel_size: pixel size of the image
     :param advanced: advanced scripting flag
-    :param use_safearray: use safe array method
+    :param use_safearray: use safearray method
     """
     from pytemscript.modules import Image
 
     if use_safearray:
         from comtypes.safearray import safearray_as_ndarray
         with safearray_as_ndarray:
-            data = obj.AsSafeArray
+            data = obj.AsSafeArray.astype("uint16")  # AsSafeArray always returns int32 array
     else:
-        data = obj.astype("uint16").reshape(width, height)
+        data = np.array(obj, dtype="uint16")
 
     name = name or obj.Name
 
     metadata = {
-        "width": width or obj.Width,
-        "height": height or obj.Height,
-        "bit_depth": bit_depth or (obj.BitDepth if advanced else obj.Depth),
+        "width": width or int(obj.Width),
+        "height": height or int(obj.Height),
+        "bit_depth": int(bit_depth or (obj.BitDepth if advanced else obj.Depth)),
         "pixel_type": ImagePixelType(obj.PixelType).name if advanced else ImagePixelType.SIGNED_INT.name,
     }
-
+    if pixel_size is not None:
+        metadata["PixelSize.Width"] = pixel_size
+        metadata["PixelSize.Height"] = pixel_size
     if advanced:
         metadata.update({item.Key: item.ValueAsString for item in obj.Metadata})
+    if "BitsPerPixel" in metadata:
+        metadata["bit_depth"] = int(metadata["BitsPerPixel"])
 
     return Image(data, name, metadata)
 
@@ -146,7 +153,7 @@ def convert_image(obj,
 class RequestBody:
     """ Dataclass-like structure of a request passed to the client. """
     def __init__(self,
-                 attr: str = "",
+                 attr: Optional[str] = None,
                  validator: Optional[Any] = None,
                  **kwargs) -> None:
         self.attr = attr

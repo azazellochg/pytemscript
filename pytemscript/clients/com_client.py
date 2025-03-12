@@ -36,7 +36,7 @@ class COMBase:
     def _createCOMObject(progId: str):
         """ Connect to a COM interface. """
         try:
-            obj = comtypes.client.CreateObject(progId)
+            obj = comtypes.client.CreateObject(progId, clsctx=com_module.CLSCTX_ALL)
             logging.info("Connected to %s", progId)
             return obj
         except Exception as e:
@@ -46,7 +46,8 @@ class COMBase:
     def _initialize(self, useLD: bool, useTecnaiCCD: bool):
         """ Wrapper to create interfaces as requested. """
         try:
-            com_module.CoInitializeEx(com_module.COINIT_MULTITHREADED)
+            flags = com_module.COINIT_APARTMENTTHREADED | com_module.COINIT_DISABLE_OLE1DDE
+            com_module.CoInitializeEx(flags)
         except OSError:
             com_module.CoInitialize()
 
@@ -62,7 +63,6 @@ class COMBase:
             self.tecnai_ccd = self._createCOMObject(SCRIPTING_TECNAI_CCD)
             if self.tecnai_ccd is None:
                 self.tecnai_ccd = self._createCOMObject(SCRIPTING_TECNAI_CCD2)
-            import comtypes.gen.TECNAICCDLib
 
         if self.tem is None:
             raise RuntimeError("Failed to create COM object.")
@@ -163,7 +163,10 @@ class COMClient(BasicClient):
         if obj_cls is None or obj_method is None:
             raise AttributeError("obj_class and obj_method must be specified")
 
-        com_obj = rgetattr(self._scope, attrname)
+        if attrname is None:  # plugin case
+            com_obj = self._scope
+        else:
+            com_obj = rgetattr(self._scope, attrname)
         obj_instance = obj_cls(com_obj)
         method = getattr(obj_instance, obj_method)
 

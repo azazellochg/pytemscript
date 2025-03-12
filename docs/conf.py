@@ -21,7 +21,7 @@ copyright = '2012-2021, Tore Niermann; 2022-2025, Grigory Sharov'
 author = 'Tore Niermann, Grigory Sharov'
 
 # The full version, including alpha/beta/rc tags
-release = '3.0a9'
+release = '3.0b1'
 
 # -- General configuration ---------------------------------------------------
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -55,4 +55,4 @@ pygments_style = 'sphinx'
 # a list of builtin themes.
 #
 html_theme = 'sphinx_rtd_theme'
-html_theme_options = {'sticky_navigation': False}
+html_theme_options = {'sticky_navigation': False, 'collapse_navigation': False, 'navigation_depth': 2}

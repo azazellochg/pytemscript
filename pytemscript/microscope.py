@@ -8,7 +8,7 @@ from .utils.enums import ProductFamily, CondenserLensSystem
 class Microscope:
     """ Main client interface exposing available methods and properties.
 
-    :param connection: Client connection: direct, grpc, zmq or socket. Defaults to direct.
+    :param connection: Client connection: direct, socket or utapi. Defaults to direct.
     :type connection: str
     :keyword str host: Remote hostname or IP address
     :keyword int port: Remote port number
@@ -29,21 +29,18 @@ class Microscope:
 
     """
     __slots__ = ("__connection", "__client",
-                 "acquisition", "detectors", "gun", "optics", "stem", "vacuum",
+                 "acquisition", "gun", "optics", "stem", "vacuum",
                  "autoloader", "stage", "piezo_stage", "apertures", "temperature",
                  "user_buttons", "user_door", "energy_filter", "low_dose")
 
-    def __init__(self, connection: str = "direct", *args, **kwargs):
+    def __init__(self, connection: str = "direct", *args, **kwargs) -> None:
         self.__connection = connection
         if connection == "direct":
             from .clients.com_client import COMClient
             self.__client = COMClient(*args, **kwargs)
-        elif connection == 'grpc':
-            from .clients.grpc_client import GRPCClient
-            self.__client = GRPCClient(*args, **kwargs)
-        elif connection == 'zmq':
-            from .clients.zmq_client import ZMQClient
-            self.__client = ZMQClient(*args, **kwargs)
+        elif connection == 'utapi':
+            from .clients.utapi_client import UTAPIClient
+            self.__client = UTAPIClient(*args, **kwargs)
         elif connection == 'socket':
             from .clients.socket_client import SocketClient
             self.__client = SocketClient(*args, **kwargs)
@@ -53,7 +50,6 @@ class Microscope:
         client = self.__client
 
         self.acquisition = Acquisition(client)
-        self.detectors = Detectors(client)
         self.gun = Gun(client)
         self.optics = Optics(client, self.condenser_system)
         self.stem = Stem(client)

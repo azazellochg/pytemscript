@@ -40,7 +40,7 @@ class SocketClient(BasicClient):
                 self.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPINTVL, 10)
                 self.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPCNT, 5)
         except Exception as e:
-            raise RuntimeError("Error communicating with server: %s" % e)
+            raise RuntimeError("Error communicating with socket server: %s" % e)
 
     @property
     @lru_cache(maxsize=1)

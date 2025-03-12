@@ -9,7 +9,7 @@ class LowDose:
     def __init__(self, client):
         self.__client = client
         self.__id = "tem_lowdose"
-        self.__err_msg = "Low Dose is not available"
+        self.__err_msg = "Low Dose is not available or not active"
 
     @property
     def is_available(self) -> bool:

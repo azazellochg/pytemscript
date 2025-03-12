@@ -4,7 +4,7 @@ Changelog
 Version 3.0
 ^^^^^^^^^^^
 
-* New changes are distributed under GPLv3+
+* Fork renamed to pytemscript. New changes are distributed under GPLv3+
 * Complete detailed documentation
 * Complete re-write using comtypes library
 * Standard scripting interface updated to v1.9
@@ -13,19 +13,20 @@ Version 3.0
 * Initial support for remote execution (socket-based server and client)
 * New utility object: Vector
 * Validation of returned data types
+* Added button events handling
 * Development and testing are performed on:
 
     - Tecnai Spirit (WinXP, Python 3.4)
     - Tecnai F20 (Win7, Python 3.8)
-    - Tecnai Polara (WinXP, Python 3.4)
+    - Tecnai F30 Polara (WinXP, Python 3.4)
     - Glacios (Win10, Python 3.8)
     - Tundra (Win10, Python 3.11)
     - Titan Krios G1 (Win7, Python 3.6), G2, G3i (Win10, Python 3.8), G4 (Win10, Python 3.8)
 
-* TODO:
+* Future plans:
 
-    - UTAPI support
-    - support for GRPC and ZMQ clients
+    - UTAPI client
+    - Acquisition series
 
 Version 2.0.0
 ^^^^^^^^^^^^^
@@ -80,7 +81,7 @@ Version 1.0.3
 Version 1.0.2
 ^^^^^^^^^^^^^
 
-* Renamed project to pytemscript.
+* Renamed project to temscript.
 * Created documentation.
 
 Version 1.0.1

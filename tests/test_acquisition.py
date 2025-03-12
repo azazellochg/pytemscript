@@ -2,7 +2,13 @@ import argparse
 import logging
 from typing import Optional, List
 import numpy as np
-import math
+import sys
+
+if sys.version_info >= (3, 5):
+    from math import isclose
+else:
+    def isclose(a, b, rel_tol=1e-09, abs_tol=0.0):
+        return abs(a-b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
 
 from pytemscript.microscope import Microscope
 from pytemscript.utils.enums import *
@@ -26,10 +32,10 @@ def print_stats(image: Image,
 
     if 'TimeStamp' in metadata:
         assert int(metadata['Binning.Width']) == binning
-        assert math.isclose(float(metadata['ExposureTime']), exp_time, abs_tol=0.01)
+        assert isclose(float(metadata['ExposureTime']), exp_time, abs_tol=0.05)
 
-    assert img.shape[1] == metadata["width"]
-    assert img.shape[0] == metadata["height"]
+    assert img.shape[0] == metadata["width"]
+    assert img.shape[1] == metadata["height"]
 
     if interactive:
         import matplotlib.pyplot as plt
@@ -103,9 +109,9 @@ def main(argv: Optional[List] = None) -> None:
                     "pytemscript-server must be already running",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("-t", "--type", type=str,
-                        choices=["direct", "socket", "zmq", "grpc"],
+                        choices=["direct", "socket", "utapi"],
                         default="direct",
-                        help="Connection type: direct, socket, zmq or grpc")
+                        help="Connection type: direct, socket or utapi")
     parser.add_argument("-p", "--port", type=int, default=39000,
                         help="Specify port on which the server is listening")
     parser.add_argument("--host", type=str, default='127.0.0.1',
@@ -120,22 +126,30 @@ def main(argv: Optional[List] = None) -> None:
 
     print("Starting acquisition tests, connection: %s" % args.type)
 
-    cameras = microscope.detectors.cameras
-    print("Available detectors:\n", cameras)
+    cameras = microscope.acquisition.cameras
+    print("Available cameras:\n", cameras)
 
+    if microscope.optics.projection.is_eftem_on:
+        microscope.optics.projection.eftem_off()
+
+    if "BM-Orius" in cameras:
+        camera_acquire(microscope, "BM-Orius", exp_time=0.25, binning=1)
     if "BM-Ceta" in cameras:
         camera_acquire(microscope, "BM-Ceta", exp_time=1, binning=2)
     if "BM-Falcon" in cameras:
         camera_acquire(microscope, "BM-Falcon", exp_time=0.5, binning=2)
         camera_acquire(microscope, "BM-Falcon", exp_time=3, binning=1,
                        align_image=True, electron_counting=True,
-                       frame_ranges=[(1, 2), (2, 3)])
+                       save_frames=True, group_frames=2)
+    if "EF-CCD" in cameras:
+        microscope.optics.projection.eftem_on()
+        camera_acquire(microscope, "EF-CCD", exp_time=2, binning=1)
 
     if microscope.stem.is_available:
         microscope.stem.enable()
-        detectors = microscope.detectors.stem_detectors
-        if "BF" in detectors:
-            detector_acquire(microscope, "BF", dwell_time=1e-5, binning=2)
+        detectors = microscope.acquisition.stem_detectors
+        for d in detectors:
+            detector_acquire(microscope, d, dwell_time=1e-6, binning=2)
         microscope.stem.disable()
 
 

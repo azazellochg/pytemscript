@@ -14,17 +14,18 @@
         :target: https://pypi.python.org/pypi/pytemscript
         :alt: Downloads
 
+Introduction
+------------
 
-The ``pytemscript`` package provides a Python wrapper for both standard and advanced scripting
-interfaces of Thermo Fisher Scientific and FEI microscopes. The functionality is
-limited to the functionality of the original scripting interfaces. For detailed information
+``Pytemscript`` is a Python package designed around standard and advanced scripting
+interfaces of Thermo Fisher Scientific and FEI transmisson electron microscopes. The functionality is
+limited to the functionality of the original COM scripting interfaces. For detailed information
 about TEM scripting see the documentation accompanying your microscope.
 
-Within the ``pytemscript`` package two implementations for the high level microscope interface are provided:
-one for running scripts directly on the microscope PC and one to run scripts remotely over network (not yet available).
-
-Currently the ``pytemscript`` package requires Python 3.4 or higher. The current plan is to keep the minimum
-supported Python version at 3.4, since this is the latest Python version supporting Windows XP.
+The ``pytemscript`` package provides a client API to connect both locally and remotely to the microscope PC.
+Currently, the minimum supported Python version is 3.4, so you should be able to control TEM instruments
+operating Windows XP or newer OS. This allows us to support scripting on a wide range of TEM platforms
+including Tecnai, Talos and Titan.
 
 This is a GPL fork of the original BSD-licensed project: https://github.com/niermann/temscript
 New changes and this whole product is distributed under either version 3 of the GPL License, or
@@ -33,83 +34,43 @@ New changes and this whole product is distributed under either version 3 of the 
 Documentation
 -------------
 
-The documentation can be found at https://pytemscript.readthedocs.io or locally in the docs/ direcory.
+The documentation can be found at https://pytemscript.readthedocs.io
 
-Installation
-------------
+Quick example
+-------------
 
-.. warning:: The project is still in development phase, no beta version has been released yet. Installing from sources is recommended.
-
-Requirements:
-
-    * python >= 3.4
-    * comtypes
-    * mrcfile
-    * pillow
-    * numpy
-
-Installation from PyPI on Windows
-#################################
-
-This assumes you have connection to the internet.
-
-Execute from the command line (assuming you have your Python interpreter in the path):
+Execute this on the microscope PC to create an instance of the local ``Microscope`` class:
 
 .. code-block:: python
 
-    py -m pip install --upgrade pip
-    py -m pip install pytemscript
+    from pytemscript.microscope import Microscope
+    microscope = Microscope()
 
-Offline-Installation from wheels file on Windows
-################################################
-
-This assumes you have downloaded the wheels file <downloaded-wheels-file>.whl for temscript and comtypes into the current folder.
-
-Execute from the command line (assuming you have your Python interpreter in the path):
+Show the current acceleration voltage:
 
 .. code-block:: python
 
-    py -m pip install comtypes mrcfile pillow numpy pytemscript --no-index --find-links .
+    microscope.gun.voltage
+    300.0
 
-If you want to install pytemscript from sources (you still need to download comtypes \*.whl):
+Move beam:
 
 .. code-block:: python
 
-    py -m pip install comtypes mrcfile pillow numpy --no-index --find-links .
-    py -m pip install -e <source_directory>
+    shift = microscope.optics.illumination.beam_shift
+    shift += (0.4, 0.2)
+    shift *= 2
+    microscope.optics.illumination.beam_shift = shift
 
-Supported functions of the COM interface
-----------------------------------------
+Take an image:
 
-Relative to TEM V1.9 standard scripting adapter:
+.. code-block:: python
 
-    * Acquisition
-    * ApertureMechanismCollection (untested)
-    * AutoLoader
-    * BlankerShutter
-    * Camera
-    * Configuration
-    * Gun
-    * Gun1 (untested)
-    * Illumination
-    * InstrumentModeControl
-    * Projection
-    * Stage
-    * TemperatureControl
-    * UserButtons (only local client)
-    * Vacuum
-
-Relative to TEM V1.2 advanced scripting adapter:
-
-    * Acquisitions
-    * Autoloader
-    * EnergyFilter (untested)
-    * Phaseplate
-    * PiezoStage (untested)
-    * Source (untested)
-    * TemperatureControl
-    * UserDoorHatch (untested)
-
+    image = microscope.acquisition.acquire_tem_image("BM-Ceta",
+                                                     size=AcqImageSize.FULL,  # <-- see enumerations
+                                                     exp_time=0.5,
+                                                     binning=2)
+    image.save("img.mrc")
 
 Disclaimer
 ----------

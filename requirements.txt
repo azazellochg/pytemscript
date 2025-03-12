@@ -1,4 +1,4 @@
-comtypes>=1.1.13; platform_system == 'Windows'
+comtypes>=1.2.1
 mrcfile
 numpy
 pillow
