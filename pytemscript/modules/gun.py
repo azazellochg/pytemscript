@@ -16,7 +16,7 @@ class Gun:
         self.__client = client
         self.__id = "tem.Gun"
         self.__id_adv = "tem_adv.Source"
-        self.__err_msg_gun1 = "Gun1 interface is not available"
+        self.__err_msg_gun1 = "Gun1 interface is not available. Requires TEM server 7.10+"
         self.__err_msg_cfeg = "Source/C-FEG interface is not available"
 
     @property
