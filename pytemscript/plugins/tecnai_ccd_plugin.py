@@ -1,6 +1,5 @@
 import logging
 import time
-from typing import Optional
 
 from ..utils.enums import AcqImageSize, AcqMode, AcqSpeed
 from ..modules.extras import Image
@@ -8,7 +7,10 @@ from ..utils.misc import convert_image
 
 
 class TecnaiCCDPlugin:
-    """ Main class that uses FEI Tecnai CCD plugin on microscope PC. """
+    """ Main class that uses Tecnai CCD plugin on microscope PC
+    to communicate with Gatan Digital Micrograph.
+    Starting from TIA 4.10 TecnaiCCD.dll was replaced by FeiCCD.dll
+    """
     def __init__(self, com_iface):
             self.ccd_plugin = com_iface.tecnai_ccd
             self._img_params = dict()
