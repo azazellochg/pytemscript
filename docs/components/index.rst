@@ -34,10 +34,10 @@ Relative to TEM V1.2 advanced scripting adapter:
 
     * Acquisitions
     * Autoloader
-    * EnergyFilter (untested)
+    * EnergyFilter
     * Phaseplate
     * PiezoStage (untested)
-    * Source (untested)
+    * Source
     * TemperatureControl
     * UserDoorHatch (untested)
 
