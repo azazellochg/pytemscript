@@ -270,23 +270,31 @@ class AcquisitionObj(SpecialObj):
             else:
                 raise NotImplementedError("This camera does not support electron counting")
 
-        if eer is not None and hasattr(capabilities, 'SupportsEER'):
-            if capabilities.SupportsEER:
+        if hasattr(capabilities, 'SupportsEER'):
+            eer_is_supported = capabilities.SupportsEER
+            if eer and eer_is_supported:
                 settings.EER = eer
-                if eer and not settings.ElectronCounting:
-                    raise RuntimeError("Electron counting should be enabled when using EER")
-                if eer and 'group_frames' in kwargs:
-                    raise RuntimeError("No frame grouping allowed when using EER")
-            else:
+            elif eer and not eer_is_supported:
                 raise NotImplementedError("This camera does not support EER")
+            elif not eer and eer_is_supported:
+                # EER param is persistent throughout camera COM object lifetime,
+                # if not using EER we need to set it to False
+                settings.EER = False
+
+            if eer and not settings.ElectronCounting:
+                raise RuntimeError("Electron counting should be enabled when using EER")
+            if eer and 'group_frames' in kwargs:
+                raise RuntimeError("No frame grouping allowed when using EER")
 
         if 'save_frames' in kwargs:
             total = settings.CalculateNumberOfFrames()
             now = datetime.now()
             settings.SubPathPattern = cameraName + "_" + now.strftime("%d%m%Y_%H%M%S")
             output = settings.PathToImageStorage + settings.SubPathPattern
+            dfd = settings.DoseFractionsDefinition
+            dfd.Clear()
 
-            if eer is None:
+            if eer is False or None:
                 group = kwargs.get('group_frames', 1)
                 if group < 1:
                     raise ValueError("Frame group size must be at least 1")
@@ -294,9 +302,8 @@ class AcquisitionObj(SpecialObj):
                     raise ValueError("Frame group size cannot exceed maximum possible "
                                      "number of frames: %d. Change exposure time." % total)
 
-                dfd = settings.DoseFractionsDefinition
-                dfd.Clear()
                 frame_ranges = [(i, min(i + group, total)) for i in range(0, total-1, group)]
+                logging.debug("Using frame ranges: %s", frame_ranges)
                 for i in frame_ranges:
                     dfd.AddRange(i[0], i[1])
 
