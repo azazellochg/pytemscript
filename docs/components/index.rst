@@ -21,7 +21,7 @@ Relative to TEM V1.9 standard scripting adapter:
     * Camera
     * Configuration
     * Gun
-    * Gun1 (untested)
+    * Gun1
     * Illumination
     * InstrumentModeControl
     * Projection

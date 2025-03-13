@@ -304,6 +304,12 @@ def test_gun(microscope: Microscope,
     print("\tShift:", gun.shift)
     print("\tTilt:", gun.tilt)
 
+    try:
+        print("\tHVOffset:", gun.voltage_offset)
+        print("\tHVOffsetRange:", gun.voltage_offset_range)
+    except NotImplementedError:
+        pass
+
     if has_cfeg:
         print("\tFegState:", gun.feg_state)
         print("\tHTState:", gun.ht_state)

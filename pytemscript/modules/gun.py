@@ -5,7 +5,33 @@ from typing import Tuple
 
 from ..utils.misc import RequestBody
 from ..utils.enums import FegState, HighTensionState, FegFlashingType
-from .extras import Vector
+from .extras import Vector, SpecialObj
+
+
+class GunObj(SpecialObj):
+    """ Wrapper around Gun COM object specifically for Gun1 interface. """
+    def __init__(self, com_object):
+        super().__init__(com_object)
+        self.gun1 = None
+
+    def is_available(self):
+        """ Gun1 inherits from the Gun interface of the std scripting. """
+        import comtypes.gen.TEMScripting as Ts
+        try:
+            self.gun1 = self.com_object.QueryInterface(Ts.Gun1)
+            return True
+        except:
+            return False
+
+    def get_hv_offset(self) -> float:
+        return self.gun1.HighVoltageOffset
+
+    def set_hv_offset(self, value) -> None:
+        self.gun1.HighVoltageOffset = value
+
+    def get_hv_offset_range(self) -> Tuple:
+        result = self.gun1.GetHighVoltageOffsetRange()
+        return (result[0], result[1])
 
 
 class Gun:
@@ -22,9 +48,11 @@ class Gun:
     @property
     @lru_cache(maxsize=1)
     def __has_gun1(self) -> bool:
-        body = RequestBody(attr="tem.Gun1", validator=bool)
-
-        return self.__client.call(method="has", body=body)
+        body = RequestBody(attr=self.__id,
+                           obj_cls=GunObj,
+                           obj_method="is_available",
+                           validator=bool)
+        return self.__client.call(method="exec_special", body=body)
 
     @property
     @lru_cache(maxsize=1)
@@ -73,16 +101,22 @@ class Gun:
     def voltage_offset(self) -> float:
         """ High voltage offset. (read/write)"""
         if self.__has_gun1:
-            body = RequestBody(attr="tem.Gun1.HighVoltageOffset", validator=float)
-            return self.__client.call(method="get", body=body)
+            body = RequestBody(attr=self.__id,
+                               obj_cls=GunObj,
+                               obj_method="get_hv_offset",
+                               validator=float)
+            return self.__client.call(method="exec_special", body=body)
         else:
             raise NotImplementedError(self.__err_msg_gun1)
 
     @voltage_offset.setter
     def voltage_offset(self, offset: float) -> None:
         if self.__has_gun1:
-            body = RequestBody(attr="tem.Gun1.HighVoltageOffset", value=offset)
-            self.__client.call(method="set", body=body)
+            body = RequestBody(attr=self.__id,
+                               obj_cls=GunObj,
+                               obj_method="set_hv_offset",
+                               value=offset)
+            self.__client.call(method="exec_special", body=body)
         else:
             raise NotImplementedError(self.__err_msg_gun1)
 
@@ -155,9 +189,11 @@ class Gun:
     def voltage_offset_range(self):
         """ Returns the high voltage offset range. """
         if self.__has_gun1:
-            #TODO: this is a function?
-            body = RequestBody(attr="tem.Gun1.GetHighVoltageOffsetRange()")
-            return self.__client.call(method="exec", body=body)
+            body = RequestBody(attr=self.__id,
+                               obj_cls=GunObj,
+                               obj_method="get_hv_offset_range",
+                               validator=tuple)
+            return self.__client.call(method="exec_special", body=body)
         else:
             raise NotImplementedError(self.__err_msg_gun1)
 
