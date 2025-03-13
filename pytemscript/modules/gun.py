@@ -16,7 +16,7 @@ class Gun:
         self.__client = client
         self.__id = "tem.Gun"
         self.__id_adv = "tem_adv.Source"
-        self.__err_msg_gun1 = "Gun1 interface is not available. Requires TEM Server 7.10+"
+        self.__err_msg_gun1 = "Gun1 interface is not available"
         self.__err_msg_cfeg = "Source/C-FEG interface is not available"
 
     @property
@@ -163,10 +163,10 @@ class Gun:
 
     @property
     def beam_current(self) -> float:
-        """ Returns the C-FEG beam current in Amperes. """
+        """ Returns the C-FEG beam current in nanoAmperes. """
         if self.__has_source:
             body = RequestBody(attr=self.__id_adv + ".BeamCurrent", validator=float)
-            return self.__client.call(method="get", body=body)
+            return self.__client.call(method="get", body=body) * 1e9
         else:
             raise NotImplementedError(self.__err_msg_cfeg)
 
