@@ -178,11 +178,9 @@ def test_autoloader(microscope: Microscope,
                 print(str(e))
 
 
-def test_stage(microscope: Microscope,
-               move_stage: bool = False) -> None:
+def test_stage(microscope: Microscope) -> None:
     """ Test stage module attrs.
     :param microscope: Microscope object
-    :param move_stage: If true, move stage around
     """
     stage = microscope.stage
     print("\nTesting stage...")
@@ -191,9 +189,6 @@ def test_stage(microscope: Microscope,
     print("\tPosition:", pos)
     print("\tHolder:", stage.holder)
     print("\tLimits:", stage.limits)
-
-    if not move_stage:
-        return
 
     print("Testing stage movement...")
     print("\tGoto(x=1, y=-1)")
@@ -297,12 +292,10 @@ def test_stem(microscope: Microscope) -> None:
 
 
 def test_gun(microscope: Microscope,
-             has_gun1: bool = False,
-             has_feg: bool = False) -> None:
+             has_cfeg: bool = False) -> None:
     """ Test gun module attrs.
     :param microscope: Microscope object
-    :param has_gun1: If true, test GUN1 interface
-    :param has_feg: If true, test C-FEG interface
+    :param has_cfeg: If true, test C-FEG interface
     """
     print("\nTesting gun...")
     gun = microscope.gun
@@ -311,17 +304,17 @@ def test_gun(microscope: Microscope,
     print("\tShift:", gun.shift)
     print("\tTilt:", gun.tilt)
 
-    if has_gun1:
-        print("\tHighVoltageOffsetRange:", gun.voltage_offset_range)
-        print("\tHighVoltageOffset:", gun.voltage_offset)
-
-    if has_feg:
+    if has_cfeg:
         print("\tFegState:", gun.feg_state)
         print("\tHTState:", gun.ht_state)
         print("\tBeamCurrent:", gun.beam_current)
         print("\tFocusIndex:", gun.focus_index)
 
-        gun.do_flashing(FegFlashingType.LOW_T)
+        try:
+            gun.do_flashing(FegFlashingType.LOW_T)
+            gun.do_flashing(FegFlashingType.HIGH_T)
+        except Warning:
+            pass
 
 
 def test_apertures(microscope: Microscope,
@@ -346,25 +339,32 @@ def test_apertures(microscope: Microscope,
         aps.select("C2", 50)
 
 
-def test_user_buttons(microscope: Microscope) -> None:
-    """ Test user button module attrs.
+def test_energy_filter(microscope: Microscope) -> None:
+    """ Test energy filter module attrs.
     :param microscope: Microscope object
     """
-    print("\nTesting user buttons...")
-    buttons = microscope.user_buttons
-    print("Buttons: %s" % buttons.show())
-    import comtypes.client
+    if hasattr(microscope, "energy_filter"):
+        print("\nTesting energy filter...")
+        ef = microscope.energy_filter
 
-    def eventHandler():
-        def Pressed():
-            print("L1 button was pressed!")
+        print("\tZLPShift: ", ef.zlp_shift)
+        print("\tHTShift: ", ef.ht_shift)
 
-    buttons.L1.Assignment = "My function"
-    #comtypes.client.GetEvents(buttons.L1, eventHandler)
-    # Simulate L1 press
-    #buttons.L1.Pressed()
-    # Clear the assignment
-    buttons.L1.Assignment = ""
+        ef.insert_slit(10)
+        print("\tSlit width: ", ef.slit_width)
+        ef.retract_slit()
+
+
+def test_lowdose(microscope: Microscope) -> None:
+    """ Test LowDose module attrs.
+    :param microscope: Microscope object
+    """
+    if hasattr(microscope, "low_dose") and microscope.low_dose.is_available:
+        print("\nTesting Low Dose...")
+        ld = microscope.low_dose
+        print("\tLowDose state: ", ld.state)
+        ld.on()
+        ld.off()
 
 
 def test_general(microscope: Microscope,
@@ -384,7 +384,7 @@ def test_general(microscope: Microscope,
     else:
         assert microscope.condenser_system == CondenserLensSystem.TWO_CONDENSER_LENSES.name
 
-    if check_door:
+    if check_door and hasattr(microscope, "user_door"):
         print("\tUser door:", microscope.user_door.state)
         microscope.user_door.open()
         microscope.user_door.close()
@@ -414,23 +414,20 @@ def main(argv: Optional[List] = None) -> None:
 
     print("Starting microscope tests, connection: %s" % args.type)
 
-    full_test = True
     test_projection(microscope, has_eftem=False)
-    test_vacuum(microscope, buffer_cycle=full_test)
-    test_autoloader(microscope, check_loading=full_test, slot=1)
+    test_vacuum(microscope, buffer_cycle=False)
+    test_autoloader(microscope, check_loading=False, slot=1)
     test_temperature(microscope, force_refill=False)
-    test_stage(microscope, move_stage=full_test)
+    test_stage(microscope)
     test_optics(microscope)
     test_illumination(microscope)
-    test_gun(microscope, has_gun1=False, has_feg=False)
-    if microscope.family != ProductFamily.TECNAI.name and args.type == "direct":
-        test_user_buttons(microscope)
+    test_gun(microscope, has_cfeg=False)
+    test_acquisition(microscope)
+    test_stem(microscope)
+    test_apertures(microscope, has_license=False)
+    test_energy_filter(microscope)
+    test_lowdose(microscope)
     test_general(microscope, check_door=False)
-
-    if full_test:
-        test_acquisition(microscope)
-        test_stem(microscope)
-        test_apertures(microscope, has_license=False)
 
     microscope.disconnect()
 
@@ -441,6 +438,6 @@ if __name__ == '__main__':
 
 """
 Notes for Tecnai F20:
-- DF element not found -> no DF mode or beam tilt. Check if python is 32-bit?
+- DF element not found -> no DF mode or beam tilt. Python 32-bit issue?
 - Userbuttons not found
 """

@@ -129,21 +129,37 @@ def main(argv: Optional[List] = None) -> None:
     cameras = microscope.acquisition.cameras
     print("Available cameras:\n", cameras)
 
-    if microscope.optics.projection.is_eftem_on:
-        microscope.optics.projection.eftem_off()
+    acq_params = {
+        "BM-Orius": {"exp_time": 0.25, "binning": 1},
+        "BM-Ceta": {"exp_time": 1.0, "binning": 2},
+        "BM-Falcon": {"exp_time": 0.5, "binning": 2},
+        "EF-CCD": {"exp_time": 2.0, "binning": 1},
+    }
+    acq_csa_params = {
+        "BM-Falcon": {"exp_time": 3.0, "binning": 1, "align_image": True,
+                      "electron_counting": True, "save_frames": True, "group_frames": 2},
+        "EF-Falcon": {"exp_time": 1.0, "binning": 1,
+                      "electron_counting": True, "save_frames": True},
+    }
 
-    if "BM-Orius" in cameras:
-        camera_acquire(microscope, "BM-Orius", exp_time=0.25, binning=1)
-    if "BM-Ceta" in cameras:
-        camera_acquire(microscope, "BM-Ceta", exp_time=1, binning=2)
-    if "BM-Falcon" in cameras:
-        camera_acquire(microscope, "BM-Falcon", exp_time=0.5, binning=2)
-        camera_acquire(microscope, "BM-Falcon", exp_time=3, binning=1,
-                       align_image=True, electron_counting=True,
-                       save_frames=True, group_frames=2)
-    if "EF-CCD" in cameras:
-        microscope.optics.projection.eftem_on()
-        camera_acquire(microscope, "EF-CCD", exp_time=2, binning=1)
+    for cam, cam_dict in cameras.items():
+        if cam.startswith("BM-") and microscope.optics.projection.is_eftem_on:
+            microscope.optics.projection.eftem_off()
+        elif cam.startswith("EF-") and not microscope.optics.projection.is_eftem_on:
+            microscope.optics.projection.eftem_on()
+
+        csa = cam_dict["supports_csa"]
+        if csa and cam in acq_csa_params:
+            csa_params = acq_csa_params[cam]
+            camera_acquire(microscope, cam, **csa_params)
+
+            if cam_dict["supports_eer"]:
+                csa_params.pop("group_frames")
+                csa_params["eer"] = True
+                camera_acquire(microscope, cam, **csa_params)
+
+        elif cam in acq_params:
+            camera_acquire(microscope, cam, **acq_params[cam])
 
     if microscope.stem.is_available:
         microscope.stem.enable()
