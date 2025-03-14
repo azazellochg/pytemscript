@@ -8,30 +8,39 @@ from ..utils.enums import FegState, HighTensionState, FegFlashingType
 from .extras import Vector, SpecialObj
 
 
+ERR_MSG_GUN1 = "Gun1 interface is not available. Requires TEM server 7.10+"
+
+
 class GunObj(SpecialObj):
-    """ Wrapper around Gun COM object specifically for Gun1 interface. """
+    """ Wrapper around Gun COM object specifically for the Gun1 interface. """
     def __init__(self, com_object):
         super().__init__(com_object)
         self.gun1 = None
 
-    def is_available(self):
+    def is_available(self) -> bool:
         """ Gun1 inherits from the Gun interface of the std scripting. """
         import comtypes.gen.TEMScripting as Ts
-        try:
+        if hasattr(Ts, "Gun1"):
             self.gun1 = self.com_object.QueryInterface(Ts.Gun1)
             return True
-        except:
+        else:
             return False
 
     def get_hv_offset(self) -> float:
+        if self.gun1 is None:
+            raise RuntimeError(ERR_MSG_GUN1)
         return self.gun1.HighVoltageOffset
 
-    def set_hv_offset(self, value) -> None:
+    def set_hv_offset(self, value: float) -> None:
+        if self.gun1 is None:
+            raise RuntimeError(ERR_MSG_GUN1)
         self.gun1.HighVoltageOffset = value
 
     def get_hv_offset_range(self) -> Tuple:
+        if self.gun1 is None:
+            raise RuntimeError(ERR_MSG_GUN1)
         result = self.gun1.GetHighVoltageOffsetRange()
-        return (result[0], result[1])
+        return result[0], result[1]
 
 
 class Gun:
@@ -42,7 +51,6 @@ class Gun:
         self.__client = client
         self.__id = "tem.Gun"
         self.__id_adv = "tem_adv.Source"
-        self.__err_msg_gun1 = "Gun1 interface is not available. Requires TEM server 7.10+"
         self.__err_msg_cfeg = "Source/C-FEG interface is not available"
 
     @property
@@ -107,7 +115,7 @@ class Gun:
                                validator=float)
             return self.__client.call(method="exec_special", body=body)
         else:
-            raise NotImplementedError(self.__err_msg_gun1)
+            raise NotImplementedError(ERR_MSG_GUN1)
 
     @voltage_offset.setter
     def voltage_offset(self, offset: float) -> None:
@@ -118,7 +126,7 @@ class Gun:
                                value=offset)
             self.__client.call(method="exec_special", body=body)
         else:
-            raise NotImplementedError(self.__err_msg_gun1)
+            raise NotImplementedError(ERR_MSG_GUN1)
 
     @property
     def feg_state(self) -> str:
@@ -195,7 +203,7 @@ class Gun:
                                validator=tuple)
             return self.__client.call(method="exec_special", body=body)
         else:
-            raise NotImplementedError(self.__err_msg_gun1)
+            raise NotImplementedError(ERR_MSG_GUN1)
 
     @property
     def beam_current(self) -> float:

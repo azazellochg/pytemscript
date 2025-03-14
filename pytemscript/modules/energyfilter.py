@@ -10,7 +10,7 @@ class EnergyFilter:
     def __init__(self, client):
         self.__client = client
         self.__id = "tem_adv.EnergyFilter"
-        self.__err_msg = "EnergyFilter interface is not available"
+        self.__err_msg = "EnergyFilter interface is not available. Requires TEM server 7.8+"
 
     @property
     @lru_cache(maxsize=1)

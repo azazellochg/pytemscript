@@ -270,6 +270,7 @@ class AcquisitionObj(SpecialObj):
             else:
                 raise NotImplementedError("This camera does not support electron counting")
 
+        # EER saving is supported in TEM server 7.6 (Titan 3.6 / Talos 2.6)
         if hasattr(capabilities, 'SupportsEER'):
             eer_is_supported = capabilities.SupportsEER
             if eer and eer_is_supported:
