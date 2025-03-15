@@ -24,6 +24,7 @@ class COMBase:
         self.tem_adv = None
         self.tem_lowdose = None
         self.tecnai_ccd = None
+        self.calgetter = None
 
         if platform.system() == "Windows":
             logging.getLogger("comtypes").setLevel(logging.INFO)
@@ -64,6 +65,8 @@ class COMBase:
             if self.tecnai_ccd is None:
                 self.tecnai_ccd = self._createCOMObject(SCRIPTING_TECNAI_CCD2)
 
+        self.calgetter = self._createCOMObject(CALGETTER)
+
         if self.tem is None:
             raise RuntimeError("Failed to create COM object.")
 
@@ -73,6 +76,7 @@ class COMBase:
         self.tem_adv = None
         self.tem_lowdose = None
         self.tecnai_ccd = None
+        self.calgetter = None
 
         com_module.CoUninitialize()
 
@@ -123,6 +127,14 @@ class COMClient(BasicClient):
     @lru_cache(maxsize=1)
     def has_ccd_iface(self) -> bool:
         return self._scope.tecnai_ccd is not None
+
+    def has_calgetter_iface(self) -> bool:
+        if self._scope.calgetter is None:
+            return False
+        try:
+            return self._scope.calgetter.IsConnected
+        except:
+            return False
 
     def _get(self, attrname):
         return rgetattr(self._scope, attrname)
