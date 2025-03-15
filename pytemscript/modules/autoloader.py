@@ -13,7 +13,7 @@ class Autoloader:
         self.__id = "tem.AutoLoader"
         self.__id_adv = "tem_adv.AutoLoader"
         self.__err_msg = "Autoloader is not available"
-        self.__err_msg_adv = "This function is not available in your advanced scripting interface."
+        self.__err_msg_adv = "Autoloader advanced interface is not available. Requires TEM server 7.8+"
 
     @property
     @lru_cache(maxsize=1)

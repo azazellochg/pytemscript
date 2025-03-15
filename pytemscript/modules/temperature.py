@@ -12,7 +12,7 @@ class Temperature:
         self.__id = "tem.TemperatureControl"
         self.__id_adv = "tem_adv.TemperatureControl"
         self.__err_msg = "TemperatureControl is not available"
-        self.__err_msg_adv = "This function is not available in your advanced scripting interface."
+        self.__err_msg_adv = "TemperatureControl advanced interface is not available. Requires TEM server 7.8+"
     
     @property
     @lru_cache(maxsize=1)

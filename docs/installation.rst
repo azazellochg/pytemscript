@@ -60,13 +60,13 @@ Latest supported Python version on Windows XP is 3.4. Download pytemscript and i
 
 .. code-block:: python
 
-    pip download -d . pytemscript --python-version 34 --only-binary=:all: --platform win32
+    pip download -d . pytemscript comtypes==1.2.1 mrcfile==1.3.0 numpy==1.15.4 pillow==5.3.0 typing --python-version 34 --only-binary=:all: --platform win32
 
 Copy downloaded \*.whl files to the target PC and install them:
 
 .. code-block:: python
 
-    py -m pip install pytemscript --no-index --find-links .
+    py -m pip install pytemscript typing --no-index --find-links .
 
 Testing
 -------

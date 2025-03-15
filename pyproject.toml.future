@@ -36,7 +36,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-extra = ["matplotlib", "mypy"]
+dev = ["matplotlib", "mypy"]
 utapi = ["grpcio", "grpcio-tools", "protobuf"]
 
 [project.urls]
