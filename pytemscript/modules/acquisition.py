@@ -109,7 +109,7 @@ class AcquisitionObj(SpecialObj):
 
         return tem_cameras
 
-    def acquire(self, cameraName: str) -> Image:
+    def acquire(self, cameraName: str, **kwargs) -> Image:
         """ Perform actual acquisition. Camera settings should be set beforehand.
 
         :param cameraName: Camera name
@@ -121,7 +121,7 @@ class AcquisitionObj(SpecialObj):
         t0 = time.time()
         imgs = acq.AcquireImages()
         t1 = time.time()
-        image = convert_image(imgs[0], name=cameraName)
+        image = convert_image(imgs[0], name=cameraName, **kwargs)
         t2 = time.time()
         logging.debug("\tAcquisition took %f s" % (t1 - t0))
         logging.debug("\tConverting image took %f s" %(t2 - t1))
@@ -130,7 +130,8 @@ class AcquisitionObj(SpecialObj):
 
     def acquire_advanced(self,
                          cameraName: str,
-                         recording: bool = False) -> Optional[Image]:
+                         recording: bool = False,
+                         **kwargs) -> Optional[Image]:
         """ Perform actual acquisition with advanced scripting. """
         if recording:
             self.com_object.CameraContinuousAcquisition.Start()
@@ -141,7 +142,7 @@ class AcquisitionObj(SpecialObj):
             img = self.com_object.CameraSingleAcquisition.Acquire()
             t1 = time.time()
             #self.com_object.CameraSingleAcquisition.Wait()
-            image = convert_image(img, name=cameraName, advanced=True)
+            image = convert_image(img, name=cameraName, advanced=True, **kwargs)
             t2 = time.time()
             logging.debug("\tAcquisition took %f s" % (t1 - t0))
             logging.debug("\tConverting image took %f s" % (t2 - t1))
@@ -295,7 +296,7 @@ class AcquisitionObj(SpecialObj):
             dfd = settings.DoseFractionsDefinition
             dfd.Clear()
 
-            if eer is False or None:
+            if eer in [False, None]:
                 group = kwargs.get('group_frames', 1)
                 if group < 1:
                     raise ValueError("Frame group size must be at least 1")
@@ -514,7 +515,8 @@ class Acquisition:
             body = RequestBody(attr="tem.Acquisition",
                                obj_cls=AcquisitionObj,
                                obj_method="acquire",
-                               cameraName=cameraName)
+                               cameraName=cameraName,
+                               **kwargs)
             image = self.__client.call(method="exec_special", body=body)
             logging.info("TEM image acquired on %s", cameraName)
 
@@ -545,7 +547,8 @@ class Acquisition:
                                    obj_cls=AcquisitionObj,
                                    obj_method="acquire_advanced",
                                    cameraName=cameraName,
-                                   recording=kwargs["recording"])
+                                   recording=kwargs["recording"],
+                                   **kwargs)
                 self.__client.call(method="exec_special", body=body)
                 logging.info("TEM image acquired on %s", cameraName)
                 return None
@@ -554,7 +557,8 @@ class Acquisition:
                                    validator=Image,
                                    obj_cls=AcquisitionObj,
                                    obj_method="acquire_advanced",
-                                   cameraName=cameraName)
+                                   cameraName=cameraName,
+                                   **kwargs)
                 image = self.__client.call(method="exec_special", body=body)
                 return image
 
@@ -595,7 +599,8 @@ class Acquisition:
                            validator=Image,
                            obj_cls=AcquisitionObj,
                            obj_method="acquire",
-                           cameraName=cameraName)
+                           cameraName=cameraName,
+                           **kwargs)
         image = self.__client.call(method="exec_special", body=body)
         logging.info("STEM image acquired on %s", cameraName)
 

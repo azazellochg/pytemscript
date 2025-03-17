@@ -1,4 +1,5 @@
 from typing import Tuple, Dict, Optional
+import time
 import numpy as np
 
 from ..utils.enums import BasicTransformTypes, ModeTypes, LorentzTypes, LensSeriesTypes
@@ -10,17 +11,22 @@ class CalGetterPlugin:
         self.cg_iface = com_iface
 
     def is_connected(self) -> bool:
-        try:
-            return self.cg_iface.IsConnected
-        except:
-            return False
+        """ If calgetter.exe is not already running, this call usually starts it."""
+        tries = 0
+        while tries < 3:
+            try:
+                return self.cg_iface.IsConnected
+            except:
+                tries += 1
+                time.sleep(1)
+        return False
 
     def get_magnifications(self,
                            camera: str,
                            mode: ModeTypes = ModeTypes.NANOPROBE,
                            series: LensSeriesTypes = LensSeriesTypes.ZOOM,
                            lorentz: LorentzTypes = LorentzTypes.OFF,
-                           kv: int = 200) -> Optional[Dict]:
+                           kv: int = 300) -> Optional[Dict]:
         """ Returns a dict of calibrated magnifications.
         :param camera: Camera name
         :param mode: Microprobe or nanoprobe mode
@@ -34,7 +40,7 @@ class CalGetterPlugin:
                                                     lorentz.value,
                                                     kv)
         if result is not None and type(result[0]) is tuple:
-            mag_range = {1: "LM", 2: "M", 3: "SA"}
+            mag_range = {1: "LM", 2: "M", 3: "SA", 4: "Mh"}
             mags_dict = {
                 int(value): {
                     "calibrated": calibrated,
@@ -77,7 +83,7 @@ class CalGetterPlugin:
                            mag: float,
                            series: LensSeriesTypes = LensSeriesTypes.ZOOM,
                            lorentz: LorentzTypes = LorentzTypes.OFF,
-                           kv: int = 200) -> float:
+                           kv: int = 300) -> float:
         """ Returns the image rotation angle for a specific magnification.
         :param camera: Camera name
         :param mode: Microprobe or nanoprobe mode
@@ -102,7 +108,7 @@ class CalGetterPlugin:
                              mag: float,
                              series: LensSeriesTypes = LensSeriesTypes.ZOOM,
                              lorentz: LorentzTypes = LorentzTypes.OFF,
-                             kv: int = 200) -> float:
+                             kv: int = 300) -> float:
         """ Returns the image pixel size for a specific magnification in meters.
         :param camera: Camera name
         :param mode: Microprobe or nanoprobe mode

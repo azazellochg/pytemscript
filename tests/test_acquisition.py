@@ -11,7 +11,7 @@ else:
         return abs(a-b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
 
 from pytemscript.microscope import Microscope
-from pytemscript.utils.enums import *
+from pytemscript.utils.enums import AcqImageSize
 from pytemscript.modules.extras import Image
 
 

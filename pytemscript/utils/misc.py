@@ -1,4 +1,5 @@
 from typing import Optional, Any
+import os
 import functools
 import numpy as np
 import logging
@@ -110,7 +111,8 @@ def convert_image(obj,
                   bit_depth: Optional[int] = None,
                   pixel_size: Optional[float] = None,
                   advanced: Optional[bool] = False,
-                  use_safearray: Optional[bool] = True):
+                  use_safearray: Optional[bool] = True,
+                  use_asfile: Optional[bool] = False):
     """ Convert COM image object into an uint16 Image.
 
     :param obj: COM object
@@ -121,14 +123,25 @@ def convert_image(obj,
     :param pixel_size: pixel size of the image
     :param advanced: advanced scripting flag
     :param use_safearray: use safearray method
+    :param use_asfile: use asfile method
     """
     from pytemscript.modules import Image
 
     if use_safearray:
+        # Convert to a safearray and then to numpy
         from comtypes.safearray import safearray_as_ndarray
         with safearray_as_ndarray:
             data = obj.AsSafeArray.astype("uint16")  # AsSafeArray always returns int32 array
+
+    elif use_asfile:
+        # Save into a temp file and read into numpy
+        import imageio
+        obj.SaveToFile("C:\temp.tif") if advanced else obj.AsFile("C:\temp.tif", 0)
+        data = imageio.imread("C:\temp.tif").astype("uint16")
+        os.remove("C:\temp.tif")
+
     else:
+        # TecnaiCCD plugin: obj is a variant, convert to numpy
         data = np.array(obj, dtype="uint16")
 
     name = name or obj.Name

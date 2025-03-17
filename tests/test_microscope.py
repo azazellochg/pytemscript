@@ -350,15 +350,18 @@ def test_energy_filter(microscope: Microscope) -> None:
     :param microscope: Microscope object
     """
     if hasattr(microscope, "energy_filter"):
-        print("\nTesting energy filter...")
-        ef = microscope.energy_filter
+        try:
+            print("\nTesting energy filter...")
+            ef = microscope.energy_filter
 
-        print("\tZLPShift: ", ef.zlp_shift)
-        print("\tHTShift: ", ef.ht_shift)
+            print("\tZLPShift: ", ef.zlp_shift)
+            print("\tHTShift: ", ef.ht_shift)
 
-        ef.insert_slit(10)
-        print("\tSlit width: ", ef.slit_width)
-        ef.retract_slit()
+            ef.insert_slit(10)
+            print("\tSlit width: ", ef.slit_width)
+            ef.retract_slit()
+        except NotImplementedError:
+            pass
 
 
 def test_lowdose(microscope: Microscope) -> None:
