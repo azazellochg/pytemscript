@@ -128,13 +128,10 @@ class COMClient(BasicClient):
     def has_ccd_iface(self) -> bool:
         return self._scope.tecnai_ccd is not None
 
+    @property
+    @lru_cache(maxsize=1)
     def has_calgetter_iface(self) -> bool:
-        if self._scope.calgetter is None:
-            return False
-        try:
-            return self._scope.calgetter.IsConnected
-        except:
-            return False
+        return self._scope.calgetter is not None
 
     def _get(self, attrname):
         return rgetattr(self._scope, attrname)

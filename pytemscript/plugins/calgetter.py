@@ -1,34 +1,45 @@
-from typing import Tuple
+from typing import Tuple, Dict, Optional
 import numpy as np
 
-from ..utils.enums import (BasicTransformTypes, ModeTypes,
-                           LorentzTypes, LensSeriesTypes)
+from ..utils.enums import BasicTransformTypes, ModeTypes, LorentzTypes, LensSeriesTypes
 
 
 class CalGetterPlugin:
     """ Main class that communicates with Calibrations service. """
     def __init__(self, com_iface):
         self.cg_iface = com_iface
-        assert self.cg_iface.IsConnected is True
+
+    def is_connected(self) -> bool:
+        try:
+            return self.cg_iface.IsConnected
+        except:
+            return False
 
     def get_magnifications(self,
                            camera: str,
                            mode: ModeTypes = ModeTypes.NANOPROBE,
                            series: LensSeriesTypes = LensSeriesTypes.ZOOM,
                            lorentz: LorentzTypes = LorentzTypes.OFF,
-                           kv: int = 200):
-        """ Returns a dict of calibrated magnifications. """
+                           kv: int = 200) -> Optional[Dict]:
+        """ Returns a dict of calibrated magnifications.
+        :param camera: Camera name
+        :param mode: Microprobe or nanoprobe mode
+        :param series: Zoom of EFTEM projection mode
+        :param lorentz: Lorentz lens
+        :param kv: voltage
+        """
         result = self.cg_iface.ActualMagnifications(camera,
                                                     mode.value,
                                                     series.value,
                                                     lorentz.value,
                                                     kv)
         if result is not None and type(result[0]) is tuple:
+            mag_range = {1: "LM", 2: "M", 3: "SA"}
             mags_dict = {
                 int(value): {
                     "calibrated": calibrated,
                     "index": int(index),
-                    "mode": int(mode), # 1 - LM, 2 - Mi, 3 - SA
+                    "mode": mag_range[int(mode)],
                     "rotation": rotation
                 }
                 for value, calibrated, index, mode, rotation in zip(result[0],
@@ -42,17 +53,21 @@ class CalGetterPlugin:
             # not calibrated
             return None
 
-    def get_reference_camera(self):
+    def get_reference_camera(self) -> str:
         """ Returns the reference camera name."""
         return self.cg_iface.GetReferenceCameraName()
 
     def get_camera_pixel_size(self, camera) -> float:
-        """ Get camera physical pixel size in um. """
+        """ Get camera physical pixel size in um at current settings.
+        :param camera: Camera name
+        """
         res = self.cg_iface.GetCameraPixelSize(camera)
         return res[0] * 1e6
 
     def get_camera_rotation(self, camera) -> float:
-        """ Returns the rotation of the camera relative to the reference camera. """
+        """ Returns the rotation of the camera relative to the reference camera.
+         :param camera: Camera name
+        """
         return self.cg_iface.CameraRotation(camera)
 
     def get_image_rotation(self,
@@ -63,7 +78,15 @@ class CalGetterPlugin:
                            series: LensSeriesTypes = LensSeriesTypes.ZOOM,
                            lorentz: LorentzTypes = LorentzTypes.OFF,
                            kv: int = 200) -> float:
-        """ Returns the image rotation angle for a specific magnification. """
+        """ Returns the image rotation angle for a specific magnification.
+        :param camera: Camera name
+        :param mode: Microprobe or nanoprobe mode
+        :param magindex: Magnification index
+        :param mag: Nominal magnification
+        :param series: Zoom of EFTEM projection mode
+        :param lorentz: Lorentz lens
+        :param kv: voltage
+        """
         return self.cg_iface.ActualTemRotation(camera,
                                                mode.value,
                                                magindex,
@@ -80,7 +103,15 @@ class CalGetterPlugin:
                              series: LensSeriesTypes = LensSeriesTypes.ZOOM,
                              lorentz: LorentzTypes = LorentzTypes.OFF,
                              kv: int = 200) -> float:
-        """ Returns the image pixel size for a specific magnification in meters."""
+        """ Returns the image pixel size for a specific magnification in meters.
+        :param camera: Camera name
+        :param mode: Microprobe or nanoprobe mode
+        :param magindex: Magnification index
+        :param mag: Nominal magnification
+        :param series: Zoom of EFTEM projection mode
+        :param lorentz: Lorentz lens
+        :param kv: voltage
+        """
         res = self.cg_iface.GetPhysicalPixelSize(camera,
                                                  mode.value,
                                                  magindex,
@@ -98,7 +129,14 @@ class CalGetterPlugin:
                         x_ref: float = 0,
                         y_ref: float = 0) -> Tuple[float, float]:
         """ Transform a vector from one coordinate system to another.
-        Input matrix should be:
+        :param transform_type: Transformation type
+        :param input_matrix: Input matrix
+        :param x: input x value
+        :param y: input y value
+        :param x_ref: input x reference value
+        :param y_ref: input y reference value
+
+        Input matrix must be 2D:
         A = np.array([[a11, a12, a13],
                       [a21, a22, a23]])
         """

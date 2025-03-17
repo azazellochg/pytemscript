@@ -20,6 +20,11 @@ class BasicClient:
     def has_ccd_iface(self) -> bool:
         raise NotImplementedError("Method must be implemented in subclass")
 
+    @property
+    @lru_cache(maxsize=1)
+    def has_calgetter_iface(self) -> bool:
+        raise NotImplementedError("Method must be implemented in subclass")
+
     def call(self, method: str, body: RequestBody):
         """ Main method used by modules. """
         raise NotImplementedError("Method must be implemented in subclass")

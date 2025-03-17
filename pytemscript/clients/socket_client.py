@@ -66,6 +66,14 @@ class SocketClient(BasicClient):
 
         return response
 
+    @property
+    @lru_cache(maxsize=1)
+    def has_calgetter_iface(self) -> bool:
+        response = self.__send_request({"method": "has_calgetter_iface"})
+        logging.debug("Received response: %s", response)
+
+        return response
+
     def call(self, method: str, body: RequestBody):
         """ Main method used by modules. """
         payload = {"method": method, "body": body}

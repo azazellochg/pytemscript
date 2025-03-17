@@ -16,6 +16,7 @@ def main():
         raise RuntimeError("Could not connect to %s interface" % CALGETTER)
 
     cg = CalGetterPlugin(obj)
+    assert cg.is_connected()
 
     cameras = [
         "BM-Orius",
