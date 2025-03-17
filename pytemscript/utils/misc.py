@@ -136,9 +136,12 @@ def convert_image(obj,
     elif use_asfile:
         # Save into a temp file and read into numpy
         import imageio
-        obj.SaveToFile("C:\temp.tif") if advanced else obj.AsFile("C:\temp.tif", 0)
-        data = imageio.imread("C:\temp.tif").astype("uint16")
-        os.remove("C:\temp.tif")
+        fn = "C:\\temp.tif"
+        if os.path.exists(fn):
+            os.remove(fn)
+        obj.SaveToFile(fn) if advanced else obj.AsFile(fn, 0)
+        data = imageio.imread(fn).astype("uint16")
+        os.remove(fn)
 
     else:
         # TecnaiCCD plugin: obj is a variant, convert to numpy

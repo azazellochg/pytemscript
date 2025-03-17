@@ -1,6 +1,3 @@
-import argparse
-from typing import Optional, List
-
 from pytemscript.microscope import Microscope
 from pytemscript.utils.enums import AcqImageSize
 from pytemscript.modules.extras import Image
@@ -15,25 +12,25 @@ def acquire_image(microscope: Microscope, camera: str, **kwargs) -> Image:
     return image
 
 
-def main(argv: Optional[List] = None) -> None:
+def main() -> None:
     """ Testing acquisition speed. """
-    parser = argparse.ArgumentParser(
-        description="This test checks acquisition speed",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("-d", "--debug", dest="debug",
-                        default=False, action='store_true',
-                        help="Enable debug mode")
-    args = parser.parse_args(argv)
+    microscope = Microscope(debug=True)
 
-    microscope = Microscope(debug=args.debug, useTecnaiCCD=True)
-
-    print("Starting acquisition speed test, connection: %s" % args.type)
+    print("Starting acquisition speed test")
     cameras = microscope.acquisition.cameras
-    if "BM-Falcon" in cameras:
-        camera = "BM-Falcon"
-        acquire_image(microscope, camera)
-        acquire_image(microscope, camera, use_safearray=False, use_asfile=True)
-        acquire_image(microscope, camera, use_tecnaiccd=True)
+
+    for camera in ["BM-Falcon", "EF-CCD"]:
+        if camera in cameras:
+
+            print("\tUsing SafeArray")
+            acquire_image(microscope, camera)
+
+            print("\tUsing AsFile")
+            acquire_image(microscope, camera, use_safearray=False, use_asfile=True)
+
+            if camera == "EF-CCD":
+                print("\tUsing TecnaiCCD/TIA")
+                acquire_image(microscope, camera, use_tecnaiccd=True)
 
 
 if __name__ == '__main__':
