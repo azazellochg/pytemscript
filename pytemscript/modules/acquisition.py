@@ -288,13 +288,18 @@ class AcquisitionObj(SpecialObj):
             if eer and 'group_frames' in kwargs:
                 raise RuntimeError("No frame grouping allowed when using EER")
 
-        if 'save_frames' in kwargs:
+        if capabilities.SupportsDoseFractions:
+            dfd = settings.DoseFractionsDefinition
+            dfd.Clear()
+
+        if kwargs.get('save_frames'):
+            if not capabilities.SupportsDoseFractions:
+                raise NotImplementedError("This camera does not support dose fractions")
+
             total = settings.CalculateNumberOfFrames()
             now = datetime.now()
             settings.SubPathPattern = cameraName + "_" + now.strftime("%d%m%Y_%H%M%S")
             output = settings.PathToImageStorage + settings.SubPathPattern
-            dfd = settings.DoseFractionsDefinition
-            dfd.Clear()
 
             if eer in [False, None]:
                 group = kwargs.get('group_frames', 1)
@@ -305,13 +310,13 @@ class AcquisitionObj(SpecialObj):
                                      "number of frames: %d. Change exposure time." % total)
 
                 frame_ranges = [(i, min(i + group, total)) for i in range(0, total-1, group)]
-                logging.debug("Using frame ranges: %s", frame_ranges)
-                for i in frame_ranges:
+                logging.debug("Using frame ranges: %s", frame_ranges[:-1])
+                for i in frame_ranges[:-1]:
                     dfd.AddRange(i[0], i[1])
 
                 logging.info("Movie of %d fractions (%d frames, group=%d) "
                              "will be saved to: %s.mrc",
-                             len(frame_ranges), total, group, output)
+                             len(frame_ranges)-1, total, group, output)
                 logging.info("MRC format can only contain images of up to "
                              "16-bits per pixel, to get true CameraCounts "
                              "multiply pixels by PixelToValueCameraCounts "
