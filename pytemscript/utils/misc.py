@@ -112,7 +112,8 @@ def convert_image(obj,
                   pixel_size: Optional[float] = None,
                   advanced: Optional[bool] = False,
                   use_safearray: Optional[bool] = True,
-                  use_asfile: Optional[bool] = False):
+                  use_asfile: Optional[bool] = False,
+                  **kwargs):
     """ Convert COM image object into an uint16 Image.
 
     :param obj: COM object
