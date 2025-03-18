@@ -132,12 +132,14 @@ def convert_image(obj,
         # Convert to a safearray and then to numpy
         from comtypes.safearray import safearray_as_ndarray
         with safearray_as_ndarray:
-            data = obj.AsSafeArray.astype("uint16")  # AsSafeArray always returns int32 array
+            # AsSafeArray always returns int32 array
+            # Also, transpose is required to match TIA orientation
+            data = obj.AsSafeArray.astype("uint16").T
 
     elif use_asfile:
         # Save into a temp file and read into numpy
         import imageio
-        fn = "C:\\temp.tif"
+        fn = r"C:/temp.tif"
         if os.path.exists(fn):
             os.remove(fn)
         obj.SaveToFile(fn) if advanced else obj.AsFile(fn, 0)
