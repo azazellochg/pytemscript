@@ -28,17 +28,17 @@ class GunObj(SpecialObj):
 
     def get_hv_offset(self) -> float:
         if self.gun1 is None:
-            raise RuntimeError(ERR_MSG_GUN1)
+            raise NotImplementedError(ERR_MSG_GUN1)
         return self.gun1.HighVoltageOffset
 
     def set_hv_offset(self, value: float) -> None:
         if self.gun1 is None:
-            raise RuntimeError(ERR_MSG_GUN1)
+            raise NotImplementedError(ERR_MSG_GUN1)
         self.gun1.HighVoltageOffset = value
 
     def get_hv_offset_range(self) -> Tuple:
         if self.gun1 is None:
-            raise RuntimeError(ERR_MSG_GUN1)
+            raise NotImplementedError(ERR_MSG_GUN1)
         result = self.gun1.GetHighVoltageOffsetRange()
         return result[0], result[1]
 
