@@ -445,7 +445,7 @@ class Acquisition:
                                "pass useTecnaiCCD=True to the Microscope() ?")
         else:
             logging.info("Using TecnaiCCD plugin for Gatan camera")
-            from ..plugins.tecnai_ccd_plugin import TecnaiCCDPlugin
+            from ..plugins.tecnai_ccd import TecnaiCCDPlugin
 
             body = RequestBody(attr=None,
                                obj_cls=TecnaiCCDPlugin,
