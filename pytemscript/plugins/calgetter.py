@@ -12,13 +12,15 @@ class CalGetterPlugin:
 
     def is_connected(self) -> bool:
         """ If calgetter.exe is not already running, this call usually starts it."""
-        tries = 0
-        while tries < 3:
+        for _ in range(3):
             try:
-                return self.cg_iface.IsConnected
+                if self.cg_iface.IsConnected:
+                    return True
             except:
-                tries += 1
-                time.sleep(1)
+                pass
+
+            time.sleep(1)
+
         return False
 
     def get_magnifications(self,
