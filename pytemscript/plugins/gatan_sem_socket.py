@@ -90,7 +90,8 @@ class Message:
     def __init__(self,
                  longargs=(), boolargs=(), dblargs=(),
                  longarray=np.array([], dtype=np.int32)):
-        """ Initialize with the sequences of args (longs, bools, doubles) and optional long array. """
+        """ Initialize with the sequences of args (longs, bools, doubles)
+        and optional long array. """
 
         if len(longarray):
             longargs = (*longargs, len(longarray))
@@ -144,7 +145,7 @@ class GatanSocket:
         self.num_grab_sum = 0
         self.connect()
 
-        self.script_functions = [
+        script_functions = [
             ('AFGetSlitState', 'GetEnergyFilter'),
             ('AFSetSlitState', 'SetEnergyFilter'),
             ('AFGetSlitWidth', 'GetEnergyFilterWidth'),
@@ -165,7 +166,7 @@ class GatanSocket:
             ('GT_CenterZLP', 'AlignEnergyFilterZeroLossPeak'),
         ]
         self.filter_functions = {}
-        for name, method_name in self.script_functions:
+        for name, method_name in script_functions:
             if self.hasScriptFunction(name):
                 self.filter_functions[method_name] = name
         if ('SetEnergyFilter' in self.filter_functions.keys() and
@@ -246,20 +247,24 @@ class GatanSocket:
     def GetNumberOfCameras(self) -> int:
         return self.GetLong('GS_GetNumberOfCameras')
 
+    def GetCameraName(self, camera_id: int) -> str:
+        result = self.ExecuteCameraObjectFunction("CM_GetCameraName", camera_id)
+        return result.array['longarray'].tobytes().decode('utf-8')
+
     def GetPluginVersion(self) -> int:
         return self.GetLong('GS_GetPluginVersion')
 
-    def IsCameraInserted(self, cameraid: int) -> bool:
+    def IsCameraInserted(self, camera_id: int) -> bool:
         funcCode = enum_gs['GS_IsCameraInserted']
-        message_send = Message(longargs=(funcCode, cameraid))
+        message_send = Message(longargs=(funcCode, camera_id))
         message_recv = Message(longargs=(0,), boolargs=(0,))
         self.ExchangeMessages(message_send, message_recv)
         result = bool(message_recv.array['boolargs'][0])
         return result
 
-    def InsertCamera(self, cameraid: int, state: int):
+    def InsertCamera(self, camera_id: int, state: int):
         funcCode = enum_gs['GS_InsertCamera']
-        message_send = Message(longargs=(funcCode, cameraid), boolargs=(state,))
+        message_send = Message(longargs=(funcCode, camera_id), boolargs=(state,))
         message_recv = Message(longargs=(0,))
         self.ExchangeMessages(message_send, message_recv)
 
@@ -269,9 +274,9 @@ class GatanSocket:
         message_recv = Message(longargs=(0,))
         self.ExchangeMessages(message_send, message_recv)
 
-    def SetShutterNormallyClosed(self, cameraid: int, shutter: int):
+    def SetShutterNormallyClosed(self, camera_id: int, shutter: int):
         funcCode = enum_gs['GS_SetShutterNormallyClosed']
-        message_send = Message(longargs=(funcCode, cameraid, shutter))
+        message_send = Message(longargs=(funcCode, camera_id, shutter))
         message_recv = Message(longargs=(0,))
         self.ExchangeMessages(message_send, message_recv)
 
@@ -382,19 +387,19 @@ class GatanSocket:
         error = args[2]
         return numsaved, error
 
-    def SelectCamera(self, cameraid: int):
+    def SelectCamera(self, camera_id: int):
         funcCode = enum_gs['GS_SelectCamera']
-        message_send = Message(longargs=(funcCode, cameraid))
+        message_send = Message(longargs=(funcCode, camera_id))
         message_recv = Message(longargs=(0,))
         self.ExchangeMessages(message_send, message_recv)
 
-    def UpdateK2HardwareDarkReference(self, cameraid: int) -> int:
+    def UpdateK2HardwareDarkReference(self, camera_id: int) -> int:
         function_name = 'K2_updateHardwareDarkReference'
-        return self.ExecuteSendCameraObjectionFunction(function_name, cameraid)
+        return self.ExecuteSendCameraObjectionFunction(function_name, camera_id)
 
-    def PrepareDarkReference(self, cameraid: int) -> int:
+    def PrepareDarkReference(self, camera_id: int) -> int:
         function_name = 'CM_PrepareDarkReference'
-        return self.ExecuteSendCameraObjectionFunction(function_name, cameraid)
+        return self.ExecuteSendCameraObjectionFunction(function_name, camera_id)
 
     def GetEnergyFilter(self) -> float:
         if 'GetEnergyFilter' not in self.filter_functions:
@@ -484,7 +489,7 @@ class GatanSocket:
                  bottom: int,
                  right: int,
                  exposure: float,
-                 corrections: int ,
+                 corrections: int,
                  shutter: int = 0,
                  shutterDelay: float = 0.0) -> np.ndarray:
 
@@ -595,9 +600,7 @@ class GatanSocket:
         """ Execute DM script function that requires camera object
         as input and output double floating point number.
         """
-        recv_dblargs_init = (0,)
-        result = self.ExecuteCameraObjectFunction(function_name, camera_id,
-                                                  recv_dblargs_init=recv_dblargs_init)
+        result = self.ExecuteCameraObjectFunction(function_name, camera_id)
         if result is False:
             return -999.0
         return float(result.array['dblargs'][0])
@@ -607,7 +610,10 @@ class GatanSocket:
                                     camera_id: int = 0,
                                     recv_longargs_init: Tuple = (0,),
                                     recv_dblargs_init: Tuple = (0.0,)) -> Message:
-        """ Execute DM script function that requires camera object as input. """
+        """ Execute DM script function that requires camera object as input.
+        See examples at http://www.dmscripting.com/files/CameraScriptDocumentation.txt
+        and http://www.dmscripting.com/tutorial_microscope_commands.html
+        """
         if not self.hasScriptFunction(function_name):
             raise NotImplementedError(function_name)
         fullcommand = ["Object manager = CM_GetCameraManager();",
@@ -668,6 +674,7 @@ if __name__ == '__main__':
     print('GetPluginVersion', g.GetPluginVersion())
     print("SelectCamera")
     g.SelectCamera(0)
+    print("GetCameraName", g.GetCameraName(0))
     if not g.IsCameraInserted(0):
         print('InsertCamera')
         g.InsertCamera(0, True)
