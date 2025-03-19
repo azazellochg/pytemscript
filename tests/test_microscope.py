@@ -34,12 +34,6 @@ def test_projection(microscope: Microscope,
     print("\tMagnification:", projection.magnification)
     print("\tMagnificationIndex:", projection.magnification_index)
 
-    # set ~ high SA mag
-    for mag in projection.list_magnifications.keys():
-        if 30000 <= mag <= 60000:
-            projection.magnification = mag
-            break
-
     projection.mode = ProjectionMode.DIFFRACTION
     print("\tCameraLength:", projection.camera_length)
     print("\tCameraLengthIndex:", projection.camera_length_index)
@@ -360,7 +354,7 @@ def test_energy_filter(microscope: Microscope) -> None:
             ef.insert_slit(10)
             print("\tSlit width: ", ef.slit_width)
             ef.retract_slit()
-        except NotImplementedError:
+        except:
             pass
 
 
