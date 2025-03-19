@@ -1,52 +1,33 @@
-"""
-The code below is a modified version of:
-https://github.com/instamatic-dev/instamatic/blob/main/src/instamatic/camera/gatansocket3.py
+# The Leginon software is Copyright 2003
+# The Scripps Research Institute, La Jolla, CA
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# The code below is a modified version of: https://github.com/leginon-org/leginon/blob/myami-python3/pyscope/gatansocket.py
+# This plugin needs the SERIALEMCCD plugin to be installed in DigitalMicrograph
+# The instructions can be found at: https://bio3d.colorado.edu/SerialEM/hlp/html/setting_up_serialem.htm
+#
+# On the computer running DM, define environment variables:
+# SERIALEMCCD_PORT=48890
+# [optional] SERIALEMCCD_DEBUG=1
 
-BSD 3-Clause License
-
-Copyright (c) 2021, Stef Smeets
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
-1. Redistributions of source code must retain the above copyright notice, this
-   list of conditions and the following disclaimer.
-
-2. Redistributions in binary form must reproduce the above copyright notice,
-   this list of conditions and the following disclaimer in the documentation
-   and/or other materials provided with the distribution.
-
-3. Neither the name of the copyright holder nor the names of its
-   contributors may be used to endorse or promote products derived from
-   this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-The script adapted from [Leginon](https://emg.nysbc.org//projects/leginon/wiki/Leginon_Homepage). Leginon is licenced under the Apache License, Version 2.0. The code (`gatansocket3.py`) was converted from Python2.7 to Python3.6+ from [here](https://github.com/leginon-org/leginon/blob/myami-python3/pyscope/gatansocket.py).
-
-It needs the SERIALEMCCD plugin to be installed in DigitalMicrograph. The instructions can be found [here](https://bio3d.colorado.edu/SerialEM/hlp/html/setting_up_serialem.htm).
-
-- On the computer running DM, define an environment variable SERIALEMCCD_PORT=48890
-- [Optional] Set an environment variable SERIALEMCCD_DEBUG=1 or 2
-
-"""
-
-import os
-import socket
 import logging
+import functools
+import socket
+from typing import Tuple
 import numpy as np
 
-# enum function codes as in SocketPathway.cpp
+# enum function codes as in https://github.com/mastcu/SerialEMCCD/blob/master/SocketPathway.cpp
 # need to match exactly both in number and order
 enum_gs = [
     'GS_ExecuteScript',
@@ -72,7 +53,7 @@ enum_gs = [
     'GS_StopDSAcquisition',
     'GS_CheckReferenceTime',
     'GS_SetK2Parameters',
-    'GS_ChunkHandshake',
+    'GS_ChunkHandshake', # deleted in new plugin?
     'GS_SetupFileSaving',
     'GS_GetFileSaveResult',
     'GS_SetupFileSaving2',
@@ -94,9 +75,9 @@ enum_gs = [
     'GS_GetTiltSumProperties',
 ]
 # lookup table of function name to function code, starting with 1
-enum_gs = {x: y for (y, x) in enumerate(enum_gs, 1)}
+enum_gs = {item: index for index, item in enumerate(enum_gs, 1)}
 
-# C "long" -> numpy "int_"
+## C "long" -> numpy "int32"
 ARGS_BUFFER_SIZE = 1024
 MAX_LONG_ARGS = 16
 MAX_DBL_ARGS = 8
@@ -105,75 +86,60 @@ sArgsBuffer = np.zeros(ARGS_BUFFER_SIZE, dtype=np.byte)
 
 
 class Message:
-    """Information packet to send and receive on the socket.
+    """ Information packet to send and receive on the socket. """
+    def __init__(self,
+                 longargs=(), boolargs=(), dblargs=(),
+                 longarray=np.array([], dtype=np.int32)):
+        """ Initialize with the sequences of args (longs, bools, doubles) and optional long array. """
 
-    Initialize with the sequences of args (longs, bools, doubles) and
-    optional long array.
-    """
-
-    def __init__(self, longargs=[], boolargs=[], dblargs=[], longarray=[]):
-        # Strings are packaged as long array using np.frombuffer(buffer,np.int_)
-        # and can be converted back with longarray.tostring()
-        # add final longarg with size of the longarray
-        if longarray:
-            longargs = list(longargs)
-            longargs.append(len(longarray))
+        if len(longarray):
+            longargs = (*longargs, len(longarray))
 
         self.dtype = [
-            ('size', np.intc),
-            ('longargs', np.int_, (len(longargs),)),
+            ('size', np.intc, (1,)),
+            ('longargs', np.int32, (len(longargs),)),
             ('boolargs', np.int32, (len(boolargs),)),
             ('dblargs', np.double, (len(dblargs),)),
-            ('longarray', np.int_, (len(longarray),)),
+            ('longarray', np.int32, (len(longarray),)),
         ]
-        self.array = np.zeros((), dtype=self.dtype)
-        self.array['size'] = self.array.data.itemsize
-        self.array['longargs'] = longargs
-        self.array['boolargs'] = boolargs
-        self.array['dblargs'] = dblargs
+        self.array = np.empty((), dtype=self.dtype)
+        self.array['size'] = np.array([self.array.nbytes], dtype=np.intc)
+        self.array['longargs'] = np.array(longargs, dtype=np.int32)
+        self.array['boolargs'] = np.array(boolargs, dtype=np.int32)
+        self.array['dblargs'] = np.array(dblargs, dtype=np.double)
         self.array['longarray'] = longarray
 
-        # create numpy arrays for the args and array
-        # self.longargs = np.asarray(longargs, dtype=np.int_)
-        # self.dblargs = np.asarray(dblargs, dtype=np.double)
-        # self.boolargs = np.asarray(boolargs, dtype=np.int32)
-        # self.longarray = np.asarray(longarray, dtype=np.int_)
-
-    def pack(self):
-        """Serialize the data."""
-        data_size = self.array.data.itemsize
-        if self.array.data.itemsize > ARGS_BUFFER_SIZE:
-            raise RuntimeError(f'Message packet size {data_size} is larger than maximum {ARGS_BUFFER_SIZE}')
+    def pack(self) -> memoryview:
+        """ Serialize the data. """
+        packed = self.array.nbytes
+        if packed > ARGS_BUFFER_SIZE:
+            raise RuntimeError('Message packet size %d is larger than maximum %d' % (packed, ARGS_BUFFER_SIZE))
         return self.array.data
 
-    def unpack(self, buf):
-        """unpack buffer into our data structure."""
+    def unpack(self, buf: bytes) -> None:
+        """ Unpack buffer into our data structure. """
         self.array = np.frombuffer(buf, dtype=self.dtype)[0]
 
 
 def logwrap(func):
-    """Decorator for socket send and recv calls, so they can make log."""
-    def newfunc(*args, **kwargs):
-        logging.debug(f'{func}\t{args}\t{kwargs}')
+    """ Decorator to log socket send and recv calls. """
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        logging.debug('%s\t%r\t%r', func.__name__, args, kwargs)
         try:
-            result = func(*args, **kwargs)
-        except Exception as ex:
-            logging.debug(f'EXCEPTION: {ex}')
+            return func(*args, **kwargs)
+        except Exception as e:
+            logging.error('EXCEPTION: %s', e)
             raise
-        return result
-    return newfunc
+
+    return wrapper
 
 
 class GatanSocket:
-    def __init__(self, host, port):
+    def __init__(self, host="127.0.0.1", port=48890):
+        self.sock = None
         self.host = host
-        self.port = os.environ.get('SERIALEMCCD_PORT', port)
-        self.debug = os.environ.get('SERIALEMCCD_DEBUG', 0)
-        if self.debug:
-            logging.debug('GatanServerIP =', self.host)
-            logging.debug('SERIALEMCCD_PORT = GatanServerPort =', self.port)
-            logging.debug('SERIALEMCCD_DEBUG =', self.debug)
-
+        self.port = port
         self.save_frames = False
         self.num_grab_sum = 0
         self.connect()
@@ -192,57 +158,53 @@ class GatanSocket:
             ('IFGetSlitIn', 'GetEnergyFilter'),
             ('IFSetSlitIn', 'SetEnergyFilter'),
             ('IFGetEnergyLoss', 'GetEnergyFilterOffset'),
-            ('IFSetEnergyLoss', 'SetEnergyFilterOffset'),
+            ('IFSetEnergyOffset', 'SetEnergyFilterOffset'),  # wjr this was IFSetEnergyLoss
+            ('IFGetMaximumSlitWidth', 'GetEnergyFilterWidthMax'),
             ('IFGetSlitWidth', 'GetEnergyFilterWidth'),
             ('IFSetSlitWidth', 'SetEnergyFilterWidth'),
             ('GT_CenterZLP', 'AlignEnergyFilterZeroLossPeak'),
         ]
         self.filter_functions = {}
         for name, method_name in self.script_functions:
-            hasScriptFunction = self.hasScriptFunction(name)
             if self.hasScriptFunction(name):
                 self.filter_functions[method_name] = name
-            if self.debug:
-                logging.debug(name, method_name, hasScriptFunction)
         if ('SetEnergyFilter' in self.filter_functions.keys() and
                 self.filter_functions['SetEnergyFilter'] == 'IFSetSlitIn'):
             self.wait_for_filter = 'IFWaitForFilter();'
         else:
             self.wait_for_filter = ''
 
-    def hasScriptFunction(self, name):
-        script = f'if ( DoesFunctionExist("{name}") ) {{ Exit(1.0); }} else {{ Exit(-1.0); }}'
+    def hasScriptFunction(self, name: str) -> bool:
+        script = 'if ( DoesFunctionExist("%s") ) { Exit(1.0); } else { Exit(-1.0); }' % name
         result = self.ExecuteGetDoubleScript(script)
         return result > 0.0
 
-    def connect(self):
+    def connect(self) -> None:
         # recommended by Gatan to use localhost IP to avoid using tcp
-        self.sock = socket.create_connection(('127.0.0.1', self.port))
+        self.sock = socket.create_connection((self.host, self.port))
 
-    def disconnect(self):
+    def disconnect(self) -> None:
         self.sock.shutdown(socket.SHUT_RDWR)
         self.sock.close()
 
-    def reconnect(self):
+    def reconnect(self) -> None:
         self.disconnect()
         self.connect()
 
     @logwrap
-    def send_data(self, data):
+    def send_data(self, data: memoryview):
         return self.sock.sendall(data)
 
     @logwrap
-    def recv_data(self, n):
+    def recv_data(self, n: int) -> bytes:
         return self.sock.recv(n)
 
     def ExchangeMessages(self, message_send, message_recv=None):
         self.send_data(message_send.pack())
-
         if message_recv is None:
             return
         recv_buffer = message_recv.pack()
-        recv_len = recv_buffer.itemsize
-
+        recv_len = recv_buffer.nbytes
         total_recv = 0
         parts = []
         while total_recv < recv_len:
@@ -252,228 +214,89 @@ class GatanSocket:
             total_recv += len(new_recv)
         buf = b''.join(parts)
         message_recv.unpack(buf)
-        # log the error code from received message
+        ## log the error code from received message
         sendargs = message_send.array['longargs']
         recvargs = message_recv.array['longargs']
-        logging.debug(f'Func: {sendargs[0]}, Code: {recvargs[0]}')
+        logging.debug('Func: %d, Code: %d', sendargs[0], recvargs[0])
 
-    def GetFunction(self, funcName, rlongargs=[], rboolargs=[], rdblargs=[]):
-        """ Common function that only receives data. """
+    def GetLong(self, funcName):
+        """ Common class of function that gets a single long """
         funcCode = enum_gs[funcName]
         message_send = Message(longargs=(funcCode,))
-        message_recv = Message(rlongargs, rboolargs, rdblargs)
+        # First recieved message longargs is error code
+        message_recv = Message(longargs=(0, 0))
         self.ExchangeMessages(message_send, message_recv)
-        return message_recv
-
-    def SetFunction(self, funcName, slongargs=[], sboolargs=[], sdblargs=[]):
-        """ Common function that only sends data. """
-        funcCode = enum_gs[funcName]
-        message_send = Message(longargs=(funcCode, slongargs, sboolargs, sdblargs))
-        message_recv = Message(longargs=(0,))
-        self.ExchangeMessages(message_send, message_recv)
-
-    def ExecuteSendCameraObjectionFunction(self, function_name, camera_id=0):
-        # first longargs is error code. Error if > 0
-        return self.ExecuteGetLongCameraObjectFunction(function_name, camera_id)
-
-    def ExecuteGetLongCameraObjectFunction(self, function_name, camera_id=0):
-        """Execute DM script function that requires camera object as input and
-        output one long integer."""
-        recv_longargs_init = (0,)
-        result = self.ExecuteCameraObjectFunction(function_name, camera_id,
-                                                  recv_longargs_init=recv_longargs_init)
-        if result is False:
-            return 1
-        return result.array['longargs'][0]
-
-    def ExecuteGetDoubleCameraObjectFunction(self, function_name, camera_id=0):
-        """Execute DM script function that requires camera object as input and
-        output double floating point number."""
-        recv_dblargs_init = (0,)
-        result = self.ExecuteCameraObjectFunction(function_name, camera_id,
-                                                  recv_dblargs_init=recv_dblargs_init)
-        if result is False:
-            return -999.0
-        return result.array['dblargs'][0]
-
-    def ExecuteCameraObjectFunction(self, function_name, camera_id=0, recv_longargs_init=(0,),
-                                    recv_dblargs_init=(0.0,), recv_longarray_init=[]):
-        """Execute DM script function that requires camera object as input."""
-        if not self.hasScriptFunction(function_name):
-            # unsuccessful
-            return False
-        fullcommand = (f'Object manager = CM_GetCameraManager();\n'
-                       f'Object cameraList = CM_GetCameras(manager);\n'
-                       f'Object camera = ObjectAt(cameraList,{camera_id});\n'
-                       f'{function_name}(camera);\n')
-        result = self.ExecuteScript(fullcommand, camera_id, recv_longargs_init,
-                                    recv_dblargs_init, recv_longarray_init)
+        result = message_recv.array['longargs'][1]
         return result
 
-    def ExecuteSendScript(self, command_line, select_camera=0):
-        recv_longargs_init = (0,)
-        result = self.ExecuteScript(command_line, select_camera, recv_longargs_init)
-        # first longargs is error code. Error if > 0
-        return result.array['longargs'][0]
-
-    def ExecuteGetLongScript(self, command_line, select_camera=0):
-        """Execute DM script and return the result as integer."""
-        # SerialEMCCD DM TemplatePlugIn::ExecuteScript retval is a double
-        return int(self.ExecuteGetDoubleScript(command_line, select_camera))
-
-    def ExecuteGetDoubleScript(self, command_line, select_camera=0):
-        """Execute DM script that gets one double float number."""
-        recv_dblargs_init = (0.0,)
-        result = self.ExecuteScript(command_line, select_camera, recv_dblargs_init=recv_dblargs_init)
-        return result.array['dblargs'][0]
-
-    def ExecuteScript(self, command_line, select_camera=0, recv_longargs_init=(0,),
-                      recv_dblargs_init=(0.0,), recv_longarray_init=[]):
-        funcCode = enum_gs['GS_ExecuteScript']
-        cmd_str = command_line + '\0'
-        extra = len(cmd_str) % 4
-        if extra:
-            npad = 4 - extra
-            cmd_str = cmd_str + (npad) * '\0'
-        # send the command string as 1D longarray
-        longarray = np.frombuffer(cmd_str.encode(), dtype=np.int_)
-        # logging.debug(longaray)
-        message_send = Message(longargs=(funcCode,), boolargs=(select_camera,), longarray=longarray)
-        message_recv = Message(longargs=recv_longargs_init, dblargs=recv_dblargs_init,
-                               longarray=recv_longarray_init)
+    def SendLongGetLong(self, funcName, longarg):
+        """ Common class of function with one long arg that returns a single long """
+        funcCode = enum_gs[funcName]
+        message_send = Message(longargs=(funcCode, longarg))
+        # First recieved message longargs is error code
+        message_recv = Message(longargs=(0, 0))
         self.ExchangeMessages(message_send, message_recv)
-        return message_recv
-
-    def RunScript(self, fn: str, background: bool = False):
-        """Run a DM script.
-
-        fn: str
-                Path to the script to run
-        background: bool
-                Prepend `// $BACKGROUND$` to run the script in the background
-                and make it non-blocking.
-        """
-
-        bkg = r'// $BACKGROUND$\n\n'
-
-        with open(fn, 'r') as f:
-            cmd_str = ''.join(f.readlines())
-
-        if background:
-            cmd_str = bkg + cmd_str
-
-        return self.ExecuteScript(cmd_str)
-
-
-class SocketFuncs(GatanSocket):
-    def __init__(self, host='127.0.0.1', port=48890):
-        super().__init__(host, port)
-
-# ---------- DM functions -----------------------------------------------------
+        result = message_recv.array['longargs'][1]
+        return result
 
     def GetDMVersion(self):
-        message_recv = self.GetFunction('GS_GetDMVersion',
-                                        rlongargs=(0, 0))
-        result = message_recv.array['longargs'][1]
-        return result
-
-    def GetDMVersionAndBuild(self):
-        message_recv = self.GetFunction('GS_GetDMVersionAndBuild',
-                                        rlongargs=(0, 0, 0))
-        result = message_recv.array['longargs']
-        return result[0], result[1]
-
-    def GetDMCapabilities(self):
-        message_recv = self.GetFunction('GS_GetDMCapabilities',
-                                        rlongargs=(0,),
-                                        rboolargs=(0, 0, 0))
-        result = message_recv.array['boolargs']
-        # canSelectShutter, canSetSettling, openShutterWorks
-        return list(map(bool, result))
-
-    def GetPluginVersion(self):
-        message_recv = self.GetFunction('GS_GetPluginVersion',
-                                        rlongargs=(0, 0))
-        result = message_recv.array['longargs'][1]
-        return result
-
-    def GetLastError(self):
-        message_recv = self.GetFunction('GS_GetLastError',
-                                        rlongargs=(0, 0))
-        result = message_recv.array['longargs'][1]
-        return result
-
-    def SetDebugMode(self, mode):
-        self.SetFunction('GS_SetDebugMode', slongargs=(mode,))
-
-# ---------- Camera functions -------------------------------------------------
+        return self.GetLong('GS_GetDMVersion')
 
     def GetNumberOfCameras(self):
-        message_recv = self.GetFunction('GS_GetNumberOfCameras',
-                                        rlongargs=(0, 0))
-        result = message_recv.array['longargs'][1]
-        return result
+        return self.GetLong('GS_GetNumberOfCameras')
 
-    def SetCurrentCamera(self, camera):
-        self.SetFunction('GS_SetCurrentCamera', slongargs=(camera,))
+    def GetPluginVersion(self):
+        return self.GetLong('GS_GetPluginVersion')
 
-    def SelectCamera(self, camera):
-        self.SetFunction('GS_SelectCamera',
-                         slongargs=(camera,))
-
-    def IsCameraInserted(self, camera):
+    def IsCameraInserted(self, cameraid: int):
         funcCode = enum_gs['GS_IsCameraInserted']
-        message_send = Message(longargs=(funcCode, camera))
+        message_send = Message(longargs=(funcCode, cameraid))
         message_recv = Message(longargs=(0,), boolargs=(0,))
         self.ExchangeMessages(message_send, message_recv)
         result = bool(message_recv.array['boolargs'][0])
         return result
 
-    def InsertCamera(self, camera, state):
-        self.SetFunction('GS_InsertCamera',
-                         slongargs=(camera,),
-                         sboolargs=(state,))
+    def InsertCamera(self, cameraid: int, state):
+        funcCode = enum_gs['GS_InsertCamera']
+        message_send = Message(longargs=(funcCode, cameraid), boolargs=(state,))
+        message_recv = Message(longargs=(0,))
+        self.ExchangeMessages(message_send, message_recv)
 
-    def SetReadMode(self, mode=-1, scaling=1.0):
-        """
-        Set the read mode and the scaling factor
-        For K2, pass 0, 1, or 2 for linear, counting, super-res
-        For K3, pass 3 or 4 for linear or super-res: this is THE signal that it is a K3
-        For camera not needing read mode, pass -1
-        For OneView, pass -3 for regular imaging or -2 for diffraction
-        For K3, the offset to be subtracted for linear mode must be supplied with the scaling.
-        The offset is supposed to be 8192 per frame
-        The offset per ms is thus nominally (8192 per frame) / (1.502 frames per ms)
-        pass scaling = trueScaling + 10 * nearestInt(offsetPerMs)
-        """
-        self.SetFunction('GS_SetReadMode',
-                         slongargs=(mode,),
-                         sdblargs=(scaling,))
+    def SetReadMode(self, mode, scaling=1.0):
+        funcCode = enum_gs['GS_SetReadMode']
+        message_send = Message(longargs=(funcCode, mode), dblargs=(scaling,))
+        message_recv = Message(longargs=(0,))
+        self.ExchangeMessages(message_send, message_recv)
 
-    def SetShutterNormallyClosed(self, camera, shutter):
-        self.SetFunction('GS_SetShutterNormallyClosed',
-                         slongargs=(camera, shutter,))
-
-    def GetLastDoseRate(self):
-        message_recv = self.GetFunction('GS_GetLastDoseRate',
-                                        rlongargs=(0,),
-                                        rdblargs=(0,))
-        result = float(message_recv.array['dblargs'])
-        return result
+    def SetShutterNormallyClosed(self, cameraid: int, shutter):
+        funcCode = enum_gs['GS_SetShutterNormallyClosed']
+        message_send = Message(longargs=(funcCode, cameraid, shutter))
+        message_recv = Message(longargs=(0,))
+        self.ExchangeMessages(message_send, message_recv)
 
     @logwrap
-    def SetK2Parameters(self, readMode, scaling, hardwareProc, doseFrac,
-                        frameTime, alignFrames, saveFrames, filt='', useCds=False):
-        funcCode = enum_gs['GS_SetK2Parameters']
-
+    def SetK2Parameters(self,
+                        readMode,
+                        scaling,
+                        hardwareProc,
+                        doseFrac,
+                        frameTime,
+                        alignFrames,
+                        saveFrames,
+                        filt='',
+                        useCds=False):
+        funcCode = enum_gs['GS_SetK2Parameters2']
         # rotation and flip for non-frame saving image. It is the same definition
         # as in SetFileSaving2
-        # if set to 0, it takes what GMS has.self.save_frames = saveFrames
+        # if set to 0, it takes what GMS has.
         rotationFlip = 0
+        self.save_frames = saveFrames
 
         # flags
         flags = 0
         flags += int(useCds) * 2 ** 6
+        # settings of unused flags
+        # anti_alias
         reducedSizes = 0
         fullSizes = 0
 
@@ -483,14 +306,14 @@ class SocketFuncs(GatanSocket):
         if extra:
             npad = 4 - extra
             filt_str = filt_str + npad * '\0'
-        longarray = np.frombuffer(filt_str.encode(), dtype=np.int_)
+        longarray = np.frombuffer(bytes(filt_str, 'utf-8'), dtype=np.int32)
 
         longs = [
             funcCode,
             readMode,
             hardwareProc,
             rotationFlip,
-            flags
+            flags,
         ]
         bools = [
             doseFrac,
@@ -506,21 +329,26 @@ class SocketFuncs(GatanSocket):
             0.0,  # dummy4
         ]
 
-        message_send = Message(longargs=longs, boolargs=bools,
-                               dblargs=doubles, longarray=longarray)
+        message_send = Message(longargs=longs, boolargs=bools, dblargs=doubles, longarray=longarray)
         message_recv = Message(longargs=(0,))  # just return code
         self.ExchangeMessages(message_send, message_recv)
 
-    def setNumGrabSum(self, earlyReturnFrameCount, earlyReturnRamGrabs):
+    def setNumGrabSum(self, earlyReturnFrameCount: int, earlyReturnRamGrabs: int):
         # pack RamGrabs and earlyReturnFrameCount in one double
-        self.num_grab_sum = (2**16) * earlyReturnRamGrabs + earlyReturnFrameCount
+        self.num_grab_sum = 2**16 * earlyReturnRamGrabs + earlyReturnFrameCount
 
     def getNumGrabSum(self):
         return self.num_grab_sum
 
     @logwrap
-    def SetupFileSaving(self, rotationFlip, dirname, rootname, filePerImage,
-                        doEarlyReturn, earlyReturnFrameCount=0, earlyReturnRamGrabs=0,
+    def SetupFileSaving(self,
+                        rotationFlip,
+                        dirname,
+                        rootname,
+                        filePerImage,
+                        doEarlyReturn,
+                        earlyReturnFrameCount=0,
+                        earlyReturnRamGrabs=0,
                         lzwtiff=False):
         pixelSize = 1.0
         self.setNumGrabSum(earlyReturnFrameCount, earlyReturnRamGrabs)
@@ -529,55 +357,137 @@ class SocketFuncs(GatanSocket):
             flag = 128 * int(doEarlyReturn) + 8 * int(lzwtiff)
             numGrabSum = self.getNumGrabSum()
             # set values to pass
-            longs = [enum_gs['GS_SetupFileSaving2'], rotationFlip, flag]
-            dbls = [pixelSize, numGrabSum, 0., 0., 0.]
+            longs = [enum_gs['GS_SetupFileSaving2'], rotationFlip, flag, ]
+            dbls = [pixelSize, numGrabSum, 0., 0., 0., ]
         else:
-            longs = [enum_gs['GS_SetupFileSaving'], rotationFlip]
-            dbls = [pixelSize]
-        bools = [filePerImage]
+            longs = [enum_gs['GS_SetupFileSaving'], rotationFlip, ]
+            dbls = [pixelSize, ]
+        bools = [filePerImage, ]
         names_str = dirname + '\0' + rootname + '\0'
         extra = len(names_str) % 4
         if extra:
             npad = 4 - extra
             names_str = names_str + npad * '\0'
-        longarray = np.frombuffer(names_str.encode(), dtype=np.int_)
-        message_send = Message(longargs=longs, boolargs=bools,
-                               dblargs=dbls, longarray=longarray)
+        longarray = np.frombuffer(bytes(names_str, 'utf-8'), dtype=np.int32)
+        message_send = Message(longargs=longs, boolargs=bools, dblargs=dbls, longarray=longarray)
         message_recv = Message(longargs=(0, 0))
         self.ExchangeMessages(message_send, message_recv)
 
-    def StopDSAcquisition(self):
-        message_recv = self.GetFunction('GS_StopDSAcquisition',
-                                        rlongargs=(0, ))
-
-    def StopContinuousCamera(self):
-        message_recv = self.GetFunction('GS_StopContinuousCamera',
-                                        rlongargs=(0, ))
-
     def GetFileSaveResult(self):
-        message_recv = self.GetFunction('GS_GetFileSaveResult',
-                                        rlongargs=(0, 0, 0))
-        result = message_recv.array['longargs']
-        # result = numSaved, error
-        return result[1]
+        #longs = [enum_gs['GS_GetFileSaveResult'], rotationFlip]
+        message_send = Message(longargs=(enum_gs['GS_GetFileSaveResult'],))#, boolargs=bools, dblargs=dbls, longarray=longarray)
+        message_recv = Message(longargs=(0, 0, 0))
+        self.ExchangeMessages(message_send, message_recv)
+        args = message_recv.array['longargs']
+        numsaved = args[1]
+        error = args[2]
+        return numsaved, error
 
-    def SetNoDMSettling(self, value):
-        self.SetFunction('GS_SetNoDMSettling',
-                         slongargs=(value,))
+    def SelectCamera(self, cameraid: int):
+        funcCode = enum_gs['GS_SelectCamera']
+        message_send = Message(longargs=(funcCode, cameraid))
+        message_recv = Message(longargs=(0,))
+        self.ExchangeMessages(message_send, message_recv)
 
-    def WaitUntilReady(self, value):
-        self.SetFunction('GS_WaitUntilReady',
-                         slongargs=(value,))
+    def UpdateK2HardwareDarkReference(self, cameraid: int):
+        function_name = 'K2_updateHardwareDarkReference'
+        return self.ExecuteSendCameraObjectionFunction(function_name, cameraid)
+
+    def PrepareDarkReference(self, cameraid: int):
+        function_name = 'CM_PrepareDarkReference'
+        return self.ExecuteSendCameraObjectionFunction(function_name, cameraid)
+
+    def GetEnergyFilter(self):
+        if 'GetEnergyFilter' not in list(self.filter_functions.keys()):
+            return -1.0
+        script = 'if ( %s() ) { Exit(1.0); } else { Exit(-1.0); }' % (self.filter_functions['GetEnergyFilter'],)
+        return self.ExecuteGetDoubleScript(script)
+
+    def SetEnergyFilter(self, value):
+        if 'SetEnergyFilter' not in list(self.filter_functions.keys()):
+            return -1.0
+        if value:
+            i = 1
+        else:
+            i = 0
+        script = '%s(%d); %s' % (self.filter_functions['SetEnergyFilter'], i, self.wait_for_filter)
+        return self.ExecuteSendScript(script)
+
+    def GetEnergyFilterWidthMax(self):
+        if 'GetEnergyFilterWidthMax' not in list(self.filter_functions.keys()):
+            return -1.0
+        script = 'Exit(%s())' % (self.filter_functions['GetEnergyFilterWidthMax'],)
+        return self.ExecuteGetDoubleScript(script)
+
+    def GetEnergyFilterWidth(self):
+        if 'GetEnergyFilterWidth' not in list(self.filter_functions.keys()):
+            return -1.0
+        script = 'Exit(%s())' % (self.filter_functions['GetEnergyFilterWidth'],)
+        return self.ExecuteGetDoubleScript(script)
+
+    def SetEnergyFilterWidth(self, value):
+        if 'SetEnergyFilterWidth' not in list(self.filter_functions.keys()):
+            return -1.0
+        script = 'if ( %s(%f) ) { Exit(1.0); } else { Exit(-1.0); }' % (
+        self.filter_functions['SetEnergyFilterWidth'], value)
+        return self.ExecuteSendScript(script)
+
+    def GetEnergyFilterOffset(self):
+        if 'GetEnergyFilterOffset' not in list(self.filter_functions.keys()):
+            return 0.0
+        script = 'Exit(%s())' % (self.filter_functions['GetEnergyFilterOffset'],)
+        return self.ExecuteGetDoubleScript(script)
+
+    def SetEnergyFilterOffset(self, value):
+        """
+        wjr changing this to use the Gatan function IFSetEnergyOffset, which needs a technique and a value
+        GMS 3.32,function apparently added in GMS 3.2. Later versions will need to be checked
+        technique 0: instrument (not available)
+        technique 1: prism offset (confusing because -10 is 10)
+        technique 2: HT offset (has no effect on BioQuantum, but HT offset in DM will change)
+        technique 3: drift tube ( this seems best since the value is consistant with direction)
+        technique 4: prism adjust (confusing because -10 is 10 and it does not count when checking the energy loss value)
+        note: the Gatan function being called is a void, so removed the boolean logic used for most other functions
+        """
+        technique = 3  # hard code to drift tube for now
+        if 'SetEnergyFilterOffset' not in list(self.filter_functions.keys()):
+            return -1.0
+        script = '%s(%i,%f)' % (self.filter_functions['SetEnergyFilterOffset'], technique, value)
+        self.ExecuteSendScript(script)
+        #		return 1
+        # or better to
+        newvalue = self.GetEnergyFilterOffset()  # ? but wastes time
+        if value == newvalue:
+            return 1
+        else:
+            technique = 2  # reset the HT offfset to 0, sometimes this gets set
+            script = '%s(%i,%f)' % (self.filter_functions['SetEnergyFilterOffset'], technique, 0)
+            self.ExecuteSendScript(script)
+            newvalue = self.GetEnergyFilterOffset()
+            if value == newvalue:
+                return 1
+            else:
+                return -1
+
+    def AlignEnergyFilterZeroLossPeak(self):
+        script = ' if ( %s() ) { %s Exit(1.0); } else { Exit(-1.0); }' % (
+        self.filter_functions['AlignEnergyFilterZeroLossPeak'], self.wait_for_filter)
+        return self.ExecuteGetDoubleScript(script)
 
     @logwrap
-    def GetImage(self, processing, height, width, binning, top,
-                 left, bottom, right, exposure, corrections,
-                 shutter=0, shutterDelay=0.):
-        """
-        :param processing: dark, unprocessed, dark subtracted or gain normalized
-        :param exposure: seconds
-        :param shutterDelay: milliseconds
-        """
+    def GetImage(self,
+                 processing,
+                 height,
+                 width,
+                 binning,
+                 top,
+                 left,
+                 bottom,
+                 right,
+                 exposure,
+                 corrections,
+                 shutter=0,
+                 shutterDelay=0.0):
 
         arrSize = width * height
 
@@ -585,13 +495,14 @@ class SocketFuncs(GatanSocket):
         divideBy2 = 0
         settling = 0.0
 
+        # prepare args for message
         if processing == 'dark':
             longargs = [enum_gs['GS_GetDarkReference']]
         else:
             longargs = [enum_gs['GS_GetAcquiredImage']]
         longargs.extend([
             arrSize,  # pixels in the image
-            width, height
+            width, height,
         ])
         if processing == 'unprocessed':
             longargs.append(0)
@@ -599,12 +510,21 @@ class SocketFuncs(GatanSocket):
             longargs.append(1)
         elif processing == 'gain normalized':
             longargs.append(2)
-
-        longargs.extend([binning, top, left, bottom, right, shutter])
+        longargs.extend([
+            binning,
+            top, left, bottom, right,
+            shutter,
+        ])
         if processing != 'dark':
             longargs.append(shutterDelay)
-        longargs.extend([divideBy2, corrections])
-        dblargs = [exposure, settling]
+        longargs.extend([
+            divideBy2,
+            corrections,
+        ])
+        dblargs = [
+            exposure,
+            settling,
+        ]
 
         message_send = Message(longargs=longargs, dblargs=dblargs)
         message_recv = Message(longargs=(0, 0, 0, 0, 0))
@@ -615,20 +535,24 @@ class SocketFuncs(GatanSocket):
 
         self.ExchangeMessages(message_send, message_recv)
 
-        longargs = message_recv.array['longargs']
+        longargs = message_recv.array['longargs'].tolist()
+        logging.debug('GetImage longargs %s', longargs)
         if longargs[0] < 0:
             return 1
         arrSize = longargs[1]
         width = longargs[2]
         height = longargs[3]
         numChunks = longargs[4]
-        bytesPerPixel = 2
+        bytesPerPixel = 2  # depends on the results formated =uint16
         numBytes = arrSize * bytesPerPixel
-        chunkSize = (numBytes + numChunks - 1) / numChunks
-        imArray = np.zeros((height, width), np.ushort)
+        chunkSize = (numBytes + numChunks - 1) // numChunks
+        imArray = np.zeros((height * width,), np.uint16)
         received = 0
         remain = numBytes
+        index = 0
+        logging.debug('chunk size %d', chunkSize)
         for chunk in range(numChunks):
+            recv_bytes = b''
             # send chunk handshake for all but the first chunk
             if chunk:
                 message_send = Message(longargs=(enum_gs['GS_ChunkHandshake'],))
@@ -639,75 +563,185 @@ class SocketFuncs(GatanSocket):
             while chunkRemain:
                 new_recv = self.recv_data(chunkRemain)
                 len_recv = len(new_recv)
-                imArray.data[received: received + len_recv] = new_recv
+                recv_bytes += new_recv
                 chunkReceived += len_recv
                 chunkRemain -= len_recv
                 remain -= len_recv
                 received += len_recv
+            last_index = int(index)
+            logging.debug('chunk bytes length %d', len(recv_bytes))
+            index = chunkSize * (chunk + 1) // bytesPerPixel
+            logging.debug('array index range to fill %d:%d', last_index, index)
+            imArray[last_index:index] = np.frombuffer(recv_bytes, dtype=np.uint16)
+        imArray = imArray.reshape((height, width))
         return imArray
 
-    def UpdateK2HardwareDarkReference(self, camera):
-        function_name = 'K2_updateHardwareDarkReference'
-        return self.ExecuteSendCameraObjectionFunction(function_name, camera)
+    def ExecuteSendCameraObjectionFunction(self, function_name, camera_id=0):
+        # first longargs is error code. Error if > 0
+        return self.ExecuteGetLongCameraObjectFunction(function_name, camera_id)
 
-    def FreeK2GainReference(self, value):
-        self.SetFunction('GS_FreeK2GainReference', slongargs=(value,))
+    def ExecuteGetLongCameraObjectFunction(self, function_name, camera_id=0):
+        """ Execute DM script function that requires camera object
+        as input and output one long integer.
+        """
+        recv_longargs_init = (0,)
+        result = self.ExecuteCameraObjectFunction(function_name, camera_id,
+                                                  recv_longargs_init=recv_longargs_init)
+        if result is False:
+            return 1
+        return result.array['longargs'][0]
 
-    def PrepareDarkReference(self, camera):
-        function_name = 'CM_PrepareDarkReference'
-        return self.ExecuteSendCameraObjectionFunction(function_name, camera)
+    def ExecuteGetDoubleCameraObjectFunction(self, function_name, camera_id=0):
+        """ Execute DM script function that requires camera object
+        as input and output double floating point number.
+        """
+        recv_dblargs_init = (0,)
+        result = self.ExecuteCameraObjectFunction(function_name, camera_id,
+                                                  recv_dblargs_init=recv_dblargs_init)
+        if result is False:
+            return -999.0
+        return result.array['dblargs'][0]
 
-# ---------- Energy filter functions ------------------------------------------
+    def ExecuteCameraObjectFunction(self,
+                                    function_name,
+                                    camera_id=0,
+                                    recv_longargs_init=(0,),
+                                    recv_dblargs_init=(0.0,)):
+        """ Execute DM script function that requires camera object as input. """
+        if not self.hasScriptFunction(function_name):
+            return False
+        fullcommand = "Object manager = CM_GetCameraManager();\n Object cameraList = CM_GetCameras(manager);\n Object camera = ObjectAt(cameraList,%d);\n " % (
+            camera_id)
+        fullcommand += "%s(camera);\n" % function_name
+        result = self.ExecuteScript(fullcommand, camera_id, recv_longargs_init,
+                                    recv_dblargs_init)
+        return result
 
-    def GetEnergyFilter(self):
-        if 'GetEnergyFilter' not in self.filter_functions.keys():
-            return -1.0
-        func = self.filter_functions['GetEnergyFilter']
-        script = f'if ( {func}() ) {{ Exit(1.0); }} else {{ Exit(-1.0); }}'
-        return self.ExecuteGetDoubleScript(script)
+    def ExecuteSendScript(self, command_line, select_camera=0):
+        recv_longargs_init = (0,)
+        result = self.ExecuteScript(command_line, select_camera, recv_longargs_init)
+        # first longargs is error code. Error if > 0
+        return result.array['longargs'][0]
 
-    def SetEnergyFilter(self, value):
-        if 'SetEnergyFilter' not in self.filter_functions.keys():
-            return -1.0
-        if value:
-            i = 1
+    def ExecuteGetLongScript(self, command_line, select_camera=0):
+        """ Execute DM script and return the result as integer. """
+        # SerialEMCCD DM TemplatePlugIn::ExecuteScript retval is a double
+        return int(self.ExecuteGetDoubleScript(command_line, select_camera))
+
+    def ExecuteGetDoubleScript(self, command_line, select_camera=0):
+        """ Execute DM script that gets one double float number. """
+        result = self.ExecuteScript(command_line, select_camera)
+        return result.array['dblargs'][0]
+
+    def ExecuteScript(self,
+                      command_line: str,
+                      select_camera: int = 0,
+                      recv_longargs_init: Tuple = (0,),
+                      recv_dblargs_init: Tuple = (0.0,)):
+        funcCode = enum_gs['GS_ExecuteScript']
+        cmd_str = command_line + '\0'
+        extra = len(cmd_str) % 4
+        if extra:
+            npad = 4 - extra
+            cmd_str = cmd_str + npad * '\0'
+        # send the command string as 1D longarray
+        longarray = np.frombuffer(bytes(cmd_str, 'utf-8'), dtype=np.int32)
+        message_send = Message(longargs=(funcCode,), boolargs=(select_camera,), longarray=longarray)
+        message_recv = Message(longargs=recv_longargs_init, dblargs=recv_dblargs_init)
+        self.ExchangeMessages(message_send, message_recv)
+        return message_recv
+
+
+if __name__ == '__main__':
+    g = GatanSocket(host="192.168.71.2")
+    print(g)
+    print('Version', g.GetDMVersion())
+    print('GetNumberOfCameras', g.GetNumberOfCameras())
+    print('GetPluginVersion', g.GetPluginVersion())
+    if not g.IsCameraInserted(0):
+        print('InsertCamera')
+        g.InsertCamera(0, True)
+    print('IsCameraInserted', g.IsCameraInserted(0))
+
+
+    k2params = {
+        'readMode': 1, # {'non-K2 cameras':-1, 'linear': 0, 'counting': 1, 'super resolution': 2}
+        'scaling': 1.0,
+        'hardwareProc': 1, #{'none': 0, 'dark': 2, 'gain': 4, 'dark+gain': 6}
+        'doseFrac': False,
+        'frameTime': 0.25,
+        'alignFrames': False,
+        'saveFrames': False,
+        'filt': 'None'
+    }
+
+    def getDMVersion(g):
+        '''
+        version: version_long, major.minor.sub
+        '''
+        version_long = g.GetDMVersion()
+        if version_long < 40000:
+            major = 1
+            minor = None
+            sub = None
+            if version_long >= 31100:
+                # 2.3.0 gives an odd number of 31100
+                major = 2
+                minor = 3
+                sub = 0
+                version_long = 40300
+        elif version_long == 40000:
+            # minor version can be 0 or 1 in this case
+            # but likely 1 since we have not used this module until k2 is around
+            major = 2
+            minor = 1
+            sub = 0
         else:
-            i = 0
-        func = self.filter_functions['SetEnergyFilter']
-        wait = self.wait_for_filter
-        script = f'{func}({i}); {wait}'
-        return self.ExecuteSendScript(script)
+            major = version_long // 10000 - 2
+            remainder = version_long - (major + 2) * 10000
+            minor = remainder // 100
+            sub = remainder % 100
+        return (version_long, '%d.%d.%d' % (major, minor, sub))
 
-    def GetEnergyFilterWidth(self):
-        if 'GetEnergyFilterWidth' not in self.filter_functions.keys():
-            return -1.0
-        func = self.filter_functions['GetEnergyFilterWidth']
-        script = f'Exit({func}())'
-        return self.ExecuteGetDoubleScript(script)
+    def isDM332orUp(g):
+        version_id, version_string = getDMVersion(g)
+        if version_id and version_id >= 50302:
+            return True
+        return False
 
-    def SetEnergyFilterWidth(self, value):
-        if 'SetEnergyFilterWidth' not in self.filter_functions.keys():
-            return -1.0
-        func = self.filter_functions['SetEnergyFilterWidth']
-        script = f'if ( {func}({value:f}) ) {{ Exit(1.0); }} else {{ Exit(-1.0); }}'
-        return self.ExecuteSendScript(script)
 
-    def GetEnergyFilterOffset(self):
-        if 'GetEnergyFilterOffset' not in self.filter_functions.keys():
-            return 0.0
-        func = self.filter_functions['GetEnergyFilterOffset']
-        script = f'Exit({func}())'
-        return self.ExecuteGetDoubleScript(script)
+    def getCorrectionFlags(g):
+        '''
+        Binnary Correction flag sum in GMS.  See Feature #8391.
+        GMS3.3.2 has pre-counting correction which is superior.
+        SerialEM always do this correction
+        but Leginon 3.4 and earlier does not.
+        David M. said SerialEM default is 49 for K2 and 1 for K3.
+        49 means defect,bias, and quadrant (to be the same as Ultrascan).
+        I don't think the latter two needs applying in counting.
+        '''
+        if isDM332orUp(g):
+            return 1  # defect correction only.
+        else:
+            # keep it zero to be back compatible.
+            return 0
 
-    def SetEnergyFilterOffset(self, value):
-        if 'SetEnergyFilterOffset' not in self.filter_functions.keys():
-            return -1.0
-        func = self.filter_functions['SetEnergyFilterOffset']
-        script = f'if ( {func}({value:f}) ) {{ Exit(1.0); }} else {{ Exit(-1.0); }}'
-        return self.ExecuteSendScript(script)
+    acqparams = {
+        'processing': 'unprocessed', # dark, dark subtracted, gain normalized
+        'height': 2048,
+        'width': 2048,
+        'binning': 1,
+        'top': 0,
+        'left': 0,
+        'bottom': 2048,
+        'right': 2048,
+        'exposure': 1.0,
+        'corrections': getCorrectionFlags(g),
+        'shutter': 0,
+        'shutterDelay': 0.0,
+    }
 
-    def AlignEnergyFilterZeroLossPeak(self):
-        func = self.filter_functions['AlignEnergyFilterZeroLossPeak']
-        wait = self.wait_for_filter
-        script = f' if ( {func}() ) {{ {wait} Exit(1.0); }} else {{ Exit(-1.0); }}'
-        return self.ExecuteGetDoubleScript(script)
+    #g.SetK2Parameters(**k2params)
+    g.SetReadMode(-1)
+    image = g.GetImage(**acqparams)
+    print("Got image array:", image.dtype, image.shape)
