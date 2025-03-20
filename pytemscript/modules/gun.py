@@ -15,29 +15,28 @@ class GunObj(SpecialObj):
     """ Wrapper around Gun COM object specifically for the Gun1 interface. """
     def __init__(self, com_object):
         super().__init__(com_object)
-        self.gun1 = None
-
-    def is_available(self) -> bool:
-        """ Gun1 inherits from the Gun interface of the std scripting. """
         import comtypes.gen.TEMScripting as Ts
         if hasattr(Ts, "Gun1"):
             self.gun1 = self.com_object.QueryInterface(Ts.Gun1)
-            return True
         else:
-            return False
+            self.gun1 = None
+
+    def is_available(self) -> bool:
+        """ Gun1 inherits from the Gun interface of the std scripting. """
+        return self.gun1 is not None
 
     def get_hv_offset(self) -> float:
-        if self.gun1 is None:
+        if not self.is_available():
             raise NotImplementedError(ERR_MSG_GUN1)
         return self.gun1.HighVoltageOffset
 
     def set_hv_offset(self, value: float) -> None:
-        if self.gun1 is None:
+        if not self.is_available():
             raise NotImplementedError(ERR_MSG_GUN1)
         self.gun1.HighVoltageOffset = value
 
     def get_hv_offset_range(self) -> Tuple:
-        if self.gun1 is None:
+        if not self.is_available():
             raise NotImplementedError(ERR_MSG_GUN1)
         result = self.gun1.GetHighVoltageOffsetRange()
         return result[0], result[1]

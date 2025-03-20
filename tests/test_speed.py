@@ -19,7 +19,7 @@ def main() -> None:
     print("Starting acquisition speed test")
     cameras = microscope.acquisition.cameras
 
-    for camera in ["BM-Ceta", "BM-Falcon", "EF-CCD"]:
+    for camera in ["BM-Ceta", "BM-Falcon", "EF-Falcon", "EF-CCD"]:
         if camera in cameras:
 
             print("\tUsing SafeArray")

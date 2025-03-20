@@ -20,9 +20,10 @@ def main():
 
     cameras = [
         "BM-Orius",
-        "BM-Falcon"
+        "BM-Falcon",
+        "EF-Falcon"
     ]
-    kv = 200
+    kv = 300
 
     #camera = cg.get_reference_camera()
     for camera in cameras:
