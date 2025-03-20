@@ -24,6 +24,7 @@ class COMBase:
         self.tem_adv = None
         self.tem_lowdose = None
         self.tecnai_ccd = None
+        self.calgetter = None
 
         if platform.system() == "Windows":
             logging.getLogger("comtypes").setLevel(logging.INFO)
@@ -64,6 +65,8 @@ class COMBase:
             if self.tecnai_ccd is None:
                 self.tecnai_ccd = self._createCOMObject(SCRIPTING_TECNAI_CCD2)
 
+        self.calgetter = self._createCOMObject(CALGETTER)
+
         if self.tem is None:
             raise RuntimeError("Failed to create COM object.")
 
@@ -73,6 +76,7 @@ class COMBase:
         self.tem_adv = None
         self.tem_lowdose = None
         self.tecnai_ccd = None
+        self.calgetter = None
 
         com_module.CoUninitialize()
 
@@ -124,6 +128,11 @@ class COMClient(BasicClient):
     def has_ccd_iface(self) -> bool:
         return self._scope.tecnai_ccd is not None
 
+    @property
+    @lru_cache(maxsize=1)
+    def has_calgetter_iface(self) -> bool:
+        return self._scope.calgetter is not None
+
     def _get(self, attrname):
         return rgetattr(self._scope, attrname)
 
@@ -163,6 +172,9 @@ class COMClient(BasicClient):
         if obj_cls is None or obj_method is None:
             raise AttributeError("obj_class and obj_method must be specified")
 
+        logging.debug("=> EXEC_SP: %s.%s, kwargs=%r",obj_cls.__name__,
+                      obj_method, kwargs)
+
         if attrname is None:  # plugin case
             com_obj = self._scope
         else:
@@ -171,7 +183,7 @@ class COMClient(BasicClient):
         method = getattr(obj_instance, obj_method)
 
         if method is None:
-            raise AttributeError("Method %s not implemented for %s" % (obj_method, obj_cls))
+            raise AttributeError("Method %s not implemented for %s" % (obj_method, obj_cls.__name__))
 
         result = method(**kwargs)
 

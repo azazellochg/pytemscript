@@ -1,4 +1,5 @@
 from typing import Optional, Any
+import os
 import functools
 import numpy as np
 import logging
@@ -13,7 +14,7 @@ def rgetattr(obj, attrname, *args, iscallable=False, log=True, **kwargs):
     """ Recursive getattr or callable on a COM object"""
     try:
         if log:
-            logging.debug("<= GET: %s, args=%s, kwargs=%s",
+            logging.debug("<= GET: %s, args=%r, kwargs=%r",
                           attrname, args, kwargs)
         result = functools.reduce(getattr, attrname.split('.'), obj)
         return result(*args, **kwargs) if iscallable else result
@@ -110,7 +111,9 @@ def convert_image(obj,
                   bit_depth: Optional[int] = None,
                   pixel_size: Optional[float] = None,
                   advanced: Optional[bool] = False,
-                  use_safearray: Optional[bool] = True):
+                  use_safearray: Optional[bool] = True,
+                  use_asfile: Optional[bool] = False,
+                  **kwargs):
     """ Convert COM image object into an uint16 Image.
 
     :param obj: COM object
@@ -121,14 +124,30 @@ def convert_image(obj,
     :param pixel_size: pixel size of the image
     :param advanced: advanced scripting flag
     :param use_safearray: use safearray method
+    :param use_asfile: use asfile method
     """
     from pytemscript.modules import Image
 
     if use_safearray:
+        # Convert to a safearray and then to numpy
         from comtypes.safearray import safearray_as_ndarray
         with safearray_as_ndarray:
-            data = obj.AsSafeArray.astype("uint16")  # AsSafeArray always returns int32 array
+            # AsSafeArray always returns int32 array
+            # Also, transpose is required to match TIA orientation
+            data = obj.AsSafeArray.astype("uint16").T
+
+    elif use_asfile:
+        # Save into a temp file and read into numpy
+        import imageio
+        fn = r"C:/temp.tif"
+        if os.path.exists(fn):
+            os.remove(fn)
+        obj.SaveToFile(fn) if advanced else obj.AsFile(fn, 0)
+        data = imageio.imread(fn).astype("uint16")
+        os.remove(fn)
+
     else:
+        # TecnaiCCD plugin: obj is a variant, convert to numpy
         data = np.array(obj, dtype="uint16")
 
     name = name or obj.Name
@@ -161,9 +180,9 @@ class RequestBody:
         self.kwargs = kwargs
 
     def __str__(self) -> str:
-        return '{"attr": "%s", "validator": "%s", "kwargs": %s}' % (
+        return '{"attr": "%s", "validator": "%s", "kwargs": %r}' % (
             self.attr, self.validator, self.kwargs)
 
     def __repr__(self) -> str:
-        return 'RequestBody(attr=%s, validator=%s, kwargs=%s)' % (
+        return 'RequestBody(attr=%s, validator=%s, kwargs=%r)' % (
             self.attr, self.validator, self.kwargs)

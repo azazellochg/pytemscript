@@ -1,6 +1,5 @@
 import logging
 import time
-from typing import Optional
 
 from ..utils.enums import AcqImageSize, AcqMode, AcqSpeed
 from ..modules.extras import Image
@@ -8,7 +7,10 @@ from ..utils.misc import convert_image
 
 
 class TecnaiCCDPlugin:
-    """ Main class that uses FEI Tecnai CCD plugin on microscope PC. """
+    """ Main class that uses Tecnai CCD plugin on microscope PC
+    to communicate with Gatan Digital Micrograph.
+    Starting from TIA 4.10 TecnaiCCD.dll was replaced by FeiCCD.dll
+    """
     def __init__(self, com_iface):
             self.ccd_plugin = com_iface.tecnai_ccd
             self._img_params = dict()
@@ -37,12 +39,18 @@ class TecnaiCCDPlugin:
             #img = self.ccd_plugin.AcquireImageShown()
             #img = self.ccd_plugin.AcquireDarkSubtractedImage() # variant
 
+            t0 = time.time()
             img = self.ccd_plugin.AcquireRawImage()  # variant / tuple
+            t1 = time.time()
 
             if kwargs.get('show', False):
                 self.ccd_plugin.ShowAcquiredImage()
 
             image = convert_image(img, name=cameraName, use_safearray=False, **self._img_params)
+            t2 = time.time()
+            logging.debug("\tAcquisition took %f s" % (t1 - t0))
+            logging.debug("\tConverting image took %f s" % (t2 - t1))
+
             return image
         else:
             raise Exception("Camera is busy acquiring...")

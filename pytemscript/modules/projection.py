@@ -17,7 +17,6 @@ class Projection:
         self.__id = "tem.Projection"
         self.__err_msg = "Microscope is not in diffraction mode"
         self.__magnifications = OrderedDict()
-        self.__find_magnifications()
 
     def __find_magnifications(self) -> None:
         if not self.__magnifications:
@@ -26,15 +25,10 @@ class Projection:
             body = RequestBody(attr="tem.AutoNormalizeEnabled", value=False)
             self.__client.call(method="set", body=body)
 
-            # make sure we are in TEM mode
-            body = RequestBody(attr="tem.InstrumentModeControl.InstrumentMode",
-                               value=InstrumentMode.TEM)
-            self.__client.call(method="set", body=body)
             self.mode = ProjectionMode.IMAGING
-
             saved_index = self.magnification_index
             previous_index = None
-            index = 0
+            index = 1
             while True:
                 self.magnification_index = index
                 index = self.magnification_index
@@ -54,6 +48,7 @@ class Projection:
     @property
     def list_magnifications(self) -> Dict:
         """ List of available magnifications: mag -> (mag_index, submode). """
+        self.__find_magnifications()
         return self.__magnifications
 
     @property
@@ -68,6 +63,11 @@ class Projection:
             raise ValueError("%s is outside of range -1.0 to 1.0" % value)
 
         body = RequestBody(attr=self.__id + ".Focus", value=value)
+        self.__client.call(method="set", body=body)
+
+    def eucentric_focus(self) -> None:
+        """ Reset focus to eucentric value. """
+        body = RequestBody(attr=self.__id + ".Focus", value=0)
         self.__client.call(method="set", body=body)
 
     @property

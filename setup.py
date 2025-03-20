@@ -43,12 +43,12 @@ if sys.version_info < (3, 5):
               "mrcfile==1.3.0",
               "numpy==1.15.4",
               "pip<=19.1.1",
-              "pillow<=5.3.0",
+              "pillow==5.3.0",
               "setuptools<=12.0.5",
               "typing"
           ],
           extras_require={
-              "extra": ["matplotlib", "mypy"],
+              "dev": ["matplotlib", "mypy"],
               "utapi": ["grpcio", "grpcio-tools", "protobuf"]
           },
           entry_points={'console_scripts': [

@@ -263,17 +263,20 @@ class Illumination:
         depends on a calibration of the tilt angles. (read/write)
         """
         dfmode = RequestBody(attr=self.__id + ".DFMode", validator=int)
-        dftilt = RequestBody(attr=self.__id + ".Tilt")
+        dftiltx = RequestBody(attr=self.__id + ".Tilt.X", validator=float)
+        dftilty = RequestBody(attr=self.__id + ".Tilt.Y", validator=float)
 
         mode = self.__client.call(method="get", body=dfmode)
-        tilt = self.__client.call(method="get", body=dftilt)
+        tiltx = self.__client.call(method="get", body=dftiltx) # rad
+        tilty = self.__client.call(method="get", body=dftilty) # rad
 
         if mode == DarkFieldMode.CONICAL:
-            tilt *= 1e3
-            return Vector(tilt.x * math.cos(tilt.y), tilt.x * math.sin(tilt.y))
+            tilt = tiltx
+            rot = tilty
+            return Vector(tilt * math.cos(rot), tilt * math.sin(rot)) * 1e3
         elif mode == DarkFieldMode.CARTESIAN:
-            return tilt * 1e3
-        else:
+            return Vector(tiltx, tilty) * 1e3
+        else:  # DF is off
             return Vector(0.0, 0.0)  # Microscope might return nonsense if DFMode is OFF
 
     @beam_tilt.setter
@@ -284,7 +287,7 @@ class Illumination:
         if isinstance(tilt, float):
             tilt = Vector(tilt, tilt)
 
-        tilt *= 1e-3
+        tilt *= 1e-3 # mrad to rad
 
         if tilt == (0.0, 0.0):
             body = RequestBody(attr=self.__id + ".Tilt", value=tilt)
@@ -299,13 +302,9 @@ class Illumination:
             body = RequestBody(attr=self.__id + ".Tilt", value=value)
             self.__client.call(method="set", body=body)
 
-        elif mode == DarkFieldMode.OFF:
-            body = RequestBody(attr=self.__id + ".DFMode", value=DarkFieldMode.CARTESIAN)
-            self.__client.call(method="set", body=body)
-
-            body = RequestBody(attr=self.__id + ".Tilt", value=tilt.x)
+        elif mode == DarkFieldMode.CARTESIAN:
+            body = RequestBody(attr=self.__id + ".Tilt", value=tilt)
             self.__client.call(method="set", body=body)
 
         else:
-            body = RequestBody(attr=self.__id + ".Tilt", value=tilt.x)
-            self.__client.call(method="set", body=body)
+            raise ValueError("Dark field mode is OFF. You cannot set beam tilt.")

@@ -1,7 +1,7 @@
 import logging
 
 from ..utils.misc import RequestBody
-from ..utils.enums import ProjectionNormalization, IlluminationNormalization
+from ..utils.enums import ProjectionNormalization, IlluminationNormalization, InstrumentMode
 from .illumination import Illumination
 from .projection import Projection
 
@@ -14,6 +14,14 @@ class Optics:
         self.__client = client
         self.illumination = Illumination(client, condenser_type)
         self.projection = Projection(client)
+
+    @property
+    def instrument_mode(self) -> str:
+        """ Current instrument mode: TEM or STEM. """
+        body = RequestBody(attr="tem.InstrumentModeControl.InstrumentMode", validator=int)
+        result = self.__client.call(method="get", body=body)
+
+        return InstrumentMode(result).name
 
     @property
     def screen_current(self) -> float:

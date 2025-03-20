@@ -109,7 +109,7 @@ class AcquisitionObj(SpecialObj):
 
         return tem_cameras
 
-    def acquire(self, cameraName: str) -> Image:
+    def acquire(self, cameraName: str, **kwargs) -> Image:
         """ Perform actual acquisition. Camera settings should be set beforehand.
 
         :param cameraName: Camera name
@@ -121,7 +121,7 @@ class AcquisitionObj(SpecialObj):
         t0 = time.time()
         imgs = acq.AcquireImages()
         t1 = time.time()
-        image = convert_image(imgs[0], name=cameraName)
+        image = convert_image(imgs[0], name=cameraName, **kwargs)
         t2 = time.time()
         logging.debug("\tAcquisition took %f s" % (t1 - t0))
         logging.debug("\tConverting image took %f s" %(t2 - t1))
@@ -130,7 +130,8 @@ class AcquisitionObj(SpecialObj):
 
     def acquire_advanced(self,
                          cameraName: str,
-                         recording: bool = False) -> Optional[Image]:
+                         recording: bool = False,
+                         **kwargs) -> Optional[Image]:
         """ Perform actual acquisition with advanced scripting. """
         if recording:
             self.com_object.CameraContinuousAcquisition.Start()
@@ -141,7 +142,7 @@ class AcquisitionObj(SpecialObj):
             img = self.com_object.CameraSingleAcquisition.Acquire()
             t1 = time.time()
             #self.com_object.CameraSingleAcquisition.Wait()
-            image = convert_image(img, name=cameraName, advanced=True)
+            image = convert_image(img, name=cameraName, advanced=True, **kwargs)
             t2 = time.time()
             logging.debug("\tAcquisition took %f s" % (t1 - t0))
             logging.debug("\tConverting image took %f s" % (t2 - t1))
@@ -270,23 +271,37 @@ class AcquisitionObj(SpecialObj):
             else:
                 raise NotImplementedError("This camera does not support electron counting")
 
-        if eer is not None and hasattr(capabilities, 'SupportsEER'):
-            if capabilities.SupportsEER:
+        # EER saving is supported in TEM server 7.6 (Titan 3.6 / Talos 2.6)
+        if hasattr(capabilities, 'SupportsEER'):
+            eer_is_supported = capabilities.SupportsEER
+            if eer and eer_is_supported:
                 settings.EER = eer
-                if eer and not settings.ElectronCounting:
-                    raise RuntimeError("Electron counting should be enabled when using EER")
-                if eer and 'group_frames' in kwargs:
-                    raise RuntimeError("No frame grouping allowed when using EER")
-            else:
+            elif eer and not eer_is_supported:
                 raise NotImplementedError("This camera does not support EER")
+            elif not eer and eer_is_supported:
+                # EER param is persistent throughout camera COM object lifetime,
+                # if not using EER we need to set it to False
+                settings.EER = False
 
-        if 'save_frames' in kwargs:
+            if eer and not settings.ElectronCounting:
+                raise RuntimeError("Electron counting should be enabled when using EER")
+            if eer and 'group_frames' in kwargs:
+                raise RuntimeError("No frame grouping allowed when using EER")
+
+        if capabilities.SupportsDoseFractions:
+            dfd = settings.DoseFractionsDefinition
+            dfd.Clear()
+
+        if kwargs.get('save_frames'):
+            if not capabilities.SupportsDoseFractions:
+                raise NotImplementedError("This camera does not support dose fractions")
+
             total = settings.CalculateNumberOfFrames()
             now = datetime.now()
             settings.SubPathPattern = cameraName + "_" + now.strftime("%d%m%Y_%H%M%S")
             output = settings.PathToImageStorage + settings.SubPathPattern
 
-            if eer is None:
+            if eer in [False, None]:
                 group = kwargs.get('group_frames', 1)
                 if group < 1:
                     raise ValueError("Frame group size must be at least 1")
@@ -294,15 +309,14 @@ class AcquisitionObj(SpecialObj):
                     raise ValueError("Frame group size cannot exceed maximum possible "
                                      "number of frames: %d. Change exposure time." % total)
 
-                dfd = settings.DoseFractionsDefinition
-                dfd.Clear()
                 frame_ranges = [(i, min(i + group, total)) for i in range(0, total-1, group)]
-                for i in frame_ranges:
+                logging.debug("Using frame ranges: %s", frame_ranges[:-1])
+                for i in frame_ranges[:-1]:
                     dfd.AddRange(i[0], i[1])
 
                 logging.info("Movie of %d fractions (%d frames, group=%d) "
                              "will be saved to: %s.mrc",
-                             len(frame_ranges), total, group, output)
+                             len(frame_ranges)-1, total, group, output)
                 logging.info("MRC format can only contain images of up to "
                              "16-bits per pixel, to get true CameraCounts "
                              "multiply pixels by PixelToValueCameraCounts "
@@ -431,7 +445,7 @@ class Acquisition:
                                "pass useTecnaiCCD=True to the Microscope() ?")
         else:
             logging.info("Using TecnaiCCD plugin for Gatan camera")
-            from ..plugins.tecnai_ccd_plugin import TecnaiCCDPlugin
+            from ..plugins.tecnai_ccd import TecnaiCCDPlugin
 
             body = RequestBody(attr=None,
                                obj_cls=TecnaiCCDPlugin,
@@ -506,7 +520,8 @@ class Acquisition:
             body = RequestBody(attr="tem.Acquisition",
                                obj_cls=AcquisitionObj,
                                obj_method="acquire",
-                               cameraName=cameraName)
+                               cameraName=cameraName,
+                               **kwargs)
             image = self.__client.call(method="exec_special", body=body)
             logging.info("TEM image acquired on %s", cameraName)
 
@@ -537,7 +552,8 @@ class Acquisition:
                                    obj_cls=AcquisitionObj,
                                    obj_method="acquire_advanced",
                                    cameraName=cameraName,
-                                   recording=kwargs["recording"])
+                                   recording=kwargs["recording"],
+                                   **kwargs)
                 self.__client.call(method="exec_special", body=body)
                 logging.info("TEM image acquired on %s", cameraName)
                 return None
@@ -546,7 +562,8 @@ class Acquisition:
                                    validator=Image,
                                    obj_cls=AcquisitionObj,
                                    obj_method="acquire_advanced",
-                                   cameraName=cameraName)
+                                   cameraName=cameraName,
+                                   **kwargs)
                 image = self.__client.call(method="exec_special", body=body)
                 return image
 
@@ -587,7 +604,8 @@ class Acquisition:
                            validator=Image,
                            obj_cls=AcquisitionObj,
                            obj_method="acquire",
-                           cameraName=cameraName)
+                           cameraName=cameraName,
+                           **kwargs)
         image = self.__client.call(method="exec_special", body=body)
         logging.info("STEM image acquired on %s", cameraName)
 
