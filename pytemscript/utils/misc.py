@@ -14,7 +14,7 @@ def rgetattr(obj, attrname, *args, iscallable=False, log=True, **kwargs):
     """ Recursive getattr or callable on a COM object"""
     try:
         if log:
-            logging.debug("<= GET: %s, args=%s, kwargs=%s",
+            logging.debug("<= GET: %s, args=%r, kwargs=%r",
                           attrname, args, kwargs)
         result = functools.reduce(getattr, attrname.split('.'), obj)
         return result(*args, **kwargs) if iscallable else result
@@ -180,9 +180,9 @@ class RequestBody:
         self.kwargs = kwargs
 
     def __str__(self) -> str:
-        return '{"attr": "%s", "validator": "%s", "kwargs": %s}' % (
+        return '{"attr": "%s", "validator": "%s", "kwargs": %r}' % (
             self.attr, self.validator, self.kwargs)
 
     def __repr__(self) -> str:
-        return 'RequestBody(attr=%s, validator=%s, kwargs=%s)' % (
+        return 'RequestBody(attr=%s, validator=%s, kwargs=%r)' % (
             self.attr, self.validator, self.kwargs)

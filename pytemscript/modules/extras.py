@@ -45,7 +45,7 @@ class Vector:
         self.__min = None
         self.__max = None
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "Vector(x=%f, y=%f)" % (self.x, self.y)
 
     def __str__(self):
@@ -150,6 +150,9 @@ class Image:
         else:
             self.timestamp = datetime.now().strftime("%Y:%m:%d %H:%M:%S")
 
+    def __repr__(self) -> str:
+        return "Image()"
+
     @lru_cache(maxsize=1)
     def __create_tiff_tags(self):
         """Create TIFF tags from metadata. """
@@ -228,6 +231,9 @@ class SpecialObj:
     """ Wrapper class for complex methods to be executed on a COM object. """
     def __init__(self, com_object):
         self.com_object = com_object
+
+    def __repr__(self):
+        return "%s()" % self.__class__.__name__
 
 
 class StageObj(SpecialObj):
