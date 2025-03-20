@@ -242,12 +242,23 @@ class Gun:
         if not self.__has_source:
             raise NotImplementedError(self.__err_msg_cfeg)
 
-        body = RequestBody(attr=self.__id_adv + ".Flashing.IsFlashingAdvised()",
-                           arg=flash_type, validator=bool)
-        if self.__client.call(method="exec", body=body):
+        if self.is_flashing_advised(flash_type):
             # Warning: lowT flashing can be done even if not advised
             doflash = RequestBody(attr=self.__id_adv + ".Flashing.PerformFlashing()",
                                   arg=flash_type)
             self.__client.call(method="exec", body=doflash)
         else:
             raise Warning("Flashing type %s is not advised" % flash_type)
+
+    def is_flashing_advised(self, flash_type: FegFlashingType) -> bool:
+        """ Check if cold FEG flashing is advised.
+
+        :param flash_type: FEG flashing type (FegFlashingType enum)
+        :type flash_type: IntEnum
+        """
+        if not self.__has_source:
+            raise NotImplementedError(self.__err_msg_cfeg)
+
+        body = RequestBody(attr=self.__id_adv + ".Flashing.IsFlashingAdvised()",
+                           arg=flash_type, validator=bool)
+        return self.__client.call(method="exec", body=body)

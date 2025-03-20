@@ -72,7 +72,7 @@ class Projection:
 
     @property
     def magnification(self) -> int:
-        """ The reference magnification value (screen up setting)."""
+        """ The reference magnification value (screen up setting). (read/write)"""
         body = RequestBody(attr=self.__id + ".Mode", validator=int)
 
         if self.__client.call(method="get", body=body) == ProjectionMode.IMAGING:
