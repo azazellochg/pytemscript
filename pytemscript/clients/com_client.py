@@ -172,6 +172,8 @@ class COMClient(BasicClient):
         if obj_cls is None or obj_method is None:
             raise AttributeError("obj_class and obj_method must be specified")
 
+        logging.debug("=> EXEC_SP: %s.%s, kwargs=%r",obj_cls, obj_method, kwargs)
+
         if attrname is None:  # plugin case
             com_obj = self._scope
         else:
