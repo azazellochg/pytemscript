@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Union, List, Tuple
 import math
 
 from .extras import Vector
@@ -90,9 +90,9 @@ class Illumination:
         return Vector(x, y) * 1e6
 
     @beam_shift.setter
-    def beam_shift(self, vector: Vector) -> None:
-        vector *= 1e-6
-        body = RequestBody(attr=self.__id + ".Shift", value=vector)
+    def beam_shift(self, vector: Union[Vector, List[float], Tuple[float, float]]) -> None:
+        value = Vector.convert_to(vector) * 1e-6
+        body = RequestBody(attr=self.__id + ".Shift", value=value)
         self.__client.call(method="set", body=body)
 
     @property
@@ -110,9 +110,9 @@ class Illumination:
         return Vector(x, y) * 1e3
 
     @rotation_center.setter
-    def rotation_center(self, vector: Vector) -> None:
-        vector *= 1e-3
-        body = RequestBody(attr=self.__id + ".RotationCenter", value=vector)
+    def rotation_center(self, vector: Union[Vector, List[float], Tuple[float, float]]) -> None:
+        value = Vector.convert_to(vector) * 1e-3
+        body = RequestBody(attr=self.__id + ".RotationCenter", value=value)
         self.__client.call(method="set", body=body)
 
     @property
@@ -125,9 +125,10 @@ class Illumination:
                       self.__client.call(method="get", body=stigy))
 
     @condenser_stigmator.setter
-    def condenser_stigmator(self, vector: Vector) -> None:
-        vector.set_limits(-1.0, 1.0)
-        body = RequestBody(attr=self.__id + ".CondenserStigmator", value=vector)
+    def condenser_stigmator(self, vector: Union[Vector, List[float], Tuple[float, float]]) -> None:
+        value = Vector.convert_to(vector)
+        value.set_limits(-1.0, 1.0)
+        body = RequestBody(attr=self.__id + ".CondenserStigmator", value=value)
         self.__client.call(method="set", body=body)
 
     @property

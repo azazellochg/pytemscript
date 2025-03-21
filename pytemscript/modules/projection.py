@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Union, Dict, List, Tuple
 from collections import OrderedDict
 import logging
 
@@ -139,9 +139,9 @@ class Projection:
         return Vector(x, y) * 1e6
 
     @image_shift.setter
-    def image_shift(self, vector: Vector) -> None:
-        vector *= 1e-6
-        body = RequestBody(attr=self.__id + ".ImageShift", value=vector)
+    def image_shift(self, vector: Union[Vector, List[float], Tuple[float, float]]) -> None:
+        value = Vector.convert_to(vector) * 1e-6
+        body = RequestBody(attr=self.__id + ".ImageShift", value=value)
         self.__client.call(method="set", body=body)
 
     @property
@@ -156,9 +156,9 @@ class Projection:
         return Vector(x, y) * 1e6
 
     @image_beam_shift.setter
-    def image_beam_shift(self, vector: Vector) -> None:
-        vector *= 1e-6
-        body = RequestBody(attr=self.__id + ".ImageBeamShift", value=vector)
+    def image_beam_shift(self, vector: Union[Vector, List[float], Tuple[float, float]]) -> None:
+        value = Vector.convert_to(vector) * 1e-6
+        body = RequestBody(attr=self.__id + ".ImageBeamShift", value=value)
         self.__client.call(method="set", body=body)
 
     @property
@@ -173,9 +173,9 @@ class Projection:
         return Vector(x, y) * 1e3
 
     @image_beam_tilt.setter
-    def image_beam_tilt(self, vector: Vector) -> None:
-        vector *= 1e-3
-        body = RequestBody(attr=self.__id + ".ImageBeamTilt", value=vector)
+    def image_beam_tilt(self, vector: Union[Vector, List[float], Tuple[float, float]]) -> None:
+        value = Vector.convert_to(vector) * 1e-3
+        body = RequestBody(attr=self.__id + ".ImageBeamTilt", value=value)
         self.__client.call(method="set", body=body)
 
     @property
@@ -191,9 +191,9 @@ class Projection:
         return Vector(x, y) * 1e3
 
     @diffraction_shift.setter
-    def diffraction_shift(self, vector: Vector) -> None:
-        vector *= 1e-3
-        body = RequestBody(attr=self.__id + ".DiffractionShift", value=vector)
+    def diffraction_shift(self, vector: Union[Vector, List[float], Tuple[float, float]]) -> None:
+        value = Vector.convert_to(vector) * 1e-3
+        body = RequestBody(attr=self.__id + ".DiffractionShift", value=value)
         self.__client.call(method="set", body=body)
 
     @property
@@ -213,12 +213,13 @@ class Projection:
             raise RuntimeError(self.__err_msg % "Diffraction")
 
     @diffraction_stigmator.setter
-    def diffraction_stigmator(self, vector: Vector) -> None:
+    def diffraction_stigmator(self, vector: Union[Vector, List[float], Tuple[float, float]]) -> None:
         body = RequestBody(attr=self.__id + ".Mode", validator=int)
 
         if self.__client.call(method="get", body=body) == ProjectionMode.DIFFRACTION:
-            vector.set_limits(-1.0, 1.0)
-            body = RequestBody(attr=self.__id + ".DiffractionStigmator", value=vector)
+            value = Vector.convert_to(vector)
+            value.set_limits(-1.0, 1.0)
+            body = RequestBody(attr=self.__id + ".DiffractionStigmator", value=value)
             self.__client.call(method="set", body=body)
         else:
             raise RuntimeError(self.__err_msg % "Diffraction")
@@ -235,9 +236,10 @@ class Projection:
         return Vector(x, y)
 
     @objective_stigmator.setter
-    def objective_stigmator(self, vector: Vector) -> None:
-        vector.set_limits(-1.0, 1.0)
-        body = RequestBody(attr=self.__id + ".ObjectiveStigmator", value=vector)
+    def objective_stigmator(self, vector: Union[Vector, List[float], Tuple[float, float]]) -> None:
+        value = Vector.convert_to(vector)
+        value.set_limits(-1.0, 1.0)
+        body = RequestBody(attr=self.__id + ".ObjectiveStigmator", value=value)
         self.__client.call(method="set", body=body)
 
     @property
