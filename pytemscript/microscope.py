@@ -89,6 +89,5 @@ class Microscope:
         return CondenserLensSystem(result).name
 
     def disconnect(self) -> None:
-        """ Disconnects the remote client. Not applicable for direct connection."""
-        if self.__connection != "direct":
-            self.__client.disconnect()
+        """ Disconnects the client. """
+        self.__client.disconnect()

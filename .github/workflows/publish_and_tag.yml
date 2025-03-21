@@ -12,6 +12,9 @@ env:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+    # IMPORTANT: this permission is mandatory for Trusted Publishing
+      id-token: write
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v5
@@ -24,13 +27,10 @@ jobs:
     - name: Check extra requirements
       if: ${{ hashFiles('requirements.txt') != '' }}
       run: pip install -r requirements.txt
-    - name: publish
-      env:
-        TWINE_USERNAME: __token__
-        TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
-      run: |
-        python -m build --no-isolation
-        twine upload dist/*
+    - name: Build dist
+      run: python -m build --no-isolation
+    - name: Publish package distributions to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
     - name: Get version and tag
       run: |
         export PACKAGE_VERSION=$(python -c "import $FOLDER_WITH_VERSION; print('VERSION', 'v'+$FOLDER_WITH_VERSION.__version__)" | grep VERSION | sed "s/VERSION //g")

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import comtypes.client
 
-from pytemscript.utils.constants import SCRIPTING_STD, SCRIPTING_ADV
+from pytemscript.utils.constants import *
 
 EXCLUDED_METHODS = [
     "QueryInterface",
@@ -60,7 +60,14 @@ def list_typelib_details(prog_id: str):
 
 def create_output():
     """ Save output into txt. """
-    for prog_id in [SCRIPTING_STD, SCRIPTING_ADV]:
+    for prog_id in [
+        SCRIPTING_STD,
+        SCRIPTING_ADV,
+        SCRIPTING_LOWDOSE,
+        SCRIPTING_TIA,
+        SCRIPTING_TECNAI_CCD2,
+        SCRIPTING_TECNAI_CCD
+    ]:
         print("Querying %s..." % prog_id, end="")
         enums, interfaces, version = list_typelib_details(prog_id)
         if enums is not None:

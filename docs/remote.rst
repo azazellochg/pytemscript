@@ -12,7 +12,7 @@ Socket-based client
 In this mode the pytemscript socket server must run on the microscope PC (Windows).
 By default, it will listen for clients on port 39000.
 
-.. warning::
+.. danger::
 
     The server provides no means of security or authorization control itself.
     Thus it is highly recommended to let the server only listen to internal networks or at least route it through a reverse proxy, which implements sufficient security.
@@ -42,7 +42,7 @@ Then you can connect to the server as shown below:
 
 Diagnostic messages are saved to ``socket_client.log`` and ``socket_server.log`` as well as printed to the console. Log files are rotated weekly at midnight.
 
-To shutdown pytemscript-server, press Ctrl+C in the console.
+To shutdown pytemscript-server, press Ctrl+C in the server console.
 
 UTAPI client
 ------------
@@ -55,7 +55,8 @@ you can search for ``utapi_server.exe`` in the Task Manager. The server is liste
 **46699**. Under the hood UTAPI utilizes gRPC (Google Remote Procedure Calls) framework that uses protocol
 buffers for communication.
 
-Pytemscript converts its API commands to UTAPI calls. The client requires extra dependencies to be installed:
+Pytemscript converts its API commands to UTAPI calls. The client only supports Python 3.8+ and requires
+a few extra dependencies to be installed:
 
 .. code-block:: python
 
