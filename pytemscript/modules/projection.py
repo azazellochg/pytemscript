@@ -4,7 +4,7 @@ import logging
 
 from ..utils.misc import RequestBody
 from ..utils.enums import (ProjectionMode, ProjectionSubMode, ProjDetectorShiftMode,
-                           ProjectionDetectorShift, LensProg, InstrumentMode)
+                           ProjectionDetectorShift, LensProg)
 from .extras import Vector
 
 
@@ -15,7 +15,7 @@ class Projection:
     def __init__(self, client):
         self.__client = client
         self.__id = "tem.Projection"
-        self.__err_msg = "Microscope is not in diffraction mode"
+        self.__err_msg = "Microscope is not in %s mode"
         self.__magnifications = OrderedDict()
 
     def __find_magnifications(self) -> None:
@@ -79,7 +79,7 @@ class Projection:
             body = RequestBody(attr=self.__id + ".Magnification", validator=float)
             return round(self.__client.call(method="get", body=body))
         else:
-            raise RuntimeError(self.__err_msg)
+            raise RuntimeError(self.__err_msg % "Imaging")
 
     @magnification.setter
     def magnification(self, value: int) -> None:
@@ -92,7 +92,7 @@ class Projection:
             index = self.__magnifications[value][0]
             self.magnification_index = index
         else:
-            raise RuntimeError(self.__err_msg)
+            raise RuntimeError(self.__err_msg % "Imaging")
 
     @property
     def magnification_index(self) -> int:
@@ -114,7 +114,7 @@ class Projection:
             body = RequestBody(attr=self.__id + ".CameraLength", validator=float)
             return self.__client.call(method="get", body=body)
         else:
-            raise RuntimeError(self.__err_msg)
+            raise RuntimeError(self.__err_msg % "Diffraction")
 
     @property
     def camera_length_index(self) -> int:
@@ -210,7 +210,7 @@ class Projection:
 
             return Vector(x, y)
         else:
-            raise RuntimeError(self.__err_msg)
+            raise RuntimeError(self.__err_msg % "Diffraction")
 
     @diffraction_stigmator.setter
     def diffraction_stigmator(self, vector: Vector) -> None:
@@ -221,7 +221,7 @@ class Projection:
             body = RequestBody(attr=self.__id + ".DiffractionStigmator", value=vector)
             self.__client.call(method="set", body=body)
         else:
-            raise RuntimeError(self.__err_msg)
+            raise RuntimeError(self.__err_msg % "Diffraction")
 
     @property
     def objective_stigmator(self) -> Vector:
@@ -242,7 +242,9 @@ class Projection:
 
     @property
     def defocus(self) -> float:
-        """ Defocus value in um. (read/write)"""
+        """ Defocus value in um. (read/write)
+         Changing ‘Defocus’ will also change ‘Focus’ and vice versa.
+        """
         body = RequestBody(attr=self.__id + ".Defocus", validator=float)
 
         return self.__client.call(method="get", body=body) * 1e6
@@ -251,6 +253,13 @@ class Projection:
     def defocus(self, value: float) -> None:
         body = RequestBody(attr=self.__id + ".Defocus", value=float(value) * 1e-6)
         self.__client.call(method="set", body=body)
+
+    @property
+    def objective(self) -> float:
+        """ The excitation of the objective lens in percent. """
+        body = RequestBody(attr=self.__id + ".ObjectiveExcitation", validator=float)
+
+        return self.__client.call(method="get", body=body)
 
     @property
     def mode(self) -> str:

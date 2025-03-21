@@ -6,14 +6,8 @@ from pathlib import Path
 import numpy as np
 from functools import lru_cache
 from collections import OrderedDict
-
-try:
-    import PIL.Image as PilImage
-    import PIL.TiffImagePlugin as PilTiff
-except ImportError:
-    print("Pillow library not found, you won't be able to "
-          "save images in non-MRC format.")
-
+import PIL.Image as PilImage
+import PIL.TiffImagePlugin as PilTiff
 
 from ..utils.enums import StageAxes, MeasurementUnitType
 
@@ -125,7 +119,7 @@ class Vector:
 class Image:
     """ Acquired image basic object.
 
-    :param data: int16 numpy array
+    :param data: uint16 numpy array
     :type data: numpy.ndarray
     :param name: name of the image
     :type name: str
@@ -193,7 +187,7 @@ class Image:
     def save(self,
              fn: Union[Path, str],
              overwrite: bool = False) -> None:
-        """ Save acquired image to a file as int16.
+        """ Save acquired image to a file as uint16.
         Supported formats: mrc, tiff, tif, png.
         To save in non-mrc format you will need pillow package installed.
 

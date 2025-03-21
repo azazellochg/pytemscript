@@ -223,8 +223,8 @@ class Gun:
             raise NotImplementedError(self.__err_msg_cfeg)
 
     @property
-    def focus_index(self) -> Tuple[int, int]:
-        """ Returns coarse and fine gun lens index. """
+    def gun_lens(self) -> Tuple[int, int]:
+        """ Returns coarse and fine gun lens index. Not available on systems with a monochromator. """
         if self.__has_source:
             coarse = RequestBody(attr=self.__id_adv + ".FocusIndex.Coarse", validator=int)
             fine = RequestBody(attr=self.__id_adv + ".FocusIndex.Fine", validator=int)

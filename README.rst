@@ -34,6 +34,8 @@ New changes and this whole product is distributed under either version 3 of the 
 Documentation
 -------------
 
+The source code is available at https://github.com/azazellochg/pytemscript
+
 The documentation can be found at https://pytemscript.readthedocs.io
 
 Quick example

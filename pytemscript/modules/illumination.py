@@ -133,19 +133,23 @@ class Illumination:
     @property
     def illuminated_area(self) -> float:
         """ Illuminated area in um. Works only on 3-condenser lens systems. (read/write)"""
-        if self.__has_3cond:
+        if not self.__has_3cond:
+            raise NotImplementedError("Illuminated area exists only on 3-condenser lens systems.")
+        if self.condenser_mode == CondenserMode.PARALLEL.name:
             body = RequestBody(attr=self.__id + ".IlluminatedArea", validator=float)
             return self.__client.call(method="get", body=body) * 1e6
         else:
-            raise NotImplementedError("Illuminated area exists only on 3-condenser lens systems.")
+            raise RuntimeError("Condenser is not in Parallel mode.")
 
     @illuminated_area.setter
     def illuminated_area(self, value: float) -> None:
-        if self.__has_3cond:
+        if not self.__has_3cond:
+            raise NotImplementedError("Illuminated area exists only on 3-condenser lens systems.")
+        if self.condenser_mode == CondenserMode.PARALLEL.name:
             body = RequestBody(attr=self.__id + ".IlluminatedArea", value=value*1e-6)
             self.__client.call(method="set", body=body)
         else:
-            raise NotImplementedError("Illuminated area exists only on 3-condenser lens systems.")
+            raise RuntimeError("Condenser is not in Parallel mode.")
 
     @property
     def probe_defocus(self) -> float:
@@ -191,7 +195,16 @@ class Illumination:
 
     @property
     def C3ImageDistanceParallelOffset(self) -> float:
-        """ C3 image distance parallel offset. Works only on 3-condenser lens systems. (read/write)"""
+        """ C3 image distance parallel offset. Works only on 3-condenser lens systems. (read/write).
+        This value takes the place previously of the Intensity value. The Intensity value
+        changed the focusing of the diffraction pattern at the back-focal plane (MF-Y in Beam Settings
+        control panel) but was rather independent of the illumination optics. As
+        such it changed the size of the illumination but the illuminated area
+        parameter was not influenced. To get rid of this problematic bypass,
+        the C3 image distance offset has been created which effectively does
+        the same focusing but now from within the illumination optics so the
+        illuminated area remains correct.
+        """
         if not self.__has_3cond:
             raise NotImplementedError("C3ImageDistanceParallelOffset exists only on 3-condenser lens systems.")
         if self.condenser_mode == CondenserMode.PARALLEL.name:
@@ -212,7 +225,9 @@ class Illumination:
 
     @property
     def mode(self) -> str:
-        """ Illumination mode: microprobe or nanoprobe. (read/write)"""
+        """ Illumination mode: microprobe or nanoprobe. (read/write)
+        (Nearly) no effect for low magnifications (LM).
+        """
         body = RequestBody(attr=self.__id + ".Mode", validator=int)
         result = self.__client.call(method="get", body=body)
 

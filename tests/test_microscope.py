@@ -31,6 +31,7 @@ def test_projection(microscope: Microscope,
     assert isclose(projection.defocus, -3.0, abs_tol=1e-5)
     projection.defocus = orig_def
 
+    print("\tObjective:", projection.objective)
     print("\tMagnification:", projection.magnification)
     print("\tMagnificationIndex:", projection.magnification_index)
 

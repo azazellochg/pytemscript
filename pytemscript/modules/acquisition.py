@@ -5,7 +5,7 @@ from datetime import datetime
 from functools import lru_cache
 
 from ..utils.misc import RequestBody, convert_image
-from ..utils.enums import AcqImageSize, AcqShutterMode, PlateLabelDateFormat, ScreenPosition
+from ..utils.enums import AcqImageSize, AcqShutterMode, AcqImageCorrection, PlateLabelDateFormat, ScreenPosition
 from .extras import Image, SpecialObj
 
 
@@ -166,7 +166,7 @@ class AcquisitionObj(SpecialObj):
     def set_tem_presets(self,
                         cameraName: str,
                         size: AcqImageSize = AcqImageSize.FULL,
-                        exp_time: float = 1,
+                        exp_time: float = 1.0,
                         binning: int = 1,
                         **kwargs) -> Optional[int]:
 
@@ -187,7 +187,7 @@ class AcquisitionObj(SpecialObj):
         prev_shutter_mode = None
 
         if 'correction' in kwargs:
-            settings.ImageCorrection = kwargs['correction']
+            settings.ImageCorrection = kwargs.get('correction', AcqImageCorrection.DEFAULT)
         if 'exposure_mode' in kwargs:
             settings.ExposureMode = kwargs['exposure_mode']
         if 'shutter_mode' in kwargs:
@@ -213,7 +213,7 @@ class AcquisitionObj(SpecialObj):
     def set_tem_presets_advanced(self,
                                  cameraName: str,
                                  size: AcqImageSize = AcqImageSize.FULL,
-                                 exp_time: float = 1,
+                                 exp_time: float = 1.0,
                                  binning: int = 1,
                                  use_cca: bool = False,
                                  **kwargs) -> None:
@@ -464,7 +464,7 @@ class Acquisition:
     def acquire_tem_image(self,
                           cameraName: str,
                           size: AcqImageSize = AcqImageSize.FULL,
-                          exp_time: float = 1,
+                          exp_time: float = 1.0,
                           binning: int = 1,
                           **kwargs) -> Optional[Image]:
         """ Acquire a TEM image.
@@ -476,6 +476,11 @@ class Acquisition:
         :param exp_time: Exposure time in seconds
         :type exp_time: float
         :param binning: Binning factor
+        :keyword IntEnum correction: Image correction (AcqImageCorrection enum)
+        :keyword IntEnum exposure_mode: CCD exposure mode (AcqExposureMode enum)
+        :keyword IntEnum shutter_mode: CCD shutter mode (AcqShutterMode enum)
+        :keyword IntEnum pre_exp_time: The pre-exposure time in seconds.
+        :keyword IntEnum pre_exp_pause_time: The time delay after pre-exposure and before the actual CCD exposure in seconds.
         :keyword bool align_image: Whether frame alignment (i.e. drift correction) is to be applied to the final image as well as the intermediate images. Advanced cameras only.
         :keyword bool electron_counting: Use counting mode. Advanced cameras only.
         :keyword bool eer: Use EER mode. Advanced cameras only.
@@ -484,6 +489,14 @@ class Acquisition:
         :keyword float recording: minimum amount of time the acquisition will take, as it will take as much complete frames with the set exposure time as is needed to get to the set RecordingDuration. E.g. if the exposure time is 0.5 and the RecordingDuration is 2.3, there will be an acquisition of 2.5 (5 frames). Advanced cameras only.
         :keyword bool use_tecnaiccd: Use Tecnai CCD plugin to acquire image via Digital Micrograph, only for Gatan cameras. Requires Microscope() initialized with useTecnaiCCD=True
         :returns: Image object
+
+        Extra notes:
+
+        - Keyword arguments correction, exposure_mode, shutter_mode, pre_exp_time, pre_exp_pause_time are only available for CCD cameras that use standard scripting.
+        - Advanced cameras are Ceta 1, Ceta 2, Falcon 3, Falcon 4(i).
+        - Counting mode and frame saving requires a separate license enabled in TEM software.
+        - Continuous acquisition with recording is supported only by Ceta 2.
+        - TecnaiCCD plugin is only available for Gatan CCD cameras.
 
         Usage:
             >>> microscope = Microscope()
@@ -581,7 +594,7 @@ class Acquisition:
         :type size: IntEnum
         :param dwell_time: Dwell time in seconds. The frame time equals the dwell time times the number of pixels plus some overhead (typically 20%, used for the line flyback)
         :type dwell_time: float
-        :param binning: Binning factor
+        :param binning: Binning factor. Technically speaking these are "pixel skipping" values, since in STEM we do not combine pixels as a CCD does.
         :type binning: int
         :keyword float brightness: Brightness setting
         :keyword float contrast: Contrast setting
@@ -637,7 +650,7 @@ class Acquisition:
     @property
     def film_settings(self) -> Dict:
         """ Returns a dict with film settings.
-        Note: The plate camera has become obsolete with Win7 so
+        Note: The plate camera has become obsolete with Windows 7 so
         most of the existing functions are no longer supported.
         """
         if self.__has_film:
@@ -676,7 +689,10 @@ class Acquisition:
     @property
     @lru_cache(maxsize=1)
     def cameras(self) -> Dict:
-        """ Returns a dict with parameters for all TEM cameras. """
+        """ Returns a dict with parameters for all TEM cameras.
+        supports_csa = single acquisition (Ceta 1, Ceta 2, Falcon 3, Falcon 4(i))
+        supports_cca = continuous acquisition (Ceta 2 only)
+        """
         body = RequestBody(attr="tem.Acquisition.Cameras",
                            validator=dict,
                            obj_cls=AcquisitionObj,
@@ -686,7 +702,7 @@ class Acquisition:
         if not self.__client.has_advanced_iface:
             return tem_cameras
 
-        # CSA is supported by Ceta 1, Ceta 2, Falcon 3, Falcon 4
+        # CSA is supported by Ceta 1, Ceta 2, Falcon 3, Falcon 4(i)
         body = RequestBody(attr=self.__id_adv + ".CameraSingleAcquisition",
                            validator=dict,
                            obj_cls=AcquisitionObj,
