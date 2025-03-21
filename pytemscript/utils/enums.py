@@ -85,11 +85,11 @@ class StageAxes(IntEnum):
 
 class IlluminationNormalization(IntEnum):
     """ Normalization modes for condenser / objective lenses. """
-    SPOTSIZE = 1
-    INTENSITY = 2
-    CONDENSER = 3
+    SPOTSIZE = 1 # C1
+    INTENSITY = 2 # C2+C3
+    CONDENSER = 3 # C1+C2+C3
     MINI_CONDENSER = 4
-    OBJECTIVE = 5
+    OBJECTIVE = 5 # minicondenser + objective
     ALL = 6
 
 
@@ -115,7 +115,7 @@ class CondenserMode(IntEnum):
 class ProjectionNormalization(IntEnum):
     """ Normalization modes for objective/projector lenses. """
     OBJECTIVE = 10
-    PROJECTOR = 11
+    PROJECTOR = 11 # Diffraction + Intermediate + P1 + P2
     ALL = 12
 
 
@@ -325,26 +325,28 @@ class LDState(IntEnum):
 
 # ---------------- FEI Tecnai CCD enums ---------------------------------------
 class AcqSpeed(IntEnum):
-    """ CCD acquisition mode. """
+    """ CCD acquisition mode for TecnaiCCD plugin. """
     TURBO = 0
     CONTINUOUS = 1
     SINGLEFRAME = 2
 
 
 class AcqMode(IntEnum):
-    """ CCD acquisition preset."""
+    """ CCD acquisition preset for TecnaiCCD plugin."""
     SEARCH = 0
     FOCUS = 1
     RECORD = 2
 
 # ----------------- CalGetter enums -------------------------------------------
 class CalibrationStatus(IntEnum):
+    """ Calgetter calibratino status. """
     NOT_CALIBRATED = 0
     INVALID_CALIBRATION = 1
     CALIBRATED = 2
 
 
 class CalibrationTypes(IntEnum):
+    """ Calgetter calibration types. """
     MAGNIFICATION = 1
     BEAM_SHIFT = 2
     BEAM_TILT = 3
@@ -363,6 +365,7 @@ class CalibrationTypes(IntEnum):
 
 
 class ModeTypes(IntEnum):
+    """ Illumination mode used by Calgetter. """
     LM = 1
     MICROPROBE = 2
     NANOPROBE = 3
@@ -375,16 +378,19 @@ class ModeTypes(IntEnum):
 
 
 class LensSeriesTypes(IntEnum):
+    """ Projection mode used by Calgetter: normal (zoom) or EFTEM. """
     ZOOM = 1
     EFTEM = 2
 
 
 class LorentzTypes(IntEnum):
+    """ Lorentz lens status used by Calgetter. """
     OFF = 1
     ON = 2
 
 
 class ActualMagnificationElements(IntEnum):
+    """ Details of calibrated magnification from Calgetter. """
     NOMINAL_MAGNIFICATION = 0
     CALIBRATED_MAGNIFICATION = 1
     MAGNIFICATION_INDEX = 2
@@ -402,6 +408,7 @@ class ActualMagnificationElements(IntEnum):
 
 
 class TransformTypes(IntEnum):
+    """ Calgetter transform types. """
     BEAM_SHIFT_LOG = 0
     BEAM_SHIFT_PHYS = 1
     BEAM_TILT_LOG = 2
@@ -416,6 +423,7 @@ class TransformTypes(IntEnum):
 
 
 class BasicTransformTypes(IntEnum):
+    """ Calgetter transforms from one coordinate system to another. """
     PIXEL_TO_BEAMSHIFT = 0
     BEAMSHIFT_TO_PIXEL = 1
     BEAMSHIFT_LOG_TO_PHYS = 2

@@ -1,13 +1,21 @@
 Installation
 ============
 
-Requirements:
+Prerequisites for the FEI or Thermo Fisher Scientific microscope:
+
+    * TEM Scripting
+    * TEM Advanced scripting (optional)
+    * LowDose (optional)
+    * TecnaiCCD plugin for Digital Micrograph (optional)
+
+Requirements for this package:
 
     * python 3.4 or newer
     * comtypes
     * mrcfile (to save MRC files)
     * numpy
     * pillow (to save non-MRC files)
+    * imageio (optional, to speed up image acquisition)
 
 Online installation on Windows
 ##############################

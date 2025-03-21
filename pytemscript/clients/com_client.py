@@ -172,6 +172,9 @@ class COMClient(BasicClient):
         if obj_cls is None or obj_method is None:
             raise AttributeError("obj_class and obj_method must be specified")
 
+        logging.debug("=> EXEC_SP: %s.%s, kwargs=%r",obj_cls.__name__,
+                      obj_method, kwargs)
+
         if attrname is None:  # plugin case
             com_obj = self._scope
         else:
@@ -180,7 +183,7 @@ class COMClient(BasicClient):
         method = getattr(obj_instance, obj_method)
 
         if method is None:
-            raise AttributeError("Method %s not implemented for %s" % (obj_method, obj_cls))
+            raise AttributeError("Method %s not implemented for %s" % (obj_method, obj_cls.__name__))
 
         result = method(**kwargs)
 

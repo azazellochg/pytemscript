@@ -15,29 +15,28 @@ class GunObj(SpecialObj):
     """ Wrapper around Gun COM object specifically for the Gun1 interface. """
     def __init__(self, com_object):
         super().__init__(com_object)
-        self.gun1 = None
-
-    def is_available(self) -> bool:
-        """ Gun1 inherits from the Gun interface of the std scripting. """
         import comtypes.gen.TEMScripting as Ts
         if hasattr(Ts, "Gun1"):
             self.gun1 = self.com_object.QueryInterface(Ts.Gun1)
-            return True
         else:
-            return False
+            self.gun1 = None
+
+    def is_available(self) -> bool:
+        """ Gun1 inherits from the Gun interface of the std scripting. """
+        return self.gun1 is not None
 
     def get_hv_offset(self) -> float:
-        if self.gun1 is None:
+        if not self.is_available():
             raise NotImplementedError(ERR_MSG_GUN1)
         return self.gun1.HighVoltageOffset
 
     def set_hv_offset(self, value: float) -> None:
-        if self.gun1 is None:
+        if not self.is_available():
             raise NotImplementedError(ERR_MSG_GUN1)
         self.gun1.HighVoltageOffset = value
 
     def get_hv_offset_range(self) -> Tuple:
-        if self.gun1 is None:
+        if not self.is_available():
             raise NotImplementedError(ERR_MSG_GUN1)
         result = self.gun1.GetHighVoltageOffsetRange()
         return result[0], result[1]
@@ -224,8 +223,8 @@ class Gun:
             raise NotImplementedError(self.__err_msg_cfeg)
 
     @property
-    def focus_index(self) -> Tuple[int, int]:
-        """ Returns coarse and fine gun lens index. """
+    def gun_lens(self) -> Tuple[int, int]:
+        """ Returns coarse and fine gun lens index. Not available on systems with a monochromator. """
         if self.__has_source:
             coarse = RequestBody(attr=self.__id_adv + ".FocusIndex.Coarse", validator=int)
             fine = RequestBody(attr=self.__id_adv + ".FocusIndex.Fine", validator=int)
@@ -243,12 +242,23 @@ class Gun:
         if not self.__has_source:
             raise NotImplementedError(self.__err_msg_cfeg)
 
-        body = RequestBody(attr=self.__id_adv + ".Flashing.IsFlashingAdvised()",
-                           arg=flash_type, validator=bool)
-        if self.__client.call(method="exec", body=body):
+        if self.is_flashing_advised(flash_type):
             # Warning: lowT flashing can be done even if not advised
             doflash = RequestBody(attr=self.__id_adv + ".Flashing.PerformFlashing()",
                                   arg=flash_type)
             self.__client.call(method="exec", body=doflash)
         else:
             raise Warning("Flashing type %s is not advised" % flash_type)
+
+    def is_flashing_advised(self, flash_type: FegFlashingType) -> bool:
+        """ Check if cold FEG flashing is advised.
+
+        :param flash_type: FEG flashing type (FegFlashingType enum)
+        :type flash_type: IntEnum
+        """
+        if not self.__has_source:
+            raise NotImplementedError(self.__err_msg_cfeg)
+
+        body = RequestBody(attr=self.__id_adv + ".Flashing.IsFlashingAdvised()",
+                           arg=flash_type, validator=bool)
+        return self.__client.call(method="exec", body=body)

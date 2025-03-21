@@ -139,7 +139,7 @@ def main(argv: Optional[List] = None) -> None:
         "BM-Falcon": {"exp_time": 3.0, "binning": 1, "align_image": True,
                       "electron_counting": True, "save_frames": True, "group_frames": 2},
         "EF-Falcon": {"exp_time": 1.0, "binning": 1,
-                      "electron_counting": True, "save_frames": True},
+                      "electron_counting": True, "save_frames": True, "group_frames": 2},
     }
 
     for cam, cam_dict in cameras.items():
