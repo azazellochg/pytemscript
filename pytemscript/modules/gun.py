@@ -1,7 +1,7 @@
 from functools import lru_cache
 import logging
 import time
-from typing import Tuple
+from typing import Tuple, Union, List
 
 from ..utils.misc import RequestBody
 from ..utils.enums import FegState, HighTensionState, FegFlashingType
@@ -80,10 +80,11 @@ class Gun:
         return Vector(x, y)
 
     @shift.setter
-    def shift(self, vector: Vector) -> None:
-        vector.set_limits(-1.0, 1.0)
+    def shift(self, vector: Union[Vector, List[float], Tuple[float, float]]) -> None:
+        value = Vector.convert_to(vector)
+        value.set_limits(-1.0, 1.0)
 
-        body = RequestBody(attr=self.__id + ".Shift", value=vector)
+        body = RequestBody(attr=self.__id + ".Shift", value=value)
         self.__client.call(method="set", body=body)
 
     @property
@@ -98,10 +99,11 @@ class Gun:
         return Vector(x, y)
 
     @tilt.setter
-    def tilt(self, vector: Vector) -> None:
-        vector.set_limits(-1.0, 1.0)
+    def tilt(self, vector: Union[Vector, List[float], Tuple[float, float]]) -> None:
+        value = Vector.convert_to(vector)
+        value.set_limits(-1.0, 1.0)
 
-        body = RequestBody(attr=self.__id + ".Tilt", value=vector)
+        body = RequestBody(attr=self.__id + ".Tilt", value=value)
         self.__client.call(method="set", body=body)
 
     @property

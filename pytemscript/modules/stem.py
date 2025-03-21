@@ -1,3 +1,5 @@
+from typing import Union, List, Tuple
+
 from .extras import Vector
 from ..utils.misc import RequestBody
 from ..utils.enums import InstrumentMode
@@ -92,11 +94,12 @@ class Stem:
             raise RuntimeError(self.__err_msg)
 
     @scan_field_of_view.setter
-    def scan_field_of_view(self, vector: Vector) -> None:
+    def scan_field_of_view(self, vector: Union[Vector, List[float], Tuple[float, float]]) -> None:
+        value = Vector.convert_to(vector)
         body = RequestBody(attr=self.__id + ".InstrumentMode", validator=int)
 
         if self.__client.call(method="get", body=body) == InstrumentMode.STEM:
-            body = RequestBody(attr="tem.Illumination.StemFullScanFieldOfView", value=vector)
+            body = RequestBody(attr="tem.Illumination.StemFullScanFieldOfView", value=value)
             self.__client.call(method="set", body=body)
         else:
             raise RuntimeError(self.__err_msg)

@@ -1,4 +1,4 @@
-from typing import Optional, Dict, Tuple, Union
+from typing import Optional, Dict, Tuple, Union, List
 from datetime import datetime
 import math
 import logging
@@ -45,6 +45,16 @@ class Vector:
     def __str__(self):
         return "(%f, %f)" % (self.x, self.y)
 
+    @classmethod
+    def convert_to(cls, value: Union[Tuple[float, float], List[float], "Vector"]):
+        """ Convert input value into a Vector. """
+        if isinstance(value, (tuple, list)):
+            return cls(x=value[0], y=value[1])
+        elif isinstance(value, cls):
+            return value
+        else:
+            raise TypeError("Expected a tuple, list or another Vector")
+
     def set_limits(self, min_value: float, max_value: float) -> None:
         """Set the range limits for the vector for both X and Y."""
         self.__min = min_value
@@ -67,12 +77,14 @@ class Vector:
         """Return the vector components as a tuple."""
         return self.x, self.y
 
-    def set(self, value: Tuple[float, float]) -> None:
-        """ Update values from a tuple. """
-        if not isinstance(value, tuple):
-            raise TypeError("Expected a tuple of floats")
+    def set(self, value: Union[Tuple[float, float], List[float], "Vector"]) -> None:
+        """ Update current values from a tuple, list or another Vector. """
+        if isinstance(value, (tuple, list)):
+            self.x, self.y = value[0], value[1]
+        elif isinstance(value, self.__class__):
+            self.x, self.y = value.x, value.y
         else:
-            self.x, self.y = value
+            raise TypeError("Expected a tuple, list or another Vector")
 
     def __add__(self, other: Union['Vector', Tuple]) -> 'Vector':
         if isinstance(other, tuple):
