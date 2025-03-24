@@ -152,7 +152,8 @@ def convert_image(obj,
 
     else:
         # TecnaiCCD plugin: obj is a variant, convert to numpy
-        data = np.array(obj, dtype="uint16")
+        # Also, transpose is required to match TIA orientation
+        data = np.array(obj, dtype="uint16").T
 
     name = name or obj.Name
 
