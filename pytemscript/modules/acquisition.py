@@ -582,7 +582,7 @@ class Acquisition:
 
     def acquire_stem_image(self,
                            cameraName: str,
-                           size: AcqImageSize,
+                           size: AcqImageSize = AcqImageSize.FULL,
                            dwell_time: float = 1e-5,
                            binning: int = 1,
                            **kwargs) -> Image:
