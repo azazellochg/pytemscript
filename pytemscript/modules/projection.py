@@ -245,7 +245,7 @@ class Projection:
     @property
     def defocus(self) -> float:
         """ Defocus value in um. (read/write)
-         Changing ‘Defocus’ will also change ‘Focus’ and vice versa.
+         Changing 'Defocus' will also change 'Focus' and vice versa.
         """
         body = RequestBody(attr=self.__id + ".Defocus", validator=float)
 

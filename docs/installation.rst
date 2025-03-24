@@ -7,6 +7,7 @@ Prerequisites for the FEI or Thermo Fisher Scientific microscope:
     * TEM Advanced scripting (optional)
     * LowDose (optional)
     * TecnaiCCD plugin for Digital Micrograph (optional)
+    * SerialEMCCD plugin for Digital Micrograph (optional)
 
 Requirements for this package:
 

@@ -10,7 +10,6 @@ else:
         return abs(a-b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
 
 from pytemscript.microscope import Microscope
-from pytemscript.modules import Vector
 from pytemscript.utils.enums import *
 
 
@@ -43,7 +42,7 @@ def test_projection(microscope: Microscope,
     projection.mode = ProjectionMode.IMAGING
 
     print("\tImageShift:", projection.image_shift)
-    projection.image_shift = Vector(-0,0)
+    projection.image_shift = (-0,0)
 
     print("\tImageBeamShift:", projection.image_beam_shift)
     print("\tObjectiveStigmator:", projection.objective_stigmator)
@@ -259,8 +258,8 @@ def test_illumination(microscope: Microscope) -> None:
 
     print("\tShift:", illum.beam_shift)
 
-    illum.beam_shift = Vector(0.5, 0.5)
-    illum.beam_shift = Vector(0, 0)
+    illum.beam_shift = (0.5, 0.5)
+    illum.beam_shift = [0, 0]
 
     print("\tCondenserStigmator:", illum.condenser_stigmator)
     print("\tRotationCenter:", illum.rotation_center)
