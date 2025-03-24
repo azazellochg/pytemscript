@@ -351,16 +351,7 @@ class AcquisitionObj(SpecialObj):
 
 
 class Acquisition:
-    """ Image acquisition functions.
-
-    In order for acquisition to be available TIA (TEM Imaging and Acquisition)
-    must be running (even if you are using DigitalMicrograph as the CCD server).
-
-    If it is necessary to update the acquisition object (e.g. when the STEM detector
-    selection on the TEM UI has been changed), you have to release and recreate the
-    main microscope object. If you do not do so, you keep accessing the same
-    acquisition object which will not work properly anymore.
-    """
+    """ Image acquisition functions. """
     __slots__ = ("__client", "__id_adv")
 
     def __init__(self, client):
@@ -596,8 +587,8 @@ class Acquisition:
         :type dwell_time: float
         :param binning: Binning factor. Technically speaking these are "pixel skipping" values, since in STEM we do not combine pixels as a CCD does.
         :type binning: int
-        :keyword float brightness: Brightness setting
-        :keyword float contrast: Contrast setting
+        :keyword float brightness: Brightness setting (0.0-1.0)
+        :keyword float contrast: Contrast setting (0.0-1.0)
         :returns: Image object
         """
         _ = self.__find_camera(cameraName, self.stem_detectors, binning)

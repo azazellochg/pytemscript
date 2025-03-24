@@ -14,8 +14,8 @@ List of tested cameras:
  * K2
  * K3
 
-All methods described below return a 16-bit unsigned integer (equivalent to MRC mode 6) :meth:`~pytemscript.modules.Image` object. If movies are being acquired
-asynchronously, their format can be different.
+All methods described below return a 16-bit unsigned integer (equivalent to MRC mode 6) :meth:`~pytemscript.modules.Image` object.
+If movies are being acquired asynchronously, their format can be different.
 
 Standard scripting
 ------------------
@@ -31,8 +31,8 @@ and TIA to be opened as well as the current camera selected in the Microscope Us
 
 .. warning:: If you need to change the camera, after doing so in the Microscope interface, you have to reconnect the microscope client since the COM interface needs to be reinitialised.
 
-Standard scripting is also used by all STEM detectors. For Gatan K2/K3 cameras (if they are embedded by TFS),
-standard scripting can only return unaligned average image, there are no options to acquire movies or change the mode (linear/counting).
+For Gatan K2/K3 cameras (if they are embedded by TFS), standard scripting can only return unaligned average image,
+there are no options to acquire movies or change the mode (linear/counting).
 You can only modify binning or exposure time.
 
 TecnaiCCD plugin
@@ -97,3 +97,11 @@ If you want to try this method, add a couple of kwargs to your acquisition comma
     microscope = Microscope()
     acq = microscope.acquisition
     img = acq.acquire_tem_image("BM-Falcon", AcqImageSize.FULL, exp_time=5.0, use_safearray=False, use_asfile=True)
+
+
+STEM acquisition
+----------------
+
+STEM detectors have to be embedded by FEI and selected in the Microscope User Interface (STEM user panel). They are controlled by standard scripting.
+
+.. note:: Be aware that the acquisition starts immediately without waiting for STEM detectors insertion to finish. It's probably better to manually insert them first in the microscope interface.

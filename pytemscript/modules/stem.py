@@ -1,4 +1,4 @@
-from typing import Union, List, Tuple
+import math
 
 from .extras import Vector
 from ..utils.misc import RequestBody
@@ -57,12 +57,13 @@ class Stem:
 
     @property
     def rotation(self) -> float:
-        """ The STEM rotation angle (in mrad). (read/write)"""
+        """ The STEM rotation angle (in degrees). (read/write)"""
         body = RequestBody(attr=self.__id + ".InstrumentMode", validator=int)
 
         if self.__client.call(method="get", body=body) == InstrumentMode.STEM:
             body = RequestBody(attr="tem.Illumination.StemRotation", validator=float)
-            return self.__client.call(method="get", body=body) * 1e3
+            rad = self.__client.call(method="get", body=body)
+            return math.degrees(rad)
         else:
             raise RuntimeError(self.__err_msg)
 
@@ -72,14 +73,14 @@ class Stem:
 
         if self.__client.call(method="get", body=body) == InstrumentMode.STEM:
             body = RequestBody(attr="tem.Illumination.StemRotation",
-                                  value=float(rot) * 1e-3)
+                               value=math.radians(float(rot)))
             self.__client.call(method="set", body=body)
         else:
             raise RuntimeError(self.__err_msg)
 
     @property
     def scan_field_of_view(self) -> Vector:
-        """ STEM full scan field of view. (read/write)"""
+        """ STEM full scan field of view in nm. """
         body = RequestBody(attr=self.__id + ".InstrumentMode", validator=int)
 
         if self.__client.call(method="get", body=body) == InstrumentMode.STEM:
@@ -89,17 +90,6 @@ class Stem:
             x = self.__client.call(method="get", body=fov_x)
             y = self.__client.call(method="get", body=fov_y)
 
-            return Vector(x, y)
-        else:
-            raise RuntimeError(self.__err_msg)
-
-    @scan_field_of_view.setter
-    def scan_field_of_view(self, vector: Union[Vector, List[float], Tuple[float, float]]) -> None:
-        value = Vector.convert_to(vector)
-        body = RequestBody(attr=self.__id + ".InstrumentMode", validator=int)
-
-        if self.__client.call(method="get", body=body) == InstrumentMode.STEM:
-            body = RequestBody(attr="tem.Illumination.StemFullScanFieldOfView", value=value)
-            self.__client.call(method="set", body=body)
+            return Vector(x, y) * 1e9
         else:
             raise RuntimeError(self.__err_msg)
