@@ -1,4 +1,4 @@
-from typing import Optional, Dict
+from typing import Optional, Dict, List, Union
 import time
 import logging
 from datetime import datetime
@@ -109,24 +109,35 @@ class AcquisitionObj(SpecialObj):
 
         return tem_cameras
 
-    def acquire(self, cameraName: str, **kwargs) -> Image:
+    def acquire(self, cameraName: Union[str, List], **kwargs) -> Union[Image, List[Image]]:
         """ Perform actual acquisition. Camera settings should be set beforehand.
 
-        :param cameraName: Camera name
-        :returns: Image object
+        :param cameraName: Camera name(s)
+        :returns: Image object or a list of Image objects
         """
+        if isinstance(cameraName, str):
+            cameraName = [cameraName]
+
         acq = self.com_object
         acq.RemoveAllAcqDevices()
-        acq.AddAcqDeviceByName(cameraName)
+        for c in cameraName:
+            acq.AddAcqDeviceByName(c)
         t0 = time.time()
         imgs = acq.AcquireImages()
         t1 = time.time()
-        image = convert_image(imgs[0], name=cameraName, **kwargs)
+
+        result = []
+        for idx, c in enumerate(cameraName):
+            image = convert_image(imgs[idx], name=c, **kwargs)
+            result.append(image)
         t2 = time.time()
         logging.debug("\tAcquisition took %f s" % (t1 - t0))
-        logging.debug("\tConverting image took %f s" %(t2 - t1))
+        logging.debug("\tConverting image(s) took %f s" %(t2 - t1))
 
-        return image
+        if len(result) == 1:
+            return result[0]
+        else:
+            return result
 
     def acquire_advanced(self,
                          cameraName: str,
@@ -326,23 +337,34 @@ class AcquisitionObj(SpecialObj):
                              total, output)
 
     def set_stem_presets(self,
-                         cameraName: str,
+                         cameraName: Union[str, List],
                          size: AcqImageSize = AcqImageSize.FULL,
                          dwell_time: float = 1e-5,
                          binning: int = 1,
                          **kwargs) -> None:
+        if isinstance(cameraName, str):
+            cameraName = [cameraName]
 
-        for stem in self.com_object:
-            if stem.Info.Name == cameraName:
-                self.current_camera = stem
-                break
-        if self.current_camera is None:
-            raise KeyError("No STEM detector with name %s" % cameraName)
+        brightness = kwargs.get('brightness')
+        if isinstance(brightness, str):
+            brightness = [brightness]
 
-        if 'brightness' in kwargs:
-            self.current_camera.Info.Brightness = kwargs['brightness']
-        if 'contrast' in kwargs:
-            self.current_camera.Info.Contrast = kwargs['contrast']
+        contrast = kwargs.get('contrast')
+        if isinstance(contrast, str):
+            contrast = [contrast]
+
+        for idx, cam in enumerate(cameraName):
+            for obj in self.com_object:
+                if obj.Info.Name == cam:
+                    self.current_camera = obj
+                    if brightness is not None:
+                        self.current_camera.Info.Brightness = brightness[idx]
+                    if contrast is not None:
+                        self.current_camera.Info.Contrast = contrast[idx]
+                    break
+
+            if self.current_camera is None:
+                raise KeyError("No STEM detector with name %s" % cam)
 
         settings = self.com_object.AcqParams  # StemAcqParams
         settings.ImageSize = size
@@ -382,18 +404,23 @@ class Acquisition:
         return self.__client.call(method="has", body=body)
 
     @staticmethod
-    def __find_camera(cameraName: str,
-                      cameras_dict: Dict,
+    def __find_camera(cameraName: Union[str, List],
+                      all_cameras: Dict,
                       binning: int) -> Dict:
-        """ Check camera name and supported binning. """
-        camera_dict = cameras_dict.get(cameraName)
+        """ Check camera name(s) and supported binning. """
+        if isinstance(cameraName, str):
+            cameraName = [cameraName]
 
-        if camera_dict is None:
-            raise KeyError("No camera with name %s. If using standard scripting the "
-                           "camera must be selected in the microscope user interface" % cameraName)
+        camera_dict = None
+        for c in cameraName:
+            camera_dict = all_cameras.get(c)
 
-        if binning not in camera_dict["binnings"]:
-            raise ValueError("Unsupported binning value: %d" % binning)
+            if camera_dict is None:
+                raise KeyError("No camera with name %s. If using standard scripting the "
+                               "camera must be selected in the microscope user interface" % cameraName)
+
+            if binning not in camera_dict["binnings"]:
+                raise ValueError("Unsupported binning value: %d" % binning)
 
         return camera_dict
 
@@ -453,15 +480,15 @@ class Acquisition:
             return image
 
     def acquire_tem_image(self,
-                          cameraName: str,
+                          camera: str,
                           size: AcqImageSize = AcqImageSize.FULL,
                           exp_time: float = 1.0,
                           binning: int = 1,
                           **kwargs) -> Optional[Image]:
         """ Acquire a TEM image.
 
-        :param cameraName: Camera name
-        :type cameraName: str
+        :param camera: Camera name
+        :type camera: str
         :param size: Image size (AcqImageSize enum)
         :type size: IntEnum
         :param exp_time: Exposure time in seconds
@@ -497,10 +524,10 @@ class Acquisition:
             >>> print(img.width)
             4096
         """
-        camera_dict = self.__find_camera(cameraName, self.cameras, binning)
+        camera_dict = self.__find_camera(camera, self.cameras, binning)
 
         if kwargs.get("use_tecnaiccd", False):
-            return self.__acquire_with_tecnaiccd(cameraName, size, exp_time,
+            return self.__acquire_with_tecnaiccd(camera, size, exp_time,
                                                  binning, camera_dict["width"],
                                                  **kwargs)
 
@@ -513,7 +540,7 @@ class Acquisition:
             body = RequestBody(attr="tem.Acquisition.Cameras",
                                obj_cls=AcquisitionObj,
                                obj_method="set_tem_presets",
-                               cameraName=cameraName,
+                               cameraName=camera,
                                size=size,
                                exp_time=exp_time,
                                binning=binning,
@@ -524,16 +551,16 @@ class Acquisition:
             body = RequestBody(attr="tem.Acquisition",
                                obj_cls=AcquisitionObj,
                                obj_method="acquire",
-                               cameraName=cameraName,
+                               cameraName=camera,
                                **kwargs)
             image = self.__client.call(method="exec_special", body=body)
-            logging.info("TEM image acquired on %s", cameraName)
+            logging.info("TEM image acquired on %s", camera)
 
             if prev_shutter_mode is not None:
                 body = RequestBody(attr="tem.Acquisition.Cameras",
                                    obj_cls=AcquisitionObj,
                                    obj_method="restore_shutter",
-                                   cameraName=cameraName,
+                                   cameraName=camera,
                                    prev_shutter_mode=prev_shutter_mode)
                 self.__client.call(method="exec_special", body=body)
 
@@ -543,7 +570,7 @@ class Acquisition:
             body = RequestBody(attr=self.__id_adv,
                                obj_cls=AcquisitionObj,
                                obj_method="set_tem_presets_advanced",
-                               cameraName=cameraName,
+                               cameraName=camera,
                                size=size,
                                exp_time=exp_time,
                                binning=binning,
@@ -555,32 +582,32 @@ class Acquisition:
                 body = RequestBody(attr=self.__id_adv,
                                    obj_cls=AcquisitionObj,
                                    obj_method="acquire_advanced",
-                                   cameraName=cameraName,
+                                   cameraName=camera,
                                    recording=kwargs["recording"],
                                    **kwargs)
                 self.__client.call(method="exec_special", body=body)
-                logging.info("TEM image acquired on %s", cameraName)
+                logging.info("TEM image acquired on %s", camera)
                 return None
             else:
                 body = RequestBody(attr=self.__id_adv,
                                    validator=Image,
                                    obj_cls=AcquisitionObj,
                                    obj_method="acquire_advanced",
-                                   cameraName=cameraName,
+                                   cameraName=camera,
                                    **kwargs)
                 image = self.__client.call(method="exec_special", body=body)
                 return image
 
     def acquire_stem_image(self,
-                           cameraName: str,
+                           detector: str,
                            size: AcqImageSize = AcqImageSize.FULL,
                            dwell_time: float = 1e-5,
                            binning: int = 1,
                            **kwargs) -> Image:
-        """ Acquire a STEM image.
+        """ Acquire a single STEM image.
 
-        :param cameraName: Camera name
-        :type cameraName: str
+        :param detector: Detector name
+        :type detector: str
         :param size: Image size (AcqImageSize enum)
         :type size: IntEnum
         :param dwell_time: Dwell time in seconds. The frame time equals the dwell time times the number of pixels plus some overhead (typically 20%, used for the line flyback)
@@ -591,12 +618,12 @@ class Acquisition:
         :keyword float contrast: Contrast setting (0.0-1.0)
         :returns: Image object
         """
-        _ = self.__find_camera(cameraName, self.stem_detectors, binning)
+        _ = self.__find_camera(detector, self.stem_detectors, binning)
 
         body = RequestBody(attr="tem.Acquisition.Detectors",
                            obj_cls=AcquisitionObj,
                            obj_method="set_stem_presets",
-                           cameraName=cameraName,
+                           cameraName=detector,
                            size=size,
                            dwell_time=dwell_time,
                            binning=binning,
@@ -608,12 +635,62 @@ class Acquisition:
                            validator=Image,
                            obj_cls=AcquisitionObj,
                            obj_method="acquire",
-                           cameraName=cameraName,
+                           cameraName=detector,
                            **kwargs)
         image = self.__client.call(method="exec_special", body=body)
-        logging.info("STEM image acquired on %s", cameraName)
+        logging.info("STEM image acquired on %s", detector)
 
         return image
+
+    def acquire_stem_images(self,
+                            detectors: List[str],
+                            size: AcqImageSize,
+                            dwell_time: float = 1e-5,
+                            binning: int = 1,
+                            **kwargs) -> List[Image]:
+        """ Simultaneous acquisition of multiple STEM images.
+
+        :param detectors: List of STEM detector names
+        :type detectors: list
+        :param size: Image size (AcqImageSize enum)
+        :type size: IntEnum
+        :param dwell_time: Dwell time in seconds. The frame time equals the dwell time times the number of pixels plus some overhead (typically 20%, used for the line flyback)
+        :type dwell_time: float
+        :param binning: Binning factor. Technically speaking these are "pixel skipping" values, since in STEM we do not combine pixels as a CCD does.
+        :type binning: int
+        :keyword list brightness: list of Brightness settings for each detector
+        :keyword list contrast: list of Contrast settings for each detector
+        :returns: list of Image objects
+        """
+        if "brightness" in kwargs:
+            assert len(kwargs["brightness"]) == len(detectors)
+        if "contrast" in kwargs:
+            assert len(kwargs["contrast"]) == len(detectors)
+
+        _ = self.__find_camera(detectors, self.stem_detectors, binning)
+
+        body = RequestBody(attr="tem.Acquisition.Detectors",
+                           obj_cls=AcquisitionObj,
+                           obj_method="set_stem_presets",
+                           cameraName=detectors,
+                           size=size,
+                           dwell_time=dwell_time,
+                           binning=binning,
+                           **kwargs)
+        self.__client.call(method="exec_special", body=body)
+
+        self.__check_prerequisites()
+        body = RequestBody(attr="tem.Acquisition",
+                           validator=Image,
+                           obj_cls=AcquisitionObj,
+                           obj_method="acquire",
+                           cameraName=detectors,
+                           **kwargs)
+        images = self.__client.call(method="exec_special", body=body)
+        logging.info("STEM images acquired on %s", detectors)
+
+        return images
+
 
     def acquire_film(self,
                      film_text: str,
