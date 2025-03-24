@@ -29,6 +29,7 @@ The documentation can be found at https://pytemscript.readthedocs.io
    installation
    components/index
    getting_started
+   acquisition
    remote
    changelog
 
