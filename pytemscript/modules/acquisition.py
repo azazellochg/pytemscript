@@ -631,8 +631,8 @@ class Acquisition:
             body = RequestBody(attr="tem.Camera",
                                obj_cls=AcquisitionObj,
                                obj_method="acquire_film",
-                               film_text = film_text,
-                               exp_time = exp_time)
+                               film_text=film_text,
+                               exp_time=exp_time)
             self.__client.call(method="exec_special", body=body)
             logging.info("Film exposure completed")
         else:

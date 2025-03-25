@@ -4,7 +4,7 @@ from functools import lru_cache
 
 from .extras import SpecialObj
 from ..utils.misc import RequestBody
-from ..utils.enums import MechanismId, MechanismState
+from ..utils.enums import MechanismId, MechanismState, ApertureType
 
 
 class AperturesObj(SpecialObj):
@@ -17,45 +17,45 @@ class AperturesObj(SpecialObj):
             apertures[MechanismId(ap.Id).name] = {
                 "retractable": ap.IsRetractable,
                 "state": MechanismState(ap.State).name,
-                "sizes": [a.Diameter for a in ap.ApertureCollection]
+                "sizes": [int(a.Diameter) for a in ap.ApertureCollection],
+                "types": [ApertureType(a.Type).name for a in ap.ApertureCollection],
             }
 
         return apertures
 
-    def _find_aperture(self, name: str):
+    def _find_aperture(self, name: MechanismId):
         """ Helper method to find the aperture object by name. """
-        name = name.upper()
         for ap in self.com_object:
-            if name == MechanismId(ap.Id).name:
+            if name == MechanismId(ap.Id):
                 return ap
-        raise KeyError("No aperture with name %s" % name)
+        raise KeyError("No aperture with name %s" % name.name)
 
-    def enable(self, name: str) -> None:
+    def enable(self, name: MechanismId) -> None:
         ap = self._find_aperture(name)
         ap.Enable()
 
-    def disable(self, name: str) -> None:
+    def disable(self, name: MechanismId) -> None:
         ap = self._find_aperture(name)
         ap.Disable()
 
-    def retract(self, name: str) -> None:
+    def retract(self, name: MechanismId) -> None:
         ap = self._find_aperture(name)
         if ap.IsRetractable:
             ap.Retract()
         else:
-            raise NotImplementedError("Aperture %s is not retractable" % name)
+            raise NotImplementedError("Aperture %s is not retractable" % name.name)
 
-    def select(self, name: str, size: int) -> None:
+    def select(self, name: MechanismId, size: int) -> None:
         ap = self._find_aperture(name)
         if ap.State == MechanismState.DISABLED:
             ap.Enable()
         for a in ap.ApertureCollection:
-            if a.Diameter == size:
+            if int(a.Diameter) == size:
                 ap.SelectAperture(a)
-                if ap.SelectedAperture.Diameter == size:
+                if int(ap.SelectedAperture.Diameter) == size:
                     return
                 else:
-                    raise RuntimeError("Could not select aperture!")
+                    raise RuntimeError("Could not select aperture %s=%d" % (name.name, size))
 
 
 class Apertures:
@@ -98,7 +98,7 @@ class Apertures:
         except:
             raise RuntimeError(self.__err_msg_vpp)
 
-    def enable(self, aperture) -> None:
+    def enable(self, aperture: MechanismId) -> None:
         if not self.__std_available:
             raise NotImplementedError(self.__err_msg)
         else:
@@ -106,7 +106,7 @@ class Apertures:
                                obj_method="enable", name=aperture)
             self.__client.call(method="exec_special", body=body)
 
-    def disable(self, aperture) -> None:
+    def disable(self, aperture: MechanismId) -> None:
         if not self.__std_available:
             raise NotImplementedError(self.__err_msg)
         else:
@@ -114,7 +114,7 @@ class Apertures:
                                obj_method="disable", name=aperture)
             self.__client.call(method="exec_special", body=body)
 
-    def retract(self, aperture) -> None:
+    def retract(self, aperture: MechanismId) -> None:
         if not self.__std_available:
             raise NotImplementedError(self.__err_msg)
         else:
@@ -122,13 +122,13 @@ class Apertures:
                                obj_method="retract", name=aperture)
             self.__client.call(method="exec_special", body=body)
 
-    def select(self, aperture: str, size: int) -> None:
+    def select(self, aperture: MechanismId, size: int) -> None:
         """ Select a specific aperture.
 
-        :param aperture: Aperture name (C1, C2, C3, OBJ or SA)
-        :type aperture: str
+        :param aperture: Aperture name (MechanismId enum)
+        :type aperture: MechanismId
         :param size: Aperture size
-        :type size: float
+        :type size: int
         """
         if not self.__std_available:
             raise NotImplementedError(self.__err_msg)

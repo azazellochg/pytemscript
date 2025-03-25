@@ -73,7 +73,7 @@ class Stem:
 
         if self.__client.call(method="get", body=body) == InstrumentMode.STEM:
             body = RequestBody(attr="tem.Illumination.StemRotation",
-                               value=math.radians(float(rot)))
+                               value=math.radians(rot))
             self.__client.call(method="set", body=body)
         else:
             raise RuntimeError(self.__err_msg)
