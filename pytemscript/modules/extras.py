@@ -2,6 +2,7 @@ from typing import Optional, Dict, Tuple, Union, List
 from datetime import datetime
 import math
 import logging
+import os.path
 from pathlib import Path
 import numpy as np
 from functools import lru_cache
@@ -206,10 +207,8 @@ class Image:
         :param fn: File path
         :param overwrite: Overwrite existing file
         """
-        if isinstance(fn, str):
-            fn = Path(fn)
-
-        ext = fn.suffix.lower()
+        fn = os.path.abspath(fn)
+        ext = os.path.splitext(fn)[-1].lower()
 
         if ext == ".mrc":
             import mrcfile
@@ -219,8 +218,8 @@ class Image:
                 mrc.set_data(self.data)
 
         elif ext in [".tiff", ".tif", ".png"]:
-            if fn.exists() and not overwrite:
-                raise FileExistsError("File %s already exists, use overwrite flag" % fn.resolve())
+            if os.path.exists(fn) and not overwrite:
+                raise FileExistsError("File %s already exists, use overwrite flag" % fn)
 
             logging.getLogger("PIL").setLevel(logging.INFO)
             pil_image = PilImage.fromarray(self.data, mode='I;16')
@@ -230,7 +229,7 @@ class Image:
         else:
             raise NotImplementedError("Unsupported file format: %s" % ext)
 
-        logging.info("File saved: %s", fn.resolve())
+        logging.info("File saved: %s", fn)
 
 
 class SpecialObj:

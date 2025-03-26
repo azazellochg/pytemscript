@@ -48,8 +48,8 @@ def test_projection(microscope: Microscope,
     projection.diffraction_shift -= (-0.02, 0.02)
 
     print("\tDiffractionStigmator:", projection.diffraction_stigmator)
-    projection.diffraction_stigmator *= 2
-    projection.diffraction_stigmator /= 2
+    projection.diffraction_stigmator += (-0.02, 0.02)
+    projection.diffraction_stigmator -= (-0.02, 0.02)
     projection.mode = ProjectionMode.IMAGING
 
     print("\tImageShift:", projection.image_shift)
@@ -58,8 +58,8 @@ def test_projection(microscope: Microscope,
     print("\tImageBeamShift:", projection.image_beam_shift)
     projection.image_beam_shift = [0,0]
     print("\tObjectiveStigmator:", projection.objective_stigmator)
-    projection.objective_stigmator *= 2
-    projection.objective_stigmator /= 2
+    projection.objective_stigmator += (-0.02, 0.02)
+    projection.objective_stigmator -= (-0.02, 0.02)
 
     print("\tSubMode:", projection.magnification_range)
     print("\tLensProgram:", projection.is_eftem_on)
@@ -93,7 +93,7 @@ def test_acquisition(microscope: Microscope) -> None:
 
     print("\tFilm settings:", acquisition.film_settings)
     print("\tCameras:", cameras)
-    acquisition.screen = ScreenPosition.UP
+    acquisition.screen_position = ScreenPosition.UP
 
     for cam_name in cameras:
         image = acquisition.acquire_tem_image(cam_name,

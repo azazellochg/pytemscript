@@ -184,7 +184,7 @@ class Illumination:
         parameter was not influenced. To get rid of this problematic bypass,
         the C3 image distance offset has been created which effectively does
         the same focusing but now from within the illumination optics so the
-        illuminated area remains correct.
+        illuminated area remains correct. The range is quite small,  +/-0.02
         """
         if not self.__has_3cond:
             raise NotImplementedError("C3ImageDistanceParallelOffset exists only on 3-condenser lens systems.")

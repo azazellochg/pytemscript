@@ -75,8 +75,11 @@ class Vacuum:
 
     def column_open(self) -> None:
         """ Open column valves. """
-        body = RequestBody(attr=self.__id + ".ColumnValvesOpen", value=True)
-        self.__client.call(method="set", body=body)
+        if self.status == VacuumStatus.READY.name:
+            body = RequestBody(attr=self.__id + ".ColumnValvesOpen", value=True)
+            self.__client.call(method="set", body=body)
+        else:
+            raise RuntimeError("Vacuum status is not READY")
 
     def column_close(self) -> None:
         """ Close column valves. """

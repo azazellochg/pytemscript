@@ -11,7 +11,7 @@ else:
         return abs(a-b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
 
 from pytemscript.microscope import Microscope
-from pytemscript.utils.enums import AcqImageSize
+from pytemscript.utils.enums import AcqImageSize, ScreenPosition
 from pytemscript.modules.extras import Image
 
 
@@ -148,6 +148,7 @@ def main(argv: Optional[List] = None) -> None:
         elif cam.startswith("EF-") and not microscope.optics.projection.is_eftem_on:
             microscope.optics.projection.eftem_on()
 
+    microscope.acquisition.screen_position = ScreenPosition.UP
     for cam, cam_dict in cameras.items():
         csa = cam_dict["supports_csa"]
         if csa and cam in acq_csa_params:

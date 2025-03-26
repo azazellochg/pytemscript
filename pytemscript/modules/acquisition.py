@@ -655,15 +655,15 @@ class Acquisition:
             return {}
 
     @property
-    def screen(self) -> str:
+    def screen_position(self) -> str:
         """ Fluorescent screen position. (read/write)"""
         body = RequestBody(attr="tem.Camera.MainScreen", validator=int)
         result = self.__client.call(method="get", body=body)
 
         return ScreenPosition(result).name
 
-    @screen.setter
-    def screen(self, value: ScreenPosition) -> None:
+    @screen_position.setter
+    def screen_position(self, value: ScreenPosition) -> None:
         body = RequestBody(attr="tem.Camera.MainScreen", value=value)
         self.__client.call(method="set", body=body)
 
