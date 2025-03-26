@@ -36,11 +36,7 @@ class CalGetterPlugin:
         :param lorentz: Lorentz lens
         :param kv: voltage
         """
-        result = self.cg_iface.ActualMagnifications(camera,
-                                                    mode.value,
-                                                    series.value,
-                                                    lorentz.value,
-                                                    kv)
+        result = self.cg_iface.ActualMagnifications(camera, mode, series, lorentz, kv)
         if result is not None and type(result[0]) is tuple:
             mag_range = {1: "LM", 2: "M", 3: "SA", 4: "Mh"}
             mags_dict = {
@@ -95,13 +91,8 @@ class CalGetterPlugin:
         :param lorentz: Lorentz lens
         :param kv: voltage
         """
-        return self.cg_iface.ActualTemRotation(camera,
-                                               mode.value,
-                                               magindex,
-                                               mag,
-                                               series.value,
-                                               lorentz.value,
-                                               kv)
+        return self.cg_iface.ActualTemRotation(camera, mode, magindex, mag,
+                                               series, lorentz, kv)
 
     def get_image_pixel_size(self,
                              camera: str,
@@ -120,13 +111,8 @@ class CalGetterPlugin:
         :param lorentz: Lorentz lens
         :param kv: voltage
         """
-        res = self.cg_iface.GetPhysicalPixelSize(camera,
-                                                 mode.value,
-                                                 magindex,
-                                                 mag,
-                                                 series.value,
-                                                 lorentz.value,
-                                                 kv)
+        res = self.cg_iface.GetPhysicalPixelSize(camera, mode, magindex, mag,
+                                                 series, lorentz, kv)
         return res[0]
 
     def basic_transform(self,
@@ -154,7 +140,7 @@ class CalGetterPlugin:
         assert input_matrix.ndim == 2
 
         x_out, y_out = self.cg_iface.BasicTransform(
-            transform_type.value,
+            transform_type,
             input_matrix[0, 0],
             input_matrix[0, 1],
             input_matrix[0, 2],

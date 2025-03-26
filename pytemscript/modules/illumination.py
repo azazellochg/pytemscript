@@ -154,7 +154,7 @@ class Illumination:
 
     @property
     def probe_defocus(self) -> float:
-        """ Probe defocus. Works only on 3-condenser lens systems in probe mode. (read/write)"""
+        """ Probe defocus. Works only on 3-condenser lens systems in probe mode. """
         if not self.__has_3cond:
             raise NotImplementedError("Probe defocus exists only on 3-condenser lens systems.")
         if self.condenser_mode == CondenserMode.PROBE.name:
@@ -163,34 +163,14 @@ class Illumination:
         else:
             raise RuntimeError("Condenser is not in Probe mode.")
 
-    @probe_defocus.setter
-    def probe_defocus(self, value: float) -> None:
-        if not self.__has_3cond:
-            raise NotImplementedError("Probe defocus exists only on 3-condenser lens systems.")
-        if self.condenser_mode == CondenserMode.PROBE.name:
-            body = RequestBody(attr=self.__id + ".ProbeDefocus", value=value)
-            self.__client.call(method="set", body=body)
-        else:
-            raise RuntimeError("Condenser is not in Probe mode.")
-
     @property
     def convergence_angle(self) -> float:
-        """ Convergence angle. Works only on 3-condenser lens systems in probe mode. (read/write)"""
+        """ Convergence angle. Works only on 3-condenser lens systems in probe mode. """
         if not self.__has_3cond:
             raise NotImplementedError("Probe defocus exists only on 3-condenser lens systems.")
         if self.condenser_mode == CondenserMode.PROBE.name:
             body = RequestBody(attr=self.__id + ".ConvergenceAngle", validator=float)
             return self.__client.call(method="get", body=body)
-        else:
-            raise RuntimeError("Condenser is not in Probe mode.")
-
-    @convergence_angle.setter
-    def convergence_angle(self, value: float) -> None:
-        if not self.__has_3cond:
-            raise NotImplementedError("Probe defocus exists only on 3-condenser lens systems.")
-        if self.condenser_mode == CondenserMode.PROBE.name:
-            body = RequestBody(attr=self.__id + ".ConvergenceAngle", value=value)
-            self.__client.call(method="set", body=body)
         else:
             raise RuntimeError("Condenser is not in Probe mode.")
 
@@ -204,7 +184,7 @@ class Illumination:
         parameter was not influenced. To get rid of this problematic bypass,
         the C3 image distance offset has been created which effectively does
         the same focusing but now from within the illumination optics so the
-        illuminated area remains correct.
+        illuminated area remains correct. The range is quite small,  +/-0.02
         """
         if not self.__has_3cond:
             raise NotImplementedError("C3ImageDistanceParallelOffset exists only on 3-condenser lens systems.")

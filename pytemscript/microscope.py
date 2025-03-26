@@ -59,7 +59,7 @@ class Microscope:
         self.apertures = Apertures(client)
         self.temperature = Temperature(client)
 
-        if connection == "direct" and self.family != ProductFamily.TECNAI.name:
+        if connection == "direct":
             self.user_buttons = UserButtons(client)
 
         if client.has_advanced_iface:

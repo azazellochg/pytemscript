@@ -198,7 +198,7 @@ class AcquisitionObj(SpecialObj):
         prev_shutter_mode = None
 
         if 'correction' in kwargs:
-            settings.ImageCorrection = kwargs.get('correction', AcqImageCorrection.DEFAULT)
+            settings.ImageCorrection = kwargs['correction']
         if 'exposure_mode' in kwargs:
             settings.ExposureMode = kwargs['exposure_mode']
         if 'shutter_mode' in kwargs:
@@ -708,8 +708,8 @@ class Acquisition:
             body = RequestBody(attr="tem.Camera",
                                obj_cls=AcquisitionObj,
                                obj_method="acquire_film",
-                               film_text = film_text,
-                               exp_time = exp_time)
+                               film_text=film_text,
+                               exp_time=exp_time)
             self.__client.call(method="exec_special", body=body)
             logging.info("Film exposure completed")
         else:
@@ -732,15 +732,15 @@ class Acquisition:
             return {}
 
     @property
-    def screen(self) -> str:
+    def screen_position(self) -> str:
         """ Fluorescent screen position. (read/write)"""
         body = RequestBody(attr="tem.Camera.MainScreen", validator=int)
         result = self.__client.call(method="get", body=body)
 
         return ScreenPosition(result).name
 
-    @screen.setter
-    def screen(self, value: ScreenPosition) -> None:
+    @screen_position.setter
+    def screen_position(self, value: ScreenPosition) -> None:
         body = RequestBody(attr="tem.Camera.MainScreen", value=value)
         self.__client.call(method="set", body=body)
 

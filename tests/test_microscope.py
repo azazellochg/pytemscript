@@ -25,36 +25,56 @@ def test_projection(microscope: Microscope,
     print("\tFocus:", projection.focus)
     print("\tDefocus:", projection.defocus)
 
-    orig_def = projection.defocus
     projection.defocus = -3.0
     assert isclose(projection.defocus, -3.0, abs_tol=1e-5)
-    projection.defocus = orig_def
+    projection.focus = 0.1
+    assert isclose(projection.focus, 0.1, abs_tol=1e-5)
+    projection.eucentric_focus()
 
     print("\tObjective:", projection.objective)
     print("\tMagnification:", projection.magnification)
     print("\tMagnificationIndex:", projection.magnification_index)
+    projection.magnification_index += 1
+    projection.magnification_index -= 1
 
     projection.mode = ProjectionMode.DIFFRACTION
     print("\tCameraLength:", projection.camera_length)
     print("\tCameraLengthIndex:", projection.camera_length_index)
+    projection.camera_length_index += 1
+    projection.camera_length_index -= 1
+
     print("\tDiffractionShift:", projection.diffraction_shift)
+    projection.diffraction_shift += (-0.02, 0.02)
+    projection.diffraction_shift -= (-0.02, 0.02)
+
     print("\tDiffractionStigmator:", projection.diffraction_stigmator)
+    projection.diffraction_stigmator += (-0.02, 0.02)
+    projection.diffraction_stigmator -= (-0.02, 0.02)
     projection.mode = ProjectionMode.IMAGING
 
     print("\tImageShift:", projection.image_shift)
-    projection.image_shift = (-0,0)
+    projection.image_shift = (0,0)
 
     print("\tImageBeamShift:", projection.image_beam_shift)
+    projection.image_beam_shift = [0,0]
     print("\tObjectiveStigmator:", projection.objective_stigmator)
+    projection.objective_stigmator += (-0.02, 0.02)
+    projection.objective_stigmator -= (-0.02, 0.02)
+
     print("\tSubMode:", projection.magnification_range)
     print("\tLensProgram:", projection.is_eftem_on)
     print("\tImageRotation:", projection.image_rotation)
     print("\tDetectorShift:", projection.detector_shift)
     print("\tDetectorShiftMode:", projection.detector_shift_mode)
-    print("\tImageBeamTilt:", projection.image_beam_tilt)
-    print("\tLensProgram:", projection.is_eftem_on)
 
-    projection.reset_defocus()  # TODO: not working remotely? check _exec!
+    beam_tilt = projection.image_beam_tilt
+    print("\tImageBeamTilt:", beam_tilt)
+    projection.image_beam_tilt = [-0.02, 0.03]
+    projection.image_beam_tilt = beam_tilt
+
+    print("\tIsEftemOn:", projection.is_eftem_on)
+
+    projection.reset_defocus()  # TODO: not working remotely?
 
     if has_eftem:
         print("\tToggling EFTEM mode...")
@@ -73,6 +93,7 @@ def test_acquisition(microscope: Microscope) -> None:
 
     print("\tFilm settings:", acquisition.film_settings)
     print("\tCameras:", cameras)
+    acquisition.screen_position = ScreenPosition.UP
 
     for cam_name in cameras:
         image = acquisition.acquire_tem_image(cam_name,
@@ -145,6 +166,12 @@ def test_temperature(microscope: Microscope,
             except Exception as e:
                 print(str(e))
 
+        if microscope.family == ProductFamily.TITAN.name:
+            print("\tDocker temperature:", temp.temp_docker)
+            print("\tCassette temperature:", temp.temp_cassette)
+            print("\tCartridge temperature:", temp.temp_cartridge)
+            print("\tHolder temperature:", temp.temp_holder)
+
 
 def test_autoloader(microscope: Microscope,
                     check_loading: bool = False,
@@ -163,6 +190,10 @@ def test_autoloader(microscope: Microscope,
         if check_loading:
             try:
                 print("\tRunning inventory and trying to load cartridge #%d..." % slot)
+                al.initialize()
+                al.buffer_cycle()
+                #al.undock_cassette()
+                #al.dock_cassette()
                 al.run_inventory()
                 if al.slot_status(slot) == CassetteSlotStatus.OCCUPIED.name:
                     al.load_cartridge(slot)
@@ -189,8 +220,8 @@ def test_stage(microscope: Microscope) -> None:
     stage.go_to(x=1, y=-1)
     sleep(1)
     print("\tPosition:", stage.position)
-    print("\tGoto(x=-1, speed=0.5)")
-    stage.go_to(x=-1, speed=0.5)
+    print("\tGoto(x=-1, speed=0.25)")
+    stage.go_to(x=-1, speed=0.25)
     sleep(1)
     print("\tPosition:", stage.position)
     print("\tMoveTo() to original position")
@@ -204,6 +235,7 @@ def test_optics(microscope: Microscope) -> None:
     """
     print("\nTesting optics...")
     opt = microscope.optics
+    print("\tInstrumentMode:", opt.instrument_mode)
     print("\tScreenCurrent:", opt.screen_current)
     print("\tBeamBlanked:", opt.is_beam_blanked)
     print("\tAutoNormalizeEnabled:", opt.is_autonormalize_on)
@@ -221,12 +253,11 @@ def test_illumination(microscope: Microscope) -> None:
     print("\nTesting illumination...")
     illum = microscope.optics.illumination
     print("\tMode:", illum.mode)
+    illum.mode = IlluminationMode.NANOPROBE
     print("\tSpotsizeIndex:", illum.spotsize)
 
-    orig_spot = illum.spotsize
-    illum.spotsize = 5
-    assert illum.spotsize == 5
-    illum.spotsize = orig_spot
+    illum.spotsize += 1
+    illum.spotsize -= 1
 
     if microscope.condenser_system == CondenserLensSystem.TWO_CONDENSER_LENSES.name:
         print("\tIntensity:", illum.intensity)
@@ -237,11 +268,14 @@ def test_illumination(microscope: Microscope) -> None:
         illum.intensity = orig_int
 
         print("\tIntensityZoomEnabled:", illum.intensity_zoom)
+        illum.intensity_zoom = False
         print("\tIntensityLimitEnabled:", illum.intensity_limit)
+        illum.intensity_limit = False
 
     elif microscope.condenser_system == CondenserLensSystem.THREE_CONDENSER_LENSES.name:
         print("\tCondenserMode:", illum.condenser_mode)
         print("\tIntensityZoomEnabled:", illum.intensity_zoom)
+        illum.intensity_zoom = False
         print("\tIlluminatedArea:", illum.illuminated_area)
 
         illum.condenser_mode = CondenserMode.PROBE
@@ -250,6 +284,8 @@ def test_illumination(microscope: Microscope) -> None:
 
         illum.condenser_mode = CondenserMode.PARALLEL
         print("\tC3ImageDistanceParallelOffset:", illum.C3ImageDistanceParallelOffset)
+        illum.C3ImageDistanceParallelOffset += 0.01
+        illum.C3ImageDistanceParallelOffset -= 0.01
 
         orig_illum = illum.illuminated_area
         illum.illuminated_area = 1.0
@@ -263,10 +299,17 @@ def test_illumination(microscope: Microscope) -> None:
 
     print("\tCondenserStigmator:", illum.condenser_stigmator)
     print("\tRotationCenter:", illum.rotation_center)
+    illum.rotation_center += (0.1, 0.2)
+    illum.rotation_center -= (0.1, 0.2)
 
     if microscope.family != ProductFamily.TECNAI.name:
         print("\tTilt:", illum.beam_tilt)
         print("\tDFMode:", illum.dark_field)
+        illum.dark_field = DarkFieldMode.CARTESIAN
+        print("\tTilt (cartesian):", illum.beam_tilt)
+        illum.dark_field = DarkFieldMode.CONICAL
+        print("\tTilt (conical):", illum.beam_tilt)
+        illum.dark_field = DarkFieldMode.OFF
 
 
 def test_stem(microscope: Microscope) -> None:
@@ -280,7 +323,9 @@ def test_stem(microscope: Microscope) -> None:
     if stem.is_available:
         stem.enable()
         print("\tIllumination.StemMagnification:", stem.magnification)
+        stem.magnification = 28000
         print("\tIllumination.StemRotation:", stem.rotation)
+        stem.rotation = -89.0
         print("\tIllumination.StemFullScanFieldOfView:", stem.scan_field_of_view)
         stem.disable()
 
@@ -296,10 +341,17 @@ def test_gun(microscope: Microscope,
     print("\tHTValue:", gun.voltage)
     print("\tHTMaxValue:", gun.voltage_max)
     print("\tShift:", gun.shift)
+    gun.shift += (0.01, 0.02)
+    gun.shift -= (0.01, 0.02)
+
     print("\tTilt:", gun.tilt)
+    gun.tilt += (0.01, 0.02)
+    gun.tilt -= (0.01, 0.02)
 
     try:
         print("\tHVOffset:", gun.voltage_offset)
+        gun.voltage_offset += 0.1
+        gun.voltage_offset -= 0.1
         print("\tHVOffsetRange:", gun.voltage_offset_range)
     except NotImplementedError:
         pass
@@ -308,9 +360,10 @@ def test_gun(microscope: Microscope,
         print("\tFegState:", gun.feg_state)
         print("\tHTState:", gun.ht_state)
         print("\tBeamCurrent:", gun.beam_current)
-        print("\tFocusIndex:", gun.focus_index)
+        print("\tGunLens:", gun.gun_lens)
 
         try:
+            gun.is_flashing_advised(FegFlashingType.HIGH_T)
             gun.do_flashing(FegFlashingType.LOW_T)
             gun.do_flashing(FegFlashingType.HIGH_T)
         except Warning:
@@ -334,9 +387,9 @@ def test_apertures(microscope: Microscope,
 
     if has_license:
         aps.show()
-        aps.disable("C2")
-        aps.enable("C2")
-        aps.select("C2", 50)
+        aps.enable(MechanismId.C2)
+        aps.select(MechanismId.C2, 50)
+        aps.retract(MechanismId.OBJ)
 
 
 def test_energy_filter(microscope: Microscope) -> None:
@@ -349,10 +402,16 @@ def test_energy_filter(microscope: Microscope) -> None:
             ef = microscope.energy_filter
 
             print("\tZLPShift: ", ef.zlp_shift)
+            ef.zlp_shift += 10
+            ef.zlp_shift -= 10
+
             print("\tHTShift: ", ef.ht_shift)
+            ef.ht_shift += 10
+            ef.ht_shift -= 10
 
             ef.insert_slit(10)
             print("\tSlit width: ", ef.slit_width)
+            ef.slit_width = 20
             ef.retract_slit()
         except:
             pass
@@ -378,8 +437,6 @@ def test_general(microscope: Microscope,
     """
     print("\nTesting configuration...")
     print("\tConfiguration.ProductFamily:", microscope.family)
-    print("\tBlankerShutter.ShutterOverrideOn:",
-          microscope.optics.is_shutter_override_on)
     print("\tCondenser system:", microscope.condenser_system)
 
     if microscope.family == ProductFamily.TITAN.name:
