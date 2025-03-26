@@ -41,7 +41,7 @@ class Stem:
 
         if self.__client.call(method="get", body=body) == InstrumentMode.STEM:
             body = RequestBody(attr="tem.Illumination.StemMagnification", validator=float)
-            return int(self.__client.call(method="get", body=body))
+            return round(self.__client.call(method="get", body=body))
         else:
             raise RuntimeError(self.__err_msg)
 

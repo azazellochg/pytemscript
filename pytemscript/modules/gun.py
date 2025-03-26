@@ -174,7 +174,7 @@ class Gun:
     @voltage.setter
     def voltage(self, value: float) -> None:
         voltage_max = self.voltage_max
-        if not (0.0 <= value <= voltage_max):
+        if not (0.0 <= float(value) <= voltage_max):
             raise ValueError("%s is outside of range 0.0-%s" % (value, voltage_max))
 
         body = RequestBody(attr=self.__id + ".HTValue", value=float(value) * 1000)

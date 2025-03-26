@@ -166,9 +166,10 @@ def main(argv: Optional[List] = None) -> None:
 
     if microscope.stem.is_available:
         microscope.stem.enable()
+        microscope.stem.magnification = 28000
         detectors = microscope.acquisition.stem_detectors
         for d in detectors:
-            detector_acquire(microscope, d, dwell_time=1e-6, binning=2)
+            detector_acquire(microscope, d, dwell_time=5e-6, binning=1)
         microscope.stem.disable()
 
 

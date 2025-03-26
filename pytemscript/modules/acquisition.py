@@ -187,7 +187,7 @@ class AcquisitionObj(SpecialObj):
         prev_shutter_mode = None
 
         if 'correction' in kwargs:
-            settings.ImageCorrection = kwargs.get('correction', AcqImageCorrection.DEFAULT)
+            settings.ImageCorrection = kwargs['correction']
         if 'exposure_mode' in kwargs:
             settings.ExposureMode = kwargs['exposure_mode']
         if 'shutter_mode' in kwargs:
