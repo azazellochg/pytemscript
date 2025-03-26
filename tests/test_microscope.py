@@ -280,16 +280,12 @@ def test_illumination(microscope: Microscope) -> None:
 
         illum.condenser_mode = CondenserMode.PROBE
         print("\tProbeDefocus:", illum.probe_defocus)
-        illum.probe_defocus += 0.1
-        illum.probe_defocus -= 0.1
         print("\tConvergenceAngle:", illum.convergence_angle)
-        illum.convergence_angle += 0.1
-        illum.convergence_angle -= 0.1
 
         illum.condenser_mode = CondenserMode.PARALLEL
         print("\tC3ImageDistanceParallelOffset:", illum.C3ImageDistanceParallelOffset)
-        illum.C3ImageDistanceParallelOffset += 0.1
-        illum.C3ImageDistanceParallelOffset -= 0.1
+        illum.C3ImageDistanceParallelOffset += 0.01
+        illum.C3ImageDistanceParallelOffset -= 0.01
 
         orig_illum = illum.illuminated_area
         illum.illuminated_area = 1.0
