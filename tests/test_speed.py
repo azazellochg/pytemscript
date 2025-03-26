@@ -14,12 +14,12 @@ def acquire_image(microscope: Microscope, camera: str, **kwargs) -> Image:
 
 def main() -> None:
     """ Testing acquisition speed. """
-    microscope = Microscope(debug=True, useTecnaiCCD=False)
+    microscope = Microscope(debug=True, useTecnaiCCD=True)
 
     print("Starting acquisition speed test")
     cameras = microscope.acquisition.cameras
 
-    for camera in ["BM-Ceta", "BM-Falcon", "EF-Falcon", "EF-CCD"]:
+    for camera in ["BM-Orius", "BM-Ceta", "BM-Falcon", "EF-Falcon", "EF-CCD"]:
         if camera in cameras:
 
             print("\tUsing SafeArray")
@@ -32,7 +32,7 @@ def main() -> None:
             img2.save(r"C:/%s_asfile.mrc" % camera, overwrite=True)
 
             if camera in ["EF-CCD", "BM-Orius"]:
-                print("\tUsing TecnaiCCD/TIA")
+                print("\tUsing TecnaiCCD")
                 # This is faster than std scripting for Gatan CCD cameras
                 img3 = acquire_image(microscope, camera, use_tecnaiccd=True)
                 img3.save(r"C:/%s_tecnaiccd.mrc" % camera, overwrite=True)

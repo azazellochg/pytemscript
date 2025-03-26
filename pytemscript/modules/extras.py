@@ -1,19 +1,14 @@
-from typing import Optional, Dict, Tuple, Union
+from typing import Optional, Dict, Tuple, Union, List
 from datetime import datetime
 import math
 import logging
+import os.path
 from pathlib import Path
 import numpy as np
 from functools import lru_cache
 from collections import OrderedDict
-
-try:
-    import PIL.Image as PilImage
-    import PIL.TiffImagePlugin as PilTiff
-except ImportError:
-    print("Pillow library not found, you won't be able to "
-          "save images in non-MRC format.")
-
+import PIL.Image as PilImage
+import PIL.TiffImagePlugin as PilTiff
 
 from ..utils.enums import StageAxes, MeasurementUnitType
 
@@ -51,6 +46,16 @@ class Vector:
     def __str__(self):
         return "(%f, %f)" % (self.x, self.y)
 
+    @classmethod
+    def convert_to(cls, value: Union[Tuple[float, float], List[float], "Vector"]):
+        """ Convert input value into a Vector. """
+        if isinstance(value, (tuple, list)):
+            return cls(x=value[0], y=value[1])
+        elif isinstance(value, cls):
+            return value
+        else:
+            raise TypeError("Expected a tuple, list or another Vector")
+
     def set_limits(self, min_value: float, max_value: float) -> None:
         """Set the range limits for the vector for both X and Y."""
         self.__min = min_value
@@ -73,12 +78,14 @@ class Vector:
         """Return the vector components as a tuple."""
         return self.x, self.y
 
-    def set(self, value: Tuple[float, float]) -> None:
-        """ Update values from a tuple. """
-        if not isinstance(value, tuple):
-            raise TypeError("Expected a tuple of floats")
+    def set(self, value: Union[Tuple[float, float], List[float], "Vector"]) -> None:
+        """ Update current values from a tuple, list or another Vector. """
+        if isinstance(value, (tuple, list)):
+            self.x, self.y = value[0], value[1]
+        elif isinstance(value, self.__class__):
+            self.x, self.y = value.x, value.y
         else:
-            self.x, self.y = value
+            raise TypeError("Expected a tuple, list or another Vector")
 
     def __add__(self, other: Union['Vector', Tuple]) -> 'Vector':
         if isinstance(other, tuple):
@@ -125,7 +132,7 @@ class Vector:
 class Image:
     """ Acquired image basic object.
 
-    :param data: int16 numpy array
+    :param data: uint16 numpy array
     :type data: numpy.ndarray
     :param name: name of the image
     :type name: str
@@ -193,17 +200,15 @@ class Image:
     def save(self,
              fn: Union[Path, str],
              overwrite: bool = False) -> None:
-        """ Save acquired image to a file as int16.
+        """ Save acquired image to a file as uint16.
         Supported formats: mrc, tiff, tif, png.
         To save in non-mrc format you will need pillow package installed.
 
         :param fn: File path
         :param overwrite: Overwrite existing file
         """
-        if isinstance(fn, str):
-            fn = Path(fn)
-
-        ext = fn.suffix.lower()
+        fn = os.path.abspath(fn)
+        ext = os.path.splitext(fn)[-1].lower()
 
         if ext == ".mrc":
             import mrcfile
@@ -213,8 +218,8 @@ class Image:
                 mrc.set_data(self.data)
 
         elif ext in [".tiff", ".tif", ".png"]:
-            if fn.exists() and not overwrite:
-                raise FileExistsError("File %s already exists, use overwrite flag" % fn.resolve())
+            if os.path.exists(fn) and not overwrite:
+                raise FileExistsError("File %s already exists, use overwrite flag" % fn)
 
             logging.getLogger("PIL").setLevel(logging.INFO)
             pil_image = PilImage.fromarray(self.data, mode='I;16')
@@ -224,7 +229,7 @@ class Image:
         else:
             raise NotImplementedError("Unsupported file format: %s" % ext)
 
-        logging.info("File saved: %s", fn.resolve())
+        logging.info("File saved: %s", fn)
 
 
 class SpecialObj:

@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Union, List, Tuple
 import math
 
 from .extras import Vector
@@ -90,9 +90,9 @@ class Illumination:
         return Vector(x, y) * 1e6
 
     @beam_shift.setter
-    def beam_shift(self, vector: Vector) -> None:
-        vector *= 1e-6
-        body = RequestBody(attr=self.__id + ".Shift", value=vector)
+    def beam_shift(self, vector: Union[Vector, List[float], Tuple[float, float]]) -> None:
+        value = Vector.convert_to(vector) * 1e-6
+        body = RequestBody(attr=self.__id + ".Shift", value=value)
         self.__client.call(method="set", body=body)
 
     @property
@@ -110,9 +110,9 @@ class Illumination:
         return Vector(x, y) * 1e3
 
     @rotation_center.setter
-    def rotation_center(self, vector: Vector) -> None:
-        vector *= 1e-3
-        body = RequestBody(attr=self.__id + ".RotationCenter", value=vector)
+    def rotation_center(self, vector: Union[Vector, List[float], Tuple[float, float]]) -> None:
+        value = Vector.convert_to(vector) * 1e-3
+        body = RequestBody(attr=self.__id + ".RotationCenter", value=value)
         self.__client.call(method="set", body=body)
 
     @property
@@ -125,31 +125,36 @@ class Illumination:
                       self.__client.call(method="get", body=stigy))
 
     @condenser_stigmator.setter
-    def condenser_stigmator(self, vector: Vector) -> None:
-        vector.set_limits(-1.0, 1.0)
-        body = RequestBody(attr=self.__id + ".CondenserStigmator", value=vector)
+    def condenser_stigmator(self, vector: Union[Vector, List[float], Tuple[float, float]]) -> None:
+        value = Vector.convert_to(vector)
+        value.set_limits(-1.0, 1.0)
+        body = RequestBody(attr=self.__id + ".CondenserStigmator", value=value)
         self.__client.call(method="set", body=body)
 
     @property
     def illuminated_area(self) -> float:
         """ Illuminated area in um. Works only on 3-condenser lens systems. (read/write)"""
-        if self.__has_3cond:
+        if not self.__has_3cond:
+            raise NotImplementedError("Illuminated area exists only on 3-condenser lens systems.")
+        if self.condenser_mode == CondenserMode.PARALLEL.name:
             body = RequestBody(attr=self.__id + ".IlluminatedArea", validator=float)
             return self.__client.call(method="get", body=body) * 1e6
         else:
-            raise NotImplementedError("Illuminated area exists only on 3-condenser lens systems.")
+            raise RuntimeError("Condenser is not in Parallel mode.")
 
     @illuminated_area.setter
     def illuminated_area(self, value: float) -> None:
-        if self.__has_3cond:
+        if not self.__has_3cond:
+            raise NotImplementedError("Illuminated area exists only on 3-condenser lens systems.")
+        if self.condenser_mode == CondenserMode.PARALLEL.name:
             body = RequestBody(attr=self.__id + ".IlluminatedArea", value=value*1e-6)
             self.__client.call(method="set", body=body)
         else:
-            raise NotImplementedError("Illuminated area exists only on 3-condenser lens systems.")
+            raise RuntimeError("Condenser is not in Parallel mode.")
 
     @property
     def probe_defocus(self) -> float:
-        """ Probe defocus. Works only on 3-condenser lens systems in probe mode. (read/write)"""
+        """ Probe defocus. Works only on 3-condenser lens systems in probe mode. """
         if not self.__has_3cond:
             raise NotImplementedError("Probe defocus exists only on 3-condenser lens systems.")
         if self.condenser_mode == CondenserMode.PROBE.name:
@@ -158,19 +163,9 @@ class Illumination:
         else:
             raise RuntimeError("Condenser is not in Probe mode.")
 
-    @probe_defocus.setter
-    def probe_defocus(self, value: float) -> None:
-        if not self.__has_3cond:
-            raise NotImplementedError("Probe defocus exists only on 3-condenser lens systems.")
-        if self.condenser_mode == CondenserMode.PROBE.name:
-            body = RequestBody(attr=self.__id + ".ProbeDefocus", value=value)
-            self.__client.call(method="set", body=body)
-        else:
-            raise RuntimeError("Condenser is not in Probe mode.")
-
     @property
     def convergence_angle(self) -> float:
-        """ Convergence angle. Works only on 3-condenser lens systems in probe mode. (read/write)"""
+        """ Convergence angle. Works only on 3-condenser lens systems in probe mode. """
         if not self.__has_3cond:
             raise NotImplementedError("Probe defocus exists only on 3-condenser lens systems.")
         if self.condenser_mode == CondenserMode.PROBE.name:
@@ -179,19 +174,18 @@ class Illumination:
         else:
             raise RuntimeError("Condenser is not in Probe mode.")
 
-    @convergence_angle.setter
-    def convergence_angle(self, value: float) -> None:
-        if not self.__has_3cond:
-            raise NotImplementedError("Probe defocus exists only on 3-condenser lens systems.")
-        if self.condenser_mode == CondenserMode.PROBE.name:
-            body = RequestBody(attr=self.__id + ".ConvergenceAngle", value=value)
-            self.__client.call(method="set", body=body)
-        else:
-            raise RuntimeError("Condenser is not in Probe mode.")
-
     @property
     def C3ImageDistanceParallelOffset(self) -> float:
-        """ C3 image distance parallel offset. Works only on 3-condenser lens systems. (read/write)"""
+        """ C3 image distance parallel offset. Works only on 3-condenser lens systems. (read/write).
+        This value takes the place previously of the Intensity value. The Intensity value
+        changed the focusing of the diffraction pattern at the back-focal plane (MF-Y in Beam Settings
+        control panel) but was rather independent of the illumination optics. As
+        such it changed the size of the illumination but the illuminated area
+        parameter was not influenced. To get rid of this problematic bypass,
+        the C3 image distance offset has been created which effectively does
+        the same focusing but now from within the illumination optics so the
+        illuminated area remains correct. The range is quite small,  +/-0.02
+        """
         if not self.__has_3cond:
             raise NotImplementedError("C3ImageDistanceParallelOffset exists only on 3-condenser lens systems.")
         if self.condenser_mode == CondenserMode.PARALLEL.name:
@@ -212,7 +206,9 @@ class Illumination:
 
     @property
     def mode(self) -> str:
-        """ Illumination mode: microprobe or nanoprobe. (read/write)"""
+        """ Illumination mode: microprobe or nanoprobe. (read/write)
+        (Nearly) no effect for low magnifications (LM).
+        """
         body = RequestBody(attr=self.__id + ".Mode", validator=int)
         result = self.__client.call(method="get", body=body)
 

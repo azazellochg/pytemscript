@@ -138,7 +138,11 @@ def convert_image(obj,
 
     elif use_asfile:
         # Save into a temp file and read into numpy
-        import imageio
+        try:
+            import imageio
+        except ImportError:
+            raise ImportError("imageio library not found, you cannot use "
+                              "use_asfile kwarg.")
         fn = r"C:/temp.tif"
         if os.path.exists(fn):
             os.remove(fn)
@@ -148,7 +152,8 @@ def convert_image(obj,
 
     else:
         # TecnaiCCD plugin: obj is a variant, convert to numpy
-        data = np.array(obj, dtype="uint16")
+        # Also, transpose is required to match TIA orientation
+        data = np.array(obj, dtype="uint16").T
 
     name = name or obj.Name
 

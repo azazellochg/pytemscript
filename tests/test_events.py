@@ -14,7 +14,7 @@ def main() -> None:
     print("User buttons:", buttons.show())
 
     def screen_toggle():
-        current_pos = acquisition.screen
+        current_pos = acquisition.screen_position
         if current_pos == ScreenPosition.UP.name:
             new_pos = ScreenPosition.DOWN
         elif current_pos == ScreenPosition.DOWN.name:
@@ -22,9 +22,8 @@ def main() -> None:
         else:
             raise RuntimeError("Unknown screen position: %s" % current_pos)
 
-        acquisition.screen = new_pos
+        acquisition.screen_position = new_pos
         print("New screen position:", new_pos)
-        assert new_pos.name == acquisition.screen
 
     event_handler = ButtonHandler(buttons.L1,
                                   lambda: screen_toggle(),

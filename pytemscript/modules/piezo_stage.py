@@ -23,13 +23,13 @@ class PiezoStage:
 
     @property
     def position(self) -> Dict:
-        """ The current position of the piezo stage (x,y,z in um). """
+        """ The current position of the piezo stage (x,y,z in um and a,b in degrees). """
         if not self.__has_pstage:
             raise NotImplementedError(self.__err_msg)
         else:
             body = RequestBody(attr=self.__id + ".CurrentPosition",
                                validator=dict,
-                               obj_cls=StageObj, obj_method="get")
+                               obj_cls=StageObj, obj_method="get", a=True)
             return self.__client.call(method="exec_special", body=body)
 
     @property

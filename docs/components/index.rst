@@ -71,7 +71,8 @@ Vectors
 -------
 
 Some attributes handle two dimensional vectors that have X and Y values (e.g. image shift or gun tilt). These
-attributes accept and return a :meth:`~pytemscript.modules.Vector` of two floats. Vectors can be multiplied, subtracted etc.:
+attributes accept and return a :meth:`~pytemscript.modules.Vector` of two floats. Vectors can be multiplied, subtracted etc. as shown below.
+You can also use a list or a tuple to set vector attributes.
 
 .. code-block:: python
 
@@ -80,6 +81,8 @@ attributes accept and return a :meth:`~pytemscript.modules.Vector` of two floats
     shift += (0.4, 0.2)
     shift *= 2
     microscope.optics.illumination.beam_shift = shift
+    projection.image_shift = (0.05, 0.1)
+    projection.image_shift = [0.05, 0.1]
 
 .. autoclass:: pytemscript.modules.Vector
     :members: set_limits, check_limits, get, set

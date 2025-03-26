@@ -1,7 +1,7 @@
 from functools import lru_cache
 import logging
 import time
-from typing import Tuple
+from typing import Tuple, Union, List
 
 from ..utils.misc import RequestBody
 from ..utils.enums import FegState, HighTensionState, FegFlashingType
@@ -80,10 +80,11 @@ class Gun:
         return Vector(x, y)
 
     @shift.setter
-    def shift(self, vector: Vector) -> None:
-        vector.set_limits(-1.0, 1.0)
+    def shift(self, vector: Union[Vector, List[float], Tuple[float, float]]) -> None:
+        value = Vector.convert_to(vector)
+        value.set_limits(-1.0, 1.0)
 
-        body = RequestBody(attr=self.__id + ".Shift", value=vector)
+        body = RequestBody(attr=self.__id + ".Shift", value=value)
         self.__client.call(method="set", body=body)
 
     @property
@@ -98,10 +99,11 @@ class Gun:
         return Vector(x, y)
 
     @tilt.setter
-    def tilt(self, vector: Vector) -> None:
-        vector.set_limits(-1.0, 1.0)
+    def tilt(self, vector: Union[Vector, List[float], Tuple[float, float]]) -> None:
+        value = Vector.convert_to(vector)
+        value.set_limits(-1.0, 1.0)
 
-        body = RequestBody(attr=self.__id + ".Tilt", value=vector)
+        body = RequestBody(attr=self.__id + ".Tilt", value=value)
         self.__client.call(method="set", body=body)
 
     @property
@@ -172,7 +174,7 @@ class Gun:
     @voltage.setter
     def voltage(self, value: float) -> None:
         voltage_max = self.voltage_max
-        if not (0.0 <= value <= voltage_max):
+        if not (0.0 <= float(value) <= voltage_max):
             raise ValueError("%s is outside of range 0.0-%s" % (value, voltage_max))
 
         body = RequestBody(attr=self.__id + ".HTValue", value=float(value) * 1000)
@@ -223,8 +225,8 @@ class Gun:
             raise NotImplementedError(self.__err_msg_cfeg)
 
     @property
-    def focus_index(self) -> Tuple[int, int]:
-        """ Returns coarse and fine gun lens index. """
+    def gun_lens(self) -> Tuple[int, int]:
+        """ Returns coarse and fine gun lens index. Not available on systems with a monochromator. """
         if self.__has_source:
             coarse = RequestBody(attr=self.__id_adv + ".FocusIndex.Coarse", validator=int)
             fine = RequestBody(attr=self.__id_adv + ".FocusIndex.Fine", validator=int)
@@ -242,12 +244,23 @@ class Gun:
         if not self.__has_source:
             raise NotImplementedError(self.__err_msg_cfeg)
 
-        body = RequestBody(attr=self.__id_adv + ".Flashing.IsFlashingAdvised()",
-                           arg=flash_type, validator=bool)
-        if self.__client.call(method="exec", body=body):
+        if self.is_flashing_advised(flash_type):
             # Warning: lowT flashing can be done even if not advised
             doflash = RequestBody(attr=self.__id_adv + ".Flashing.PerformFlashing()",
                                   arg=flash_type)
             self.__client.call(method="exec", body=doflash)
         else:
             raise Warning("Flashing type %s is not advised" % flash_type)
+
+    def is_flashing_advised(self, flash_type: FegFlashingType) -> bool:
+        """ Check if cold FEG flashing is advised.
+
+        :param flash_type: FEG flashing type (FegFlashingType enum)
+        :type flash_type: IntEnum
+        """
+        if not self.__has_source:
+            raise NotImplementedError(self.__err_msg_cfeg)
+
+        body = RequestBody(attr=self.__id_adv + ".Flashing.IsFlashingAdvised()",
+                           arg=flash_type, validator=bool)
+        return self.__client.call(method="exec", body=body)
