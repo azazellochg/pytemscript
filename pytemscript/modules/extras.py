@@ -5,7 +5,6 @@ import logging
 import os.path
 from pathlib import Path
 import numpy as np
-from functools import lru_cache
 from collections import OrderedDict
 import PIL.Image as PilImage
 import PIL.TiffImagePlugin as PilTiff
@@ -160,7 +159,6 @@ class Image:
     def __repr__(self) -> str:
         return "Image()"
 
-    @lru_cache(maxsize=1)
     def __create_tiff_tags(self):
         """Create TIFF tags from metadata. """
         tiff_tags = PilTiff.ImageFileDirectory_v2()

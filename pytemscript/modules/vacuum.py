@@ -47,7 +47,7 @@ class Vacuum:
 
     @property
     def is_buffer_running(self) -> bool:
-        """ Checks whether the prevacuum pump is currently running
+        """ Checks whether the pre-vacuum pump is currently running
         (consequences: vibrations, exposure function blocked
         or should not be called).
         """

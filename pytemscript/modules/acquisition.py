@@ -5,7 +5,7 @@ from datetime import datetime
 from functools import lru_cache
 
 from ..utils.misc import RequestBody, convert_image
-from ..utils.enums import AcqImageSize, AcqShutterMode, AcqImageCorrection, PlateLabelDateFormat, ScreenPosition
+from ..utils.enums import AcqImageSize, AcqShutterMode, PlateLabelDateFormat, ScreenPosition
 from .extras import Image, SpecialObj
 
 
