@@ -122,7 +122,7 @@ class Temperature:
     def temp_holder(self) -> float:
         """ Returns Holder temperature in Kelvins. """
         if self.__has_tmpctrl_adv:
-            body = RequestBody(attr=self.__id_adv + ".AutoloaderCompartment.HolderTemperature",
+            body = RequestBody(attr=self.__id_adv + ".ColumnCompartment.HolderTemperature",
                                validator=float)
             return self.__client.call(method="get", body=body)
         else:
