@@ -70,7 +70,7 @@ class Gun:
 
     @property
     def shift(self) -> Vector:
-        """ Gun shift. (read/write)"""
+        """ Gun shift. (read/write) """
         shx = RequestBody(attr=self.__id + ".Shift.X", validator=float)
         shy = RequestBody(attr=self.__id + ".Shift.Y", validator=float)
 
@@ -89,7 +89,7 @@ class Gun:
 
     @property
     def tilt(self) -> Vector:
-        """ Gun tilt. (read/write)"""
+        """ Gun tilt. (read/write) """
         tx = RequestBody(attr=self.__id + ".Tilt.X", validator=float)
         ty = RequestBody(attr=self.__id + ".Tilt.Y", validator=float)
 
@@ -108,7 +108,7 @@ class Gun:
 
     @property
     def voltage_offset(self) -> float:
-        """ High voltage offset. (read/write)"""
+        """ High voltage offset. (read/write) """
         if self.__has_gun1:
             body = RequestBody(attr=self.__id,
                                obj_cls=GunObj,
@@ -131,7 +131,7 @@ class Gun:
 
     @property
     def feg_state(self) -> str:
-        """ FEG emitter status. """
+        """ FEG emitter status (FegState enum). """
         if self.__has_source:
             body = RequestBody(attr=self.__id_adv + ".State", validator=int)
             result = self.__client.call(method="get", body=body)
@@ -141,7 +141,8 @@ class Gun:
 
     @property
     def ht_state(self) -> str:
-        """ High tension state: on, off or disabled.
+        """ High tension state: HighTensionState enum.
+
         Disabling/enabling can only be done via the button on the
         system on/off-panel, not via script. When switching on
         the high tension, this function cannot check if and
@@ -195,7 +196,7 @@ class Gun:
         return self.__client.call(method="get", body=body) * 1e-3
 
     @property
-    def voltage_offset_range(self):
+    def voltage_offset_range(self) -> Tuple[float, float]:
         """ Returns the high voltage offset range. """
         if self.__has_gun1:
             body = RequestBody(attr=self.__id,
@@ -238,8 +239,7 @@ class Gun:
     def do_flashing(self, flash_type: FegFlashingType) -> None:
         """ Perform cold FEG flashing.
 
-        :param flash_type: FEG flashing type (FegFlashingType enum)
-        :type flash_type: IntEnum
+        :param FegFlashingType flash_type:
         """
         if not self.__has_source:
             raise NotImplementedError(self.__err_msg_cfeg)
@@ -255,8 +255,7 @@ class Gun:
     def is_flashing_advised(self, flash_type: FegFlashingType) -> bool:
         """ Check if cold FEG flashing is advised.
 
-        :param flash_type: FEG flashing type (FegFlashingType enum)
-        :type flash_type: IntEnum
+        :param FegFlashingType flash_type:
         """
         if not self.__has_source:
             raise NotImplementedError(self.__err_msg_cfeg)

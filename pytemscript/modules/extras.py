@@ -15,10 +15,8 @@ from ..utils.enums import StageAxes, MeasurementUnitType
 class Vector:
     """ Utility object with two float attributes.
 
-    :param x: X value
-    :type x: float
-    :param y: Y value
-    :type y: float
+    :param float x: X value
+    :param float y: Y value
 
     Usage:
             >>> from pytemscript.modules import Vector
@@ -131,14 +129,10 @@ class Vector:
 class Image:
     """ Acquired image basic object.
 
-    :param data: uint16 numpy array
-    :type data: numpy.ndarray
-    :param name: name of the image
-    :type name: str
-    :param metadata: image metadata
-    :type metadata: dict
-    :param timestamp: acquisition timestamp in "%Y:%m:%d %H:%M:%S" format
-    :type timestamp: str
+    :param numpy.ndarray data: uint16 numpy array
+    :param str name: name of the image
+    :param dict metadata: image metadata
+    :param str timestamp: acquisition timestamp in "%Y:%m:%d %H:%M:%S" format
     """
     def __init__(self,
                  data: np.ndarray,  # int16
@@ -199,11 +193,11 @@ class Image:
              fn: Union[Path, str],
              overwrite: bool = False) -> None:
         """ Save acquired image to a file as uint16.
-        Supported formats: mrc, tiff, tif, png.
-        To save in non-mrc format you will need pillow package installed.
+        Supported formats: mrc, tif, png.
 
-        :param fn: File path
-        :param overwrite: Overwrite existing file
+        :param fn: Filepath
+        :type fn: Path or str
+        :param bool overwrite: Overwrite existing file
         """
         fn = os.path.abspath(fn)
         ext = os.path.splitext(fn)[-1].lower()

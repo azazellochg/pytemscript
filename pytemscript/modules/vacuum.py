@@ -39,7 +39,7 @@ class Vacuum:
 
     @property
     def status(self) -> str:
-        """ Status of the vacuum system. """
+        """ Status of the vacuum system. VacuumStatus enum. """
         body = RequestBody(attr=self.__id + ".Status", validator=int)
         result = self.__client.call(method="get", body=body)
 

@@ -1,5 +1,6 @@
 from functools import lru_cache
 
+from ..utils.enums import RefrigerantDewar
 from ..utils.misc import RequestBody
 
 
@@ -50,11 +51,10 @@ class Temperature:
 
         self.__client.call(method="exec", body=body)
 
-    def dewar_level(self, dewar) -> float:
+    def dewar_level(self, dewar: RefrigerantDewar) -> float:
         """ Returns the LN level (%) in a dewar.
 
-        :param dewar: Dewar name (RefrigerantDewar enum)
-        :type dewar: IntEnum
+        :param RefrigerantDewar dewar: Dewar name
         """
         if self.__has_tmpctrl:
             body = RequestBody(attr=self.__id + ".RefrigerantLevel()",

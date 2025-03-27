@@ -85,14 +85,10 @@ class COMClient(BasicClient):
     """ Local COM client interface for the microscope.
     Creating an instance of this class will also create COM interfaces for the TEM.
 
-    :param useLD: Connect to LowDose server on microscope PC (limited control only)
-    :type useLD: bool
-    :param useTecnaiCCD: Connect to TecnaiCCD plugin on microscope PC that controls Digital Micrograph (maybe faster than via TIA / std scripting)
-    :type useTecnaiCCD: bool
-    :param debug: Print debug messages
-    :type debug: bool
-    :param as_server: Use this client as a server process (only for remote clients)
-    :type as_server: bool
+    :param bool useLD: Connect to LowDose server on microscope PC (limited control only)
+    :param bool useTecnaiCCD: Connect to TecnaiCCD plugin on microscope PC that controls Digital Micrograph (maybe faster than via TIA / std scripting)
+    :param bool debug: Print debug messages
+    :param bool as_server: Use this client as a server process (only for remote clients)
     """
     def __init__(self,
                  useLD: bool = False,

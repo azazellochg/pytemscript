@@ -107,7 +107,7 @@ class Stage:
 
     @property
     def status(self) -> str:
-        """ The current state of the stage. """
+        """ The current state of the stage. StageStatus enum. """
         body = RequestBody(attr=self.__id + ".Status", validator=int)
         result = self.__client.call(method="get", body=body)
 
@@ -115,7 +115,7 @@ class Stage:
 
     @property
     def holder(self) -> str:
-        """ The current specimen holder type. """
+        """ The current specimen holder type. StageHolderType enum. """
         body = RequestBody(attr=self.__id + ".Holder", validator=int)
         result = self.__client.call(method="get", body=body)
 
@@ -130,7 +130,10 @@ class Stage:
 
         return self.__client.call(method="exec_special", body=body)
 
-    def go_to(self, relative=False, speed=None, **kwargs) -> None:
+    def go_to(self,
+              relative: bool = False,
+              speed: Optional[float] = None,
+              **kwargs) -> None:
         """ Makes the holder directly go to the new position by moving all axes
         simultaneously. Keyword args can be x,y,z,a or b.
         (x,y,z in um and a,b in degrees)
@@ -140,7 +143,7 @@ class Stage:
         """
         self._change_position(direct=True, relative=relative, speed=speed, **kwargs)
 
-    def move_to(self, relative=False, **kwargs) -> None:
+    def move_to(self, relative: bool = False, **kwargs) -> None:
         """ Makes the holder safely move to the new position.
         Keyword args can be x,y,z,a or b.
         (x,y,z in um and a,b in degrees)
