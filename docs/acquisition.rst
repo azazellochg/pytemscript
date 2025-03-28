@@ -90,13 +90,13 @@ Depending on the image size this method can be very slow (several seconds). Ther
 
 .. warning:: On some systems, saving to a file fails with a COM error due to incomplete implementation, so you will have to stick to the default `AsSafeArray` method.
 
-If you want to try this method, add a couple of kwargs to your acquisition command:
+If you want to try this method, add `use_asfile=True` to your acquisition command:
 
 .. code-block:: python
 
     microscope = Microscope()
     acq = microscope.acquisition
-    img = acq.acquire_tem_image("BM-Falcon", AcqImageSize.FULL, exp_time=5.0, use_safearray=False, use_asfile=True)
+    img = acq.acquire_tem_image("BM-Falcon", AcqImageSize.FULL, exp_time=5.0, use_asfile=True)
 
 
 STEM acquisition

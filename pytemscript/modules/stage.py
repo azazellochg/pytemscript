@@ -44,9 +44,9 @@ class Stage:
         """
         Execute stage move to a new position.
 
-        :param direct: use Goto instead of MoveTo
-        :param relative: use relative coordinates
-        :param speed: Goto speed
+        :param bool direct: use Goto instead of MoveTo
+        :param bool relative: use relative coordinates
+        :param float speed: Goto speed
         :param kwargs: new coordinates
         """
         self._wait_for_stage(tries=5)
@@ -138,17 +138,16 @@ class Stage:
         simultaneously. Keyword args can be x,y,z,a or b.
         (x,y,z in um and a,b in degrees)
 
-        :param relative: Use relative move instead of absolute position.
-        :param speed: fraction of the standard speed setting (max 1.0)
+        :param bool relative: Use relative move instead of absolute position.
+        :param float speed: fraction of the standard speed setting (max 1.0)
         """
         self._change_position(direct=True, relative=relative, speed=speed, **kwargs)
 
     def move_to(self, relative: bool = False, **kwargs) -> None:
         """ Makes the holder safely move to the new position.
-        Keyword args can be x,y,z,a or b.
-        (x,y,z in um and a,b in degrees)
+        Keyword args can be x,y,z,a or b (x,y,z in um and a,b in degrees).
 
-        :param relative: Use relative move instead of absolute position.
+        :param bool relative: Use relative move instead of absolute position.
         """
         self._change_position(relative=relative, **kwargs)
 

@@ -112,7 +112,7 @@ class AcquisitionObj(SpecialObj):
     def acquire(self, cameraName: str, **kwargs) -> Image:
         """ Perform actual acquisition. Camera settings should be set beforehand.
 
-        :param cameraName: Camera name
+        :param str cameraName: Camera name
         :returns: Image object
         """
         acq = self.com_object
