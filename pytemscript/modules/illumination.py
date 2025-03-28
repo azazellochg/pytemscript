@@ -21,7 +21,7 @@ class Illumination:
 
     @property
     def spotsize(self) -> int:
-        """ Spotsize number, usually 1 to 11. (read/write)"""
+        """ Spotsize number, usually 1 to 11. (read/write) """
         body = RequestBody(attr=self.__id + ".SpotsizeIndex", validator=int)
 
         return self.__client.call(method="get", body=body)
@@ -36,7 +36,7 @@ class Illumination:
 
     @property
     def intensity(self) -> float:
-        """ Intensity / C2 condenser lens value. (read/write)"""
+        """ Intensity / C2 condenser lens value. (read/write) """
         body = RequestBody(attr=self.__id + ".Intensity", validator=float)
 
         return self.__client.call(method="get", body=body)
@@ -51,7 +51,7 @@ class Illumination:
 
     @property
     def intensity_zoom(self) -> bool:
-        """ Intensity zoom (AutoZoom on Krios). Set to False to disable. (read/write)"""
+        """ Intensity zoom (AutoZoom on Krios). Set to False to disable. (read/write) """
         body = RequestBody(attr=self.__id + ".IntensityZoomEnabled", validator=bool)
 
         return self.__client.call(method="get", body=body)
@@ -63,7 +63,7 @@ class Illumination:
 
     @property
     def intensity_limit(self) -> bool:
-        """ Intensity limit. Set to False to disable. (read/write)"""
+        """ Intensity limit. Set to False to disable. (read/write) """
         if self.__has_3cond:
             raise NotImplementedError("Intensity limit exists only on 2-condenser lens systems.")
         else:
@@ -80,7 +80,7 @@ class Illumination:
 
     @property
     def beam_shift(self) -> Vector:
-        """ Beam shift X and Y in um. (read/write)"""
+        """ Beam shift X and Y in um. (read/write) """
         shx = RequestBody(attr=self.__id + ".Shift.X", validator=float)
         shy = RequestBody(attr=self.__id + ".Shift.Y", validator=float)
 
@@ -98,8 +98,9 @@ class Illumination:
     @property
     def rotation_center(self) -> Vector:
         """ Rotation center X and Y in mrad. (read/write)
-            Depending on the scripting version,
-            the values might need scaling by 6.0 to get mrads.
+
+        Depending on the scripting version, the values might need
+        scaling by 6.0 to get mrads.
         """
         rotx = RequestBody(attr=self.__id + ".RotationCenter.X", validator=float)
         roty = RequestBody(attr=self.__id + ".RotationCenter.Y", validator=float)
@@ -117,7 +118,7 @@ class Illumination:
 
     @property
     def condenser_stigmator(self) -> Vector:
-        """ C2 condenser stigmator X and Y. (read/write)"""
+        """ C2 condenser stigmator X and Y. (read/write) """
         stigx = RequestBody(attr=self.__id + ".CondenserStigmator.X", validator=float)
         stigy = RequestBody(attr=self.__id + ".CondenserStigmator.Y", validator=float)
 
@@ -133,7 +134,7 @@ class Illumination:
 
     @property
     def illuminated_area(self) -> float:
-        """ Illuminated area in um. Works only on 3-condenser lens systems. (read/write)"""
+        """ Illuminated area in um. Works only on 3-condenser lens systems. (read/write) """
         if not self.__has_3cond:
             raise NotImplementedError("Illuminated area exists only on 3-condenser lens systems.")
         if self.condenser_mode == CondenserMode.PARALLEL.name:
@@ -176,7 +177,8 @@ class Illumination:
 
     @property
     def C3ImageDistanceParallelOffset(self) -> float:
-        """ C3 image distance parallel offset. Works only on 3-condenser lens systems. (read/write).
+        """ C3 image distance parallel offset. Works only on 3-condenser lens systems. (read/write)
+
         This value takes the place previously of the Intensity value. The Intensity value
         changed the focusing of the diffraction pattern at the back-focal plane (MF-Y in Beam Settings
         control panel) but was rather independent of the illumination optics. As
@@ -206,7 +208,8 @@ class Illumination:
 
     @property
     def mode(self) -> str:
-        """ Illumination mode: microprobe or nanoprobe. (read/write)
+        """ Illumination mode: microprobe or nanoprobe. IlluminationMode enum (read/write)
+
         (Nearly) no effect for low magnifications (LM).
         """
         body = RequestBody(attr=self.__id + ".Mode", validator=int)
@@ -221,7 +224,7 @@ class Illumination:
 
     @property
     def dark_field(self) -> str:
-        """ Dark field mode: cartesian, conical or off. (read/write)"""
+        """ Dark field mode: cartesian, conical or off. DarkFieldMode enum (read/write) """
         body = RequestBody(attr=self.__id + ".DFMode", validator=int)
         result = self.__client.call(method="get", body=body)
 
@@ -234,7 +237,7 @@ class Illumination:
 
     @property
     def condenser_mode(self) -> str:
-        """ Mode of the illumination system: parallel or probe. (read/write)"""
+        """ Mode of the illumination system: parallel or probe. CondenserMode enum (read/write) """
         if self.__has_3cond:
             body = RequestBody(attr=self.__id + ".CondenserMode", validator=int)
             result = self.__client.call(method="get", body=body)

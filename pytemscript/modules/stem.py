@@ -36,7 +36,7 @@ class Stem:
 
     @property
     def magnification(self) -> int:
-        """ The magnification value in STEM mode. (read/write)"""
+        """ The magnification value in STEM mode. (read/write) """
         body = RequestBody(attr=self.__id + ".InstrumentMode", validator=int)
 
         if self.__client.call(method="get", body=body) == InstrumentMode.STEM:
@@ -57,7 +57,7 @@ class Stem:
 
     @property
     def rotation(self) -> float:
-        """ The STEM rotation angle (in degrees). (read/write)"""
+        """ The STEM rotation angle (in degrees). (read/write) """
         body = RequestBody(attr=self.__id + ".InstrumentMode", validator=int)
 
         if self.__client.call(method="get", body=body) == InstrumentMode.STEM:

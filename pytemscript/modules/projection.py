@@ -53,7 +53,7 @@ class Projection:
 
     @property
     def focus(self) -> float:
-        """ Absolute focus value. (read/write)"""
+        """ Absolute focus value. (read/write) """
         body = RequestBody(attr=self.__id + ".Focus", validator=float)
         return self.__client.call(method="get", body=body)
 
@@ -72,7 +72,7 @@ class Projection:
 
     @property
     def magnification(self) -> int:
-        """ The reference magnification value (screen up setting). (read/write)"""
+        """ The reference magnification value (screen up setting). (read/write) """
         body = RequestBody(attr=self.__id + ".Mode", validator=int)
 
         if self.__client.call(method="get", body=body) == ProjectionMode.IMAGING:
@@ -96,7 +96,7 @@ class Projection:
 
     @property
     def magnification_index(self) -> int:
-        """ The magnification index. (read/write)"""
+        """ The magnification index. (read/write) """
         body = RequestBody(attr=self.__id + ".MagnificationIndex", validator=int)
         return self.__client.call(method="get", body=body)
 
@@ -118,7 +118,7 @@ class Projection:
 
     @property
     def camera_length_index(self) -> int:
-        """ The camera length index. (read/write)"""
+        """ The camera length index. (read/write) """
         body = RequestBody(attr=self.__id + ".CameraLengthIndex", validator=int)
         return self.__client.call(method="get", body=body)
 
@@ -129,7 +129,7 @@ class Projection:
 
     @property
     def image_shift(self) -> Vector:
-        """ Image shift in um. (read/write)"""
+        """ Image shift in um. (read/write) """
         shx = RequestBody(attr=self.__id + ".ImageShift.X", validator=float)
         shy = RequestBody(attr=self.__id + ".ImageShift.Y", validator=float)
 
@@ -146,7 +146,7 @@ class Projection:
 
     @property
     def image_beam_shift(self) -> Vector:
-        """ Image shift with beam shift compensation in um. (read/write)"""
+        """ Image shift with beam shift compensation in um. (read/write) """
         bsx = RequestBody(attr=self.__id + ".ImageBeamShift.X", validator=float)
         bsy = RequestBody(attr=self.__id + ".ImageBeamShift.Y", validator=float)
 
@@ -163,7 +163,7 @@ class Projection:
 
     @property
     def image_beam_tilt(self) -> Vector:
-        """ Beam tilt with diffraction shift compensation in mrad. (read/write)"""
+        """ Beam tilt with diffraction shift compensation in mrad. (read/write) """
         btx = RequestBody(attr=self.__id + ".ImageBeamTilt.X", validator=float)
         bty = RequestBody(attr=self.__id + ".ImageBeamTilt.Y", validator=float)
 
@@ -180,7 +180,7 @@ class Projection:
 
     @property
     def diffraction_shift(self) -> Vector:
-        """ Diffraction shift in mrad. (read/write)"""
+        """ Diffraction shift in mrad. (read/write) """
         #TODO: 180/pi*value = approx number in TUI
         stigx = RequestBody(attr=self.__id + ".DiffractionShift.X", validator=float)
         stigy = RequestBody(attr=self.__id + ".DiffractionShift.Y", validator=float)
@@ -198,7 +198,7 @@ class Projection:
 
     @property
     def diffraction_stigmator(self) -> Vector:
-        """ Diffraction stigmator. (read/write)"""
+        """ Diffraction stigmator. (read/write) """
         body = RequestBody(attr=self.__id + ".Mode", validator=int)
 
         if self.__client.call(method="get", body=body) == ProjectionMode.DIFFRACTION:
@@ -226,7 +226,7 @@ class Projection:
 
     @property
     def objective_stigmator(self) -> Vector:
-        """ Objective stigmator. (read/write)"""
+        """ Objective stigmator. (read/write) """
         stigx = RequestBody(attr=self.__id + ".ObjectiveStigmator.X", validator=float)
         stigy = RequestBody(attr=self.__id + ".ObjectiveStigmator.Y", validator=float)
 
@@ -265,7 +265,7 @@ class Projection:
 
     @property
     def mode(self) -> str:
-        """ Main mode of the projection system (either imaging or diffraction). (read/write)"""
+        """ Main mode of the projection system (either imaging or diffraction). ProjectionMode enum (read/write) """
         body = RequestBody(attr=self.__id + ".Mode", validator=int)
         result = self.__client.call(method="get", body=body)
 
@@ -278,7 +278,7 @@ class Projection:
 
     @property
     def detector_shift(self) -> str:
-        """ Detector shift. (read/write)"""
+        """ Detector shift. ProjectionDetectorShift enum. (read/write) """
         body = RequestBody(attr=self.__id + ".DetectorShift", validator=int)
         result = self.__client.call(method="get", body=body)
 
@@ -291,7 +291,7 @@ class Projection:
 
     @property
     def detector_shift_mode(self) -> str:
-        """ Detector shift mode. (read/write)"""
+        """ Detector shift mode. ProjDetectorShiftMode enum. (read/write) """
         body = RequestBody(attr=self.__id + ".DetectorShiftMode", validator=int)
         result = self.__client.call(method="get", body=body)
 
@@ -305,6 +305,8 @@ class Projection:
     @property
     def magnification_range(self) -> str:
         """ Submode of the projection system (either LM, M, SA, MH, LAD or D).
+
+        ProjectionSubMode enum.
         The imaging submode can change when the magnification is changed.
         """
         body = RequestBody(attr=self.__id + ".SubMode", validator=int)

@@ -1,4 +1,5 @@
 import logging
+from typing import Union
 
 from ..utils.misc import RequestBody
 from ..utils.enums import ProjectionNormalization, IlluminationNormalization, InstrumentMode
@@ -17,7 +18,7 @@ class Optics:
 
     @property
     def instrument_mode(self) -> str:
-        """ Current instrument mode: TEM or STEM. """
+        """ Current instrument mode: TEM or STEM (InstrumentMode enum). """
         body = RequestBody(attr="tem.InstrumentModeControl.InstrumentMode", validator=int)
         result = self.__client.call(method="get", body=body)
 
@@ -40,6 +41,7 @@ class Optics:
     @property
     def is_shutter_override_on(self) -> bool:
         """ Determines the state of the shutter override function.
+
         WARNING: Do not leave the Shutter override on when stopping the script.
         The microscope operator will be unable to have a beam come down and has
         no separate way of seeing that it is blocked by the closed microscope shutter.
@@ -77,10 +79,11 @@ class Optics:
         body = RequestBody(attr="tem.NormalizeAll()")
         self.__client.call(method="exec", body=body)
 
-    def normalize(self, mode) -> None:
+    def normalize(self, mode: Union[ProjectionNormalization, IlluminationNormalization]) -> None:
         """ Normalize condenser or projection lens system.
-        :param mode: Normalization mode (ProjectionNormalization or IlluminationNormalization enum)
-        :type mode: IntEnum
+
+        :param mode:
+        :type mode: ProjectionNormalization or IlluminationNormalization
         """
         if mode in ProjectionNormalization:
             body = RequestBody(attr="tem.Projection.Normalize()", arg=mode)

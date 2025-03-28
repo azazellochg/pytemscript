@@ -5,7 +5,6 @@ import logging
 import os.path
 from pathlib import Path
 import numpy as np
-from functools import lru_cache
 from collections import OrderedDict
 import PIL.Image as PilImage
 import PIL.TiffImagePlugin as PilTiff
@@ -16,10 +15,8 @@ from ..utils.enums import StageAxes, MeasurementUnitType
 class Vector:
     """ Utility object with two float attributes.
 
-    :param x: X value
-    :type x: float
-    :param y: Y value
-    :type y: float
+    :param float x: X value
+    :param float y: Y value
 
     Usage:
             >>> from pytemscript.modules import Vector
@@ -132,14 +129,10 @@ class Vector:
 class Image:
     """ Acquired image basic object.
 
-    :param data: uint16 numpy array
-    :type data: numpy.ndarray
-    :param name: name of the image
-    :type name: str
-    :param metadata: image metadata
-    :type metadata: dict
-    :param timestamp: acquisition timestamp in "%Y:%m:%d %H:%M:%S" format
-    :type timestamp: str
+    :param numpy.ndarray data: uint16 numpy array
+    :param str name: name of the image
+    :param dict metadata: image metadata
+    :param str timestamp: acquisition timestamp in "%Y:%m:%d %H:%M:%S" format
     """
     def __init__(self,
                  data: np.ndarray,  # int16
@@ -158,9 +151,11 @@ class Image:
             self.timestamp = datetime.now().strftime("%Y:%m:%d %H:%M:%S")
 
     def __repr__(self) -> str:
-        return "Image()"
+        return "Image(name=%s, width=%d, height=%d)" % (
+            self.name,
+            self.metadata['width'],
+            self.metadata['height'])
 
-    @lru_cache(maxsize=1)
     def __create_tiff_tags(self):
         """Create TIFF tags from metadata. """
         tiff_tags = PilTiff.ImageFileDirectory_v2()
@@ -199,13 +194,15 @@ class Image:
 
     def save(self,
              fn: Union[Path, str],
+             thumbnail: bool = False,
              overwrite: bool = False) -> None:
         """ Save acquired image to a file as uint16.
-        Supported formats: mrc, tiff, tif, png.
-        To save in non-mrc format you will need pillow package installed.
+        Supported formats: mrc, tif, png, jpg.
 
-        :param fn: File path
-        :param overwrite: Overwrite existing file
+        :param fn: Filepath
+        :type fn: Path or str
+        :param bool thumbnail: Create a 512px-wide thumbnail, height is adjusted to keep the aspect ratio. Only for non-MRC formats
+        :param bool overwrite: Overwrite existing file
         """
         fn = os.path.abspath(fn)
         ext = os.path.splitext(fn)[-1].lower()
@@ -217,13 +214,31 @@ class Image:
                     mrc.voxel_size = float(self.metadata['PixelSize.Width']) * 1e10
                 mrc.set_data(self.data)
 
-        elif ext in [".tiff", ".tif", ".png"]:
+        elif ext in [".tiff", ".tif", ".png", ".jpg"]:
             if os.path.exists(fn) and not overwrite:
                 raise FileExistsError("File %s already exists, use overwrite flag" % fn)
 
             logging.getLogger("PIL").setLevel(logging.INFO)
-            pil_image = PilImage.fromarray(self.data, mode='I;16')
-            tiff_tags = self.__create_tiff_tags() if ext != ".png" else None
+            pil_image = PilImage.fromarray(self.data.copy(), mode='I;16')
+
+            if thumbnail:
+                # create a thumbnail
+                width, height = self.data.shape
+                if width < height:
+                    width = max(round(width * 512 / height), 1)
+                    thumbnail_size = (width, 512)
+                else:
+                    height = max(round(height * 512 / width), 1)
+                    thumbnail_size = (512, height)
+
+                pil_image.thumbnail(size=thumbnail_size, resample=PilImage.Resampling.LANCZOS)
+
+            # create tiff tags
+            if ext in [".tif", ".tiff"] and not thumbnail:
+                tiff_tags = self.__create_tiff_tags()
+            else:
+                tiff_tags = None
+
             pil_image.save(fn, format=None, tiffinfo=tiff_tags)
 
         else:

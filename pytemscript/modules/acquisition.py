@@ -5,7 +5,7 @@ from datetime import datetime
 from functools import lru_cache
 
 from ..utils.misc import RequestBody, convert_image
-from ..utils.enums import AcqImageSize, AcqShutterMode, AcqImageCorrection, PlateLabelDateFormat, ScreenPosition
+from ..utils.enums import AcqImageSize, AcqShutterMode, PlateLabelDateFormat, ScreenPosition
 from .extras import Image, SpecialObj
 
 
@@ -113,6 +113,7 @@ class AcquisitionObj(SpecialObj):
         """ Perform actual acquisition. Camera settings should be set beforehand.
 
         :param cameraName: Camera name(s)
+        :type cameraName: Union[str, List]
         :returns: Image object or a list of Image objects
         """
         if isinstance(cameraName, str):
@@ -487,18 +488,15 @@ class Acquisition:
                           **kwargs) -> Optional[Image]:
         """ Acquire a TEM image.
 
-        :param camera: Camera name
-        :type camera: str
-        :param size: Image size (AcqImageSize enum)
-        :type size: IntEnum
-        :param exp_time: Exposure time in seconds
-        :type exp_time: float
-        :param binning: Binning factor
-        :keyword IntEnum correction: Image correction (AcqImageCorrection enum)
-        :keyword IntEnum exposure_mode: CCD exposure mode (AcqExposureMode enum)
-        :keyword IntEnum shutter_mode: CCD shutter mode (AcqShutterMode enum)
-        :keyword IntEnum pre_exp_time: The pre-exposure time in seconds.
-        :keyword IntEnum pre_exp_pause_time: The time delay after pre-exposure and before the actual CCD exposure in seconds.
+        :param str cameraName: Camera name
+        :param AcqImageSize size: Image size
+        :param float exp_time: Exposure time in seconds
+        :param int binning: Binning factor
+        :keyword AcqImageCorrection correction: Image correction
+        :keyword AcqExposureMode exposure_mode: CCD exposure mode
+        :keyword AcqShutterMode shutter_mode: CCD shutter mode
+        :keyword float pre_exp_time: The pre-exposure time in seconds.
+        :keyword float pre_exp_pause_time: The time delay after pre-exposure and before the actual CCD exposure in seconds.
         :keyword bool align_image: Whether frame alignment (i.e. drift correction) is to be applied to the final image as well as the intermediate images. Advanced cameras only.
         :keyword bool electron_counting: Use counting mode. Advanced cameras only.
         :keyword bool eer: Use EER mode. Advanced cameras only.
@@ -507,6 +505,7 @@ class Acquisition:
         :keyword float recording: minimum amount of time the acquisition will take, as it will take as much complete frames with the set exposure time as is needed to get to the set RecordingDuration. E.g. if the exposure time is 0.5 and the RecordingDuration is 2.3, there will be an acquisition of 2.5 (5 frames). Advanced cameras only.
         :keyword bool use_tecnaiccd: Use Tecnai CCD plugin to acquire image via Digital Micrograph, only for Gatan cameras. Requires Microscope() initialized with useTecnaiCCD=True
         :returns: Image object
+        :rtype: Image
 
         Extra notes:
 
@@ -606,17 +605,14 @@ class Acquisition:
                            **kwargs) -> Image:
         """ Acquire a single STEM image.
 
-        :param detector: Detector name
-        :type detector: str
-        :param size: Image size (AcqImageSize enum)
-        :type size: IntEnum
-        :param dwell_time: Dwell time in seconds. The frame time equals the dwell time times the number of pixels plus some overhead (typically 20%, used for the line flyback)
-        :type dwell_time: float
-        :param binning: Binning factor. Technically speaking these are "pixel skipping" values, since in STEM we do not combine pixels as a CCD does.
-        :type binning: int
+        :param str detector: Detector name
+        :param AcqImageSize size: Image size
+        :param float dwell_time: Dwell time in seconds. The frame time equals the dwell time times the number of pixels plus some overhead (typically 20%, used for the line flyback)
+        :param int binning: Binning factor. Technically speaking these are "pixel skipping" values, since in STEM we do not combine pixels as a CCD does.
         :keyword float brightness: Brightness setting (0.0-1.0)
         :keyword float contrast: Contrast setting (0.0-1.0)
         :returns: Image object
+        :rtype: Image
         """
         _ = self.__find_camera(detector, self.stem_detectors, binning)
 
@@ -650,17 +646,14 @@ class Acquisition:
                             **kwargs) -> List[Image]:
         """ Simultaneous acquisition of multiple STEM images.
 
-        :param detectors: List of STEM detector names
-        :type detectors: list
-        :param size: Image size (AcqImageSize enum)
-        :type size: IntEnum
-        :param dwell_time: Dwell time in seconds. The frame time equals the dwell time times the number of pixels plus some overhead (typically 20%, used for the line flyback)
-        :type dwell_time: float
-        :param binning: Binning factor. Technically speaking these are "pixel skipping" values, since in STEM we do not combine pixels as a CCD does.
-        :type binning: int
+        :param list detectors: List of STEM detector names
+        :param AcqImageSize size: Image size
+        :param float dwell_time: Dwell time in seconds. The frame time equals the dwell time times the number of pixels plus some overhead (typically 20%, used for the line flyback)
+        :param int binning: Binning factor. Technically speaking these are "pixel skipping" values, since in STEM we do not combine pixels as a CCD does.
         :keyword list brightness: list of Brightness settings for each detector
         :keyword list contrast: list of Contrast settings for each detector
         :returns: list of Image objects
+        :rtype: List[Image]
         """
         if "brightness" in kwargs:
             assert len(kwargs["brightness"]) == len(detectors)
@@ -697,10 +690,8 @@ class Acquisition:
                      exp_time: float) -> None:
         """ Expose a film.
 
-        :param film_text: Film text, 96 symbols
-        :type film_text: str
-        :param exp_time: Exposure time in seconds
-        :type exp_time: float
+        :param str film_text: Film text, 96 symbols
+        :param float exp_time: Exposure time in seconds
         """
         stock = RequestBody(attr="tem.Camera.Stock", validator=int)
 
@@ -718,6 +709,7 @@ class Acquisition:
     @property
     def film_settings(self) -> Dict:
         """ Returns a dict with film settings.
+
         Note: The plate camera has become obsolete with Windows 7 so
         most of the existing functions are no longer supported.
         """
@@ -733,7 +725,7 @@ class Acquisition:
 
     @property
     def screen_position(self) -> str:
-        """ Fluorescent screen position. (read/write)"""
+        """ Fluorescent screen position, ScreenPosition enum. (read/write) """
         body = RequestBody(attr="tem.Camera.MainScreen", validator=int)
         result = self.__client.call(method="get", body=body)
 
@@ -758,8 +750,9 @@ class Acquisition:
     @lru_cache(maxsize=1)
     def cameras(self) -> Dict:
         """ Returns a dict with parameters for all TEM cameras.
-        supports_csa = single acquisition (Ceta 1, Ceta 2, Falcon 3, Falcon 4(i))
-        supports_cca = continuous acquisition (Ceta 2 only)
+
+        supports_csa means single acquisition (Ceta 1, Ceta 2, Falcon 3, Falcon 4(i));
+        supports_cca means continuous acquisition (Ceta 2 only)
         """
         body = RequestBody(attr="tem.Acquisition.Cameras",
                            validator=dict,

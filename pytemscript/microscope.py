@@ -8,8 +8,7 @@ from .utils.enums import ProductFamily, CondenserLensSystem
 class Microscope:
     """ Main client interface exposing available methods and properties.
 
-    :param connection: Client connection: direct, socket or utapi. Defaults to direct.
-    :type connection: str
+    :param str connection: Client connection: direct, socket or utapi. Defaults to direct.
     :keyword str host: Remote hostname or IP address
     :keyword int port: Remote port number
     :keyword bool useLD: Connect to LowDose server on microscope PC (limited control only)
@@ -73,7 +72,7 @@ class Microscope:
     @property
     @lru_cache(maxsize=1)
     def family(self) -> str:
-        """ Returns the microscope product family / platform. """
+        """ Returns the microscope product family / platform (ProductFamily enum). """
         body = RequestBody(attr="tem.Configuration.ProductFamily", validator=int)
         result = self.__client.call(method="get", body=body)
 
@@ -82,7 +81,7 @@ class Microscope:
     @property
     @lru_cache(maxsize=1)
     def condenser_system(self) -> str:
-        """ Returns the type of condenser lens system: two or three lenses. """
+        """ Returns the type of condenser lens system: two or three lenses (CondenserLensSystem enum). """
         body = RequestBody(attr="tem.Configuration.CondenserLensSystem", validator=int)
         result = self.__client.call(method="get", body=body)
 

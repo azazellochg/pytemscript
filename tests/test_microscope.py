@@ -217,7 +217,7 @@ def test_stage(microscope: Microscope) -> None:
 
     print("Testing stage movement...")
     print("\tGoto(x=1, y=-1)")
-    stage.go_to(x=1, y=-1)
+    stage.go_to(x=+1, y=-1, relative=True)
     sleep(1)
     print("\tPosition:", stage.position)
     print("\tGoto(x=-1, speed=0.25)")
