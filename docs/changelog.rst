@@ -1,6 +1,14 @@
 Changelog
 =========
 
+Version 3.1
+^^^^^^^^^^^
+
+* Simultaneous STEM acquisition for multiple detectors
+* Use CalGetter to get magnifications and camera lengths
+* Add more methods for piezo stage (untested)
+* SerialEMCCD plugin for advanced Gatan cameras
+
 Version 3.0
 ^^^^^^^^^^^
 
