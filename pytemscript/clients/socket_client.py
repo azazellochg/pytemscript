@@ -12,12 +12,9 @@ from .base_client import BasicClient
 class SocketClient(BasicClient):
     """ Remote socket client interface for the microscope.
 
-    :param host: Remote hostname or IP address
-    :type host: str
-    :param port: Remote port number
-    :type port: int
-    :param debug: Print debug messages
-    :type debug: bool
+    :param str host: Remote hostname or IP address
+    :param int port: Remote port number
+    :param bool debug: Print debug messages
     """
     def __init__(self,
                  host: str = "127.0.0.1",

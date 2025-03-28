@@ -1,9 +1,9 @@
 Enumerations
 ============
 
-Enumerations are represented by :class:`IntEnum` objects and are used to describe TEM Scripting constants.
+Enumerations are represented by :class:`IntEnum` objects and are used to describe integer or string constants.
 When a property returns an enumeration, it will print its **name**. When you assign a variable to an enumeration,
-it will use its integer **value**. To see the accepted values, you can switch to source code using links below.
+it will use its integer **value**.
 
 Example:
 

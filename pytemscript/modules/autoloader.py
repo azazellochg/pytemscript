@@ -43,8 +43,7 @@ class Autoloader:
     def load_cartridge(self, slot: int) -> None:
         """ Loads the cartridge in the given slot into the microscope.
 
-        :param slot: Slot number
-        :type slot: int
+        :param int slot: Slot number
         """
         if self.is_available:
             total = self.number_of_slots
@@ -80,10 +79,9 @@ class Autoloader:
             raise RuntimeError(self.__err_msg)
 
     def slot_status(self, slot: int) -> str:
-        """ The status of the slot specified.
+        """ The status of the slot specified (CassetteSlotStatus enum).
 
-        :param slot: Slot number
-        :type slot: int
+        :param int slot: Slot number
         """
         if self.is_available:
             total = self.number_of_slots

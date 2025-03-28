@@ -46,7 +46,7 @@ class TecnaiCCDPlugin:
             if kwargs.get('show', False):
                 self.ccd_plugin.ShowAcquiredImage()
 
-            image = convert_image(img, name=cameraName, use_safearray=False, **self._img_params)
+            image = convert_image(img, name=cameraName, use_variant=True, **self._img_params)
             t2 = time.time()
             logging.debug("\tAcquisition took %f s" % (t1 - t0))
             logging.debug("\tConverting image took %f s" % (t2 - t1))

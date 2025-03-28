@@ -33,8 +33,7 @@ class EnergyFilter:
     def insert_slit(self, width: float) -> None:
         """ Insert energy slit.
 
-        :param width: Slit width in eV
-        :type width: float
+        :param float width: Slit width in eV
         """
         if not self.__has_ef:
             raise NotImplementedError(self.__err_msg)
@@ -58,7 +57,7 @@ class EnergyFilter:
 
     @property
     def slit_width(self) -> float:
-        """ Energy slit width in eV. (read/write)"""
+        """ Energy slit width in eV. (read/write) """
         if not self.__has_ef:
             raise NotImplementedError(self.__err_msg)
 
@@ -76,7 +75,7 @@ class EnergyFilter:
 
     @property
     def ht_shift(self) -> float:
-        """ High Tension energy shift in eV. (read/write)"""
+        """ High Tension energy shift in eV. (read/write) """
         if not self.__has_ef:
             raise NotImplementedError(self.__err_msg)
 
@@ -94,7 +93,7 @@ class EnergyFilter:
 
     @property
     def zlp_shift(self) -> float:
-        """ Zero-Loss Peak (ZLP) energy shift in eV. (read/write)"""
+        """ Zero-Loss Peak (ZLP) energy shift in eV. (read/write) """
         if not self.__has_ef:
             raise NotImplementedError(self.__err_msg)
 

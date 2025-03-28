@@ -18,7 +18,7 @@ Introduction
 ------------
 
 ``Pytemscript`` is a Python package designed around standard and advanced scripting
-interfaces of Thermo Fisher Scientific and FEI transmisson electron microscopes. The functionality is
+interfaces of Thermo Fisher Scientific and FEI transmission electron microscopes. The functionality is
 limited to the functionality of the original COM scripting interfaces. For detailed information
 about TEM scripting see the documentation accompanying your microscope.
 

@@ -30,11 +30,11 @@ class CalGetterPlugin:
                            lorentz: LorentzTypes = LorentzTypes.OFF,
                            kv: int = 300) -> Optional[Dict]:
         """ Returns a dict of calibrated magnifications.
-        :param camera: Camera name
-        :param mode: Microprobe or nanoprobe mode
-        :param series: Zoom of EFTEM projection mode
-        :param lorentz: Lorentz lens
-        :param kv: voltage
+        :param str camera: Camera name
+        :param ModeTypes mode: Microprobe or nanoprobe mode
+        :param LensSeriesTypes series: Zoom of EFTEM projection mode
+        :param LorentzTypes lorentz: Lorentz lens
+        :param int kv: voltage
         """
         result = self.cg_iface.ActualMagnifications(camera, mode, series, lorentz, kv)
         if result is not None and type(result[0]) is tuple:
@@ -61,16 +61,16 @@ class CalGetterPlugin:
         """ Returns the reference camera name."""
         return self.cg_iface.GetReferenceCameraName()
 
-    def get_camera_pixel_size(self, camera) -> float:
+    def get_camera_pixel_size(self, camera: str) -> float:
         """ Get camera physical pixel size in um at current settings.
-        :param camera: Camera name
+        :param str camera: Camera name
         """
         res = self.cg_iface.GetCameraPixelSize(camera)
         return res[0] * 1e6
 
-    def get_camera_rotation(self, camera) -> float:
+    def get_camera_rotation(self, camera: str) -> float:
         """ Returns the rotation of the camera relative to the reference camera.
-         :param camera: Camera name
+         :param str camera: Camera name
         """
         return self.cg_iface.CameraRotation(camera)
 
@@ -83,13 +83,13 @@ class CalGetterPlugin:
                            lorentz: LorentzTypes = LorentzTypes.OFF,
                            kv: int = 300) -> float:
         """ Returns the image rotation angle for a specific magnification.
-        :param camera: Camera name
-        :param mode: Microprobe or nanoprobe mode
-        :param magindex: Magnification index
-        :param mag: Nominal magnification
-        :param series: Zoom of EFTEM projection mode
-        :param lorentz: Lorentz lens
-        :param kv: voltage
+        :param str camera: Camera name
+        :param ModeTypes mode: Microprobe or nanoprobe mode
+        :param int magindex: Magnification index
+        :param float mag: Nominal magnification
+        :param LensSeriesTypes series: Zoom of EFTEM projection mode
+        :param LorentzTypes lorentz: Lorentz lens
+        :param int kv: voltage
         """
         return self.cg_iface.ActualTemRotation(camera, mode, magindex, mag,
                                                series, lorentz, kv)
@@ -103,13 +103,13 @@ class CalGetterPlugin:
                              lorentz: LorentzTypes = LorentzTypes.OFF,
                              kv: int = 300) -> float:
         """ Returns the image pixel size for a specific magnification in meters.
-        :param camera: Camera name
-        :param mode: Microprobe or nanoprobe mode
-        :param magindex: Magnification index
-        :param mag: Nominal magnification
-        :param series: Zoom of EFTEM projection mode
-        :param lorentz: Lorentz lens
-        :param kv: voltage
+        :param str camera: Camera name
+        :param ModeTypes mode: Microprobe or nanoprobe mode
+        :param int magindex: Magnification index
+        :param float mag: Nominal magnification
+        :param LensSeriesTypes series: Zoom of EFTEM projection mode
+        :param LorentzTypes lorentz: Lorentz lens
+        :param int kv: voltage
         """
         res = self.cg_iface.GetPhysicalPixelSize(camera, mode, magindex, mag,
                                                  series, lorentz, kv)
@@ -123,12 +123,12 @@ class CalGetterPlugin:
                         x_ref: float = 0,
                         y_ref: float = 0) -> Tuple[float, float]:
         """ Transform a vector from one coordinate system to another.
-        :param transform_type: Transformation type
-        :param input_matrix: Input matrix
-        :param x: input x value
-        :param y: input y value
-        :param x_ref: input x reference value
-        :param y_ref: input y reference value
+        :param BasicTransformTypes transform_type: Transformation type
+        :param np.ndarray input_matrix: Input matrix
+        :param float x: input x value
+        :param float y: input y value
+        :param float x_ref: input x reference value
+        :param float y_ref: input y reference value
 
         Input matrix must be 2D:
         A = np.array([[a11, a12, a13],

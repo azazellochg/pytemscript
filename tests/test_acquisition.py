@@ -79,6 +79,7 @@ def camera_acquire(microscope: Microscope,
         print_stats(image, binning, exp_time)
         image.save(fn="test_image_%s.mrc" % cam_name, overwrite=True)
         image.save(fn="test_image_%s.tif" % cam_name, overwrite=True)
+        image.save(fn="test_image_%s.jpg" % cam_name, overwrite=True, thumbnail=True)
 
 
 def detector_acquire(microscope: Microscope,

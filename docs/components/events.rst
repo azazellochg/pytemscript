@@ -1,9 +1,9 @@
 Events
 ======
 
-You can receive events from hand panel buttons when using the local client on the microscope PC. Each button
-can be assigned with a custom Python function that will be executed upon pressing. We provide the :meth:`~pytemscript.modules.ButtonHandler` class
-that takes care of assigning events.
+You can receive events from multifunction buttons (L1, L2, L3, R1, R2, R3) on the hand panels when using the local client on the microscope PC.
+Each button can be assigned with a custom Python function that will be executed upon pressing.
+We provide the :meth:`~pytemscript.modules.ButtonHandler` class that takes care of assigning events.
 
 .. note:: Don't forget to clear the custom button assignment at the end using `clear()` method. This will restore the previous assignment.
 

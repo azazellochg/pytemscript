@@ -1,5 +1,5 @@
 from functools import lru_cache
-from typing import Dict
+from typing import Dict, Optional
 import math
 import time
 import logging
@@ -39,12 +39,14 @@ class Stage:
     def _change_position(self,
                          direct: bool = False,
                          relative: bool = False,
+                         speed: Optional[float] = None,
                          **kwargs) -> None:
         """
         Execute stage move to a new position.
 
-        :param direct: use Goto instead of MoveTo
-        :param relative: use relative coordinates
+        :param bool direct: use Goto instead of MoveTo
+        :param bool relative: use relative coordinates
+        :param float speed: Goto speed
         :param kwargs: new coordinates
         """
         self._wait_for_stage(tries=5)
@@ -64,7 +66,6 @@ class Stage:
             if kwargs.get(axis) is not None:
                 new_coords.update({axis: math.radians(kwargs[axis])})
 
-        speed = kwargs.get("speed")
         if speed is not None and not (0.0 <= speed <= 1.0):
             raise ValueError("Speed must be within 0.0-1.0 range")
 
@@ -106,7 +107,7 @@ class Stage:
 
     @property
     def status(self) -> str:
-        """ The current state of the stage. """
+        """ The current state of the stage. StageStatus enum. """
         body = RequestBody(attr=self.__id + ".Status", validator=int)
         result = self.__client.call(method="get", body=body)
 
@@ -114,7 +115,7 @@ class Stage:
 
     @property
     def holder(self) -> str:
-        """ The current specimen holder type. """
+        """ The current specimen holder type. StageHolderType enum. """
         body = RequestBody(attr=self.__id + ".Holder", validator=int)
         result = self.__client.call(method="get", body=body)
 
@@ -129,24 +130,25 @@ class Stage:
 
         return self.__client.call(method="exec_special", body=body)
 
-    def go_to(self, relative=False, **kwargs) -> None:
+    def go_to(self,
+              relative: bool = False,
+              speed: Optional[float] = None,
+              **kwargs) -> None:
         """ Makes the holder directly go to the new position by moving all axes
         simultaneously. Keyword args can be x,y,z,a or b.
         (x,y,z in um and a,b in degrees)
 
-        :param relative: Use relative move instead of absolute position.
-        :keyword float speed: fraction of the standard speed setting (max 1.0)
+        :param bool relative: Use relative move instead of absolute position.
+        :param float speed: fraction of the standard speed setting (max 1.0)
         """
-        self._change_position(direct=True, relative=relative, **kwargs)
+        self._change_position(direct=True, relative=relative, speed=speed, **kwargs)
 
-    def move_to(self, relative=False, **kwargs) -> None:
+    def move_to(self, relative: bool = False, **kwargs) -> None:
         """ Makes the holder safely move to the new position.
-        Keyword args can be x,y,z,a or b.
-        (x,y,z in um and a,b in degrees)
+        Keyword args can be x,y,z,a or b (x,y,z in um and a,b in degrees).
 
-        :param relative: Use relative move instead of absolute position.
+        :param bool relative: Use relative move instead of absolute position.
         """
-        kwargs['speed'] = None
         self._change_position(relative=relative, **kwargs)
 
     @property

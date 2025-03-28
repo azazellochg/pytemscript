@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from setuptools import setup
+from setuptools import setup, find_packages
 # To use a consistent encoding
 from codecs import open
 from os import path
@@ -19,7 +19,7 @@ if sys.version_info < (3, 5):
           author='Tore Niermann, Grigory Sharov',
           author_email='tore.niermann@tu-berlin.de, gsharov@mrc-lmb.cam.ac.uk',
           long_description=long_description,
-          packages=['pytemscript'],
+          packages=find_packages(),
           platforms=['any'],
           license="GNU General Public License v3 (GPLv3)",
           classifiers=[
@@ -71,7 +71,7 @@ else:
           author_email='tore.niermann@tu-berlin.de, gsharov@mrc-lmb.cam.ac.uk',
           long_description=long_description,
           long_description_content_type='text/x-rst',
-          packages=['pytemscript'],
+          packages=find_packages(),
           platforms=['any'],
           license="GNU General Public License v3 (GPLv3)",
           python_requires='>=3.4',

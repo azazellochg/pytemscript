@@ -18,10 +18,8 @@ class ButtonHandler:
 
     :param button: button object
     :type button: COM object
-    :param func: lambda function to execute when button is pressed
-    :type func: Callable
-    :param assignment: new label for the button, to be displayed in TEM User Interface
-    :type assignment: str
+    :param Callable func: lambda function to execute when button is pressed
+    :param str assignment: new label for the button, to be displayed in TEM User Interface
     """
     def __init__(self,
                  button,
@@ -33,12 +31,12 @@ class ButtonHandler:
         self.connection = None
         self.button.Assignment = assignment  # Set assignment on init
 
-    def assign(self):
+    def assign(self) -> None:
         """ Assigns the event sink to the button. """
         import comtypes.client as cc
         self.connection = cc.GetEvents(self.button, self.sink)
 
-    def clear(self):
+    def clear(self) -> None:
         """ Removes the event sink from the button. """
         if self.connection:
             self.connection.disconnect()

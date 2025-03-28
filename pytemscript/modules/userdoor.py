@@ -29,7 +29,7 @@ class UserDoor:
 
     @property
     def state(self) -> str:
-        """ Returns door state. """
+        """ Returns door state (HatchState enum). """
         if not self.__has_door:
             raise NotImplementedError(self.__err_msg)
 
