@@ -279,14 +279,14 @@ class Illumination:
             return Vector(0.0, 0.0)  # Microscope might return nonsense if DFMode is OFF
 
     @beam_tilt.setter
-    def beam_tilt(self, tilt: Union[Vector, float]) -> None:
+    def beam_tilt(self, tilt: Union[Vector, float, List[float], Tuple[float, float]]) -> None:
         body = RequestBody(attr=self.__id + ".DFMode", validator=int)
         mode = self.__client.call(method="get", body=body)
 
         if isinstance(tilt, float):
             tilt = Vector(tilt, tilt)
 
-        tilt *= 1e-3 # mrad to rad
+        tilt = Vector.convert_to(tilt) * 1e-3 # mrad to rad
 
         if tilt == (0.0, 0.0):
             body = RequestBody(attr=self.__id + ".Tilt", value=tilt)
