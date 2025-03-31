@@ -99,6 +99,10 @@ class Apertures:
             raise RuntimeError(self.__err_msg_vpp)
 
     def enable(self, aperture: MechanismId) -> None:
+        """ Enable a specific aperture.
+
+        :param MechanismId aperture: Aperture name
+        """
         if not self.__std_available:
             raise NotImplementedError(self.__err_msg)
         else:
@@ -107,6 +111,10 @@ class Apertures:
             self.__client.call(method="exec_special", body=body)
 
     def disable(self, aperture: MechanismId) -> None:
+        """ Disable a specific aperture.
+
+        :param MechanismId aperture: Aperture name
+        """
         if not self.__std_available:
             raise NotImplementedError(self.__err_msg)
         else:
@@ -115,6 +123,10 @@ class Apertures:
             self.__client.call(method="exec_special", body=body)
 
     def retract(self, aperture: MechanismId) -> None:
+        """ Retract a specific aperture.
+
+        :param MechanismId aperture: Aperture name
+        """
         if not self.__std_available:
             raise NotImplementedError(self.__err_msg)
         else:
@@ -125,10 +137,8 @@ class Apertures:
     def select(self, aperture: MechanismId, size: int) -> None:
         """ Select a specific aperture.
 
-        :param aperture: Aperture name (MechanismId enum)
-        :type aperture: MechanismId
-        :param size: Aperture size
-        :type size: int
+        :param MechanismId aperture: Aperture name
+        :param int size: Aperture size
         """
         if not self.__std_available:
             raise NotImplementedError(self.__err_msg)

@@ -29,13 +29,13 @@ def rsetattr(obj, attrname, value):
     return setattr(rgetattr(obj, pre, log=False) if pre else obj, post, value)
 
 
-def setup_logging(fn,
+def setup_logging(fn: str,
                   prefix: Optional[str] = None,
                   debug: bool = False) -> None:
     """ Setup logging handlers.
-    :param fn: filename
-    :param prefix: prefix for the formatting
-    :param debug: use debug level instead
+    :param str fn: filename
+    :param str prefix: prefix for the formatting
+    :param bool debug: use debug level instead
     """
     fmt = '[%(asctime)s] %(levelname)s %(message)s'
     if prefix is not None:
@@ -56,10 +56,14 @@ def setup_logging(fn,
 
 def send_data(sock, data: bytes, datatype="msg") -> None:
     """ Assemble data packet and send it over socket.
-    type: 2 bytes
-    length of data: 4 bytes
-    checksum: 20 bytes - only if type is "data"
-    data: bytes
+    :param bytes data: raw data
+    :param str datatype: data type
+
+    The packet includes the following:
+        - header: 2 bytes
+        - length of data: 4 bytes
+        - checksum: 20 bytes - only if header == HEADER_DATA
+        - actual data
     """
     packet = bytearray()
     packet.extend(HEADER_MSG if datatype == "msg" else HEADER_DATA)
@@ -111,32 +115,24 @@ def convert_image(obj,
                   bit_depth: Optional[int] = None,
                   pixel_size: Optional[float] = None,
                   advanced: Optional[bool] = False,
-                  use_safearray: Optional[bool] = True,
                   use_asfile: Optional[bool] = False,
+                  use_variant: Optional[bool] = False,
                   **kwargs):
     """ Convert COM image object into an uint16 Image.
 
     :param obj: COM object
-    :param name: optional name for the image
-    :param width: width of the image
-    :param height: height of the image
-    :param bit_depth: bit depth of the image
-    :param pixel_size: pixel size of the image
-    :param advanced: advanced scripting flag
-    :param use_safearray: use safearray method
-    :param use_asfile: use asfile method
+    :param str name: optional name for the image
+    :param int width: width of the image
+    :param int height: height of the image
+    :param int bit_depth: bit depth of the image
+    :param float pixel_size: pixel size of the image
+    :param bool advanced: advanced scripting flag
+    :param bool use_asfile: use asfile method
+    :param bool use_variant: use variant method
     """
     from pytemscript.modules import Image
 
-    if use_safearray:
-        # Convert to a safearray and then to numpy
-        from comtypes.safearray import safearray_as_ndarray
-        with safearray_as_ndarray:
-            # AsSafeArray always returns int32 array
-            # Also, transpose is required to match TIA orientation
-            data = obj.AsSafeArray.astype("uint16").T
-
-    elif use_asfile:
+    if use_asfile:
         # Save into a temp file and read into numpy
         try:
             import imageio
@@ -150,26 +146,34 @@ def convert_image(obj,
         data = imageio.imread(fn).astype("uint16")
         os.remove(fn)
 
-    else:
+    elif use_variant:
         # TecnaiCCD plugin: obj is a variant, convert to numpy
         # Also, transpose is required to match TIA orientation
         data = np.array(obj, dtype="uint16").T
+
+    else:
+        # Convert to a safearray and then to numpy
+        from comtypes.safearray import safearray_as_ndarray
+        with safearray_as_ndarray:
+            # AsSafeArray always returns int32 array
+            # Also, transpose is required to match TIA orientation
+            data = obj.AsSafeArray.astype("uint16").T
 
     name = name or obj.Name
 
     metadata = {
         "width": width or int(obj.Width),
         "height": height or int(obj.Height),
-        "bit_depth": int(bit_depth or (obj.BitDepth if advanced else obj.Depth)),
-        "pixel_type": ImagePixelType(obj.PixelType).name if advanced else ImagePixelType.SIGNED_INT.name,
+        "bit_depth": 16, # int(bit_depth or (obj.BitDepth if advanced else obj.Depth)),
+        "pixel_type": ImagePixelType.UNSIGNED_INT.name # ImagePixelType(obj.PixelType).name if advanced
     }
     if pixel_size is not None:
         metadata["PixelSize.Width"] = pixel_size
         metadata["PixelSize.Height"] = pixel_size
     if advanced:
         metadata.update({item.Key: item.ValueAsString for item in obj.Metadata})
-    if "BitsPerPixel" in metadata:
-        metadata["bit_depth"] = int(metadata["BitsPerPixel"])
+    #if "BitsPerPixel" in metadata:
+    #    metadata["bit_depth"] = int(metadata["BitsPerPixel"])
 
     return Image(data, name, metadata)
 

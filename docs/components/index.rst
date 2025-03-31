@@ -3,44 +3,6 @@ Components
 
 This section covers the main components of Pytemscript.
 
-The COM interface
------------------
-
-As a user, you don't have to deal with the COM objects directly. Below we provide a list of objects exposed
-by the scripting interfaces and implemented in ``pytemscript`` API.
-The scripting manual of your microscope (``scripting.pdf``) can be located in the ``C:\Titan\Tem_help\manual`` or
-``C:\Tecnai\tem_help\manual`` directory. Advanced scripting manual can be found in
-``C:\Titan\Scripting\Advanced TEM Scripting User Guide.pdf``.
-
-Relative to TEM V1.9 standard scripting adapter:
-
-    * Acquisition
-    * ApertureMechanismCollection (untested)
-    * AutoLoader
-    * BlankerShutter
-    * Camera
-    * Configuration
-    * Gun
-    * Gun1
-    * Illumination
-    * InstrumentModeControl
-    * Projection
-    * Stage
-    * TemperatureControl
-    * UserButtons (with event handling)
-    * Vacuum
-
-Relative to TEM V1.2 advanced scripting adapter:
-
-    * Acquisitions
-    * Autoloader
-    * EnergyFilter
-    * Phaseplate
-    * PiezoStage (untested)
-    * Source
-    * TemperatureControl
-    * UserDoorHatch (untested)
-
 Microscope class
 ----------------
 
@@ -86,3 +48,42 @@ You can also use a list or a tuple to set vector attributes.
 
 .. autoclass:: pytemscript.modules.Vector
     :members: set_limits, check_limits, get, set
+
+The COM interface
+-----------------
+
+The Python API of ``pytemscript`` provides a wrapper (via comtypes library) around COM methods of scripting interfaces.
+If you would like to know more, the standard scripting manual of your microscope (``scripting.pdf``) can be located
+in the ``C:\Titan\Tem_help\manual`` or ``C:\Tecnai\tem_help\manual`` directory. Advanced scripting manual can be found in
+``C:\Titan\Scripting\Advanced TEM Scripting User Guide.pdf``. Below is the list of COM interfaces used by ``pytemscript``.
+
+Relative to the standard scripting library v1.9:
+
+    * Acquisition
+    * ApertureMechanismCollection (untested)
+    * AutoLoader
+    * BlankerShutter
+    * Camera
+    * Configuration
+    * Gun
+    * Gun1
+    * Illumination
+    * InstrumentModeControl
+    * Projection
+    * Stage
+    * TemperatureControl
+    * UserButtons (with event handling)
+    * Vacuum
+
+Relative to the advanced scripting library v1.2:
+
+    * Acquisitions
+    * Autoloader
+    * EnergyFilter
+    * Phaseplate
+    * PiezoStage (untested)
+    * Source
+    * TemperatureControl
+    * UserDoorHatch (untested)
+
+Other components and plugins (LowDose, TIA, TecnaiCCD, Calgetter etc.) have their own COM interfaces.

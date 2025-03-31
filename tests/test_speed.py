@@ -28,7 +28,7 @@ def main() -> None:
 
             print("\tUsing AsFile")
             # This should be 3x faster than SafeArray method above
-            img2 = acquire_image(microscope, camera, use_safearray=False, use_asfile=True)
+            img2 = acquire_image(microscope, camera, use_asfile=True)
             img2.save(r"C:/%s_asfile.mrc" % camera, overwrite=True)
 
             if camera in ["EF-CCD", "BM-Orius"]:

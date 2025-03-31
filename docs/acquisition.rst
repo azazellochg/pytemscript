@@ -14,7 +14,7 @@ List of tested cameras:
  * K2
  * K3
 
-All methods described below return a 16-bit unsigned integer (equivalent to MRC mode 6) :meth:`~pytemscript.modules.Image` object.
+All methods described below return a **16-bit unsigned integer** (equivalent to MRC mode 6) :meth:`~pytemscript.modules.Image` object.
 If movies are being acquired asynchronously, their format can be different.
 
 Standard scripting
@@ -88,15 +88,15 @@ By default, ``pytemscript`` will use `AsSafeArray` method to convert the COM ima
 Depending on the image size this method can be very slow (several seconds). There's a trick to save the image object to a temporary file
 (`AsFile` COM method) and then read it, which seems to work much faster (up to 3x). However, this requires an extra `imageio` dependency for reading the temporary file.
 
-.. warning:: On some systems, saving to a file can fail with a COM error due to incomplete implementation, so you will have to stick to the default `AsSafeArray` method.
+.. warning:: On some systems, saving to a file fails with a COM error due to incomplete implementation, so you will have to stick to the default `AsSafeArray` method.
 
-If you want to try this method, add a couple of kwargs to your acquisition command:
+If you want to try this method, add `use_asfile=True` to your acquisition command:
 
 .. code-block:: python
 
     microscope = Microscope()
     acq = microscope.acquisition
-    img = acq.acquire_tem_image("BM-Falcon", AcqImageSize.FULL, exp_time=5.0, use_safearray=False, use_asfile=True)
+    img = acq.acquire_tem_image("BM-Falcon", AcqImageSize.FULL, exp_time=5.0, use_asfile=True)
 
 
 STEM acquisition
@@ -104,4 +104,4 @@ STEM acquisition
 
 STEM detectors have to be embedded by FEI and selected in the Microscope User Interface (STEM user panel). They are controlled by standard scripting.
 
-.. note:: Be aware that the acquisition starts immediately without waiting for STEM detectors insertion to finish. It's probably better to manually insert them first in the microscope interface.
+.. note:: Be aware that the acquisition starts immediately without waiting for detector insertion to finish. It's probably better to manually insert them first in the microscope interface.
