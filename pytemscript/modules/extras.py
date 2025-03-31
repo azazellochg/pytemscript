@@ -136,7 +136,7 @@ class Image:
     :param str timestamp: acquisition timestamp in "%Y:%m:%d %H:%M:%S" format
     """
     def __init__(self,
-                 data: np.ndarray,  # int16
+                 data: np.ndarray,  # uint16
                  name: str,
                  metadata: Dict) -> None:
         self.data = data
