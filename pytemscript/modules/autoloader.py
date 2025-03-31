@@ -59,7 +59,7 @@ class Autoloader:
 
     def unload_cartridge(self) -> None:
         """ Unloads the cartridge currently in the microscope and puts it back into its
-        slot in the cassette.
+        slot in the cassette. Does nothing if no cartridge is on stage.
         """
         if self.is_available:
             body = RequestBody(attr=self.__id + ".UnloadCartridge()")

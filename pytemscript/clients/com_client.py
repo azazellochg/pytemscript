@@ -233,7 +233,9 @@ class COMClient(BasicClient):
         """ Try catching COM error. """
         try:
             error_code = TEMScriptingError(int(com_error.args[0])).name
-            error_msg = com_error.args[2][0].split("]")[-1]
+            error_msg = com_error.args[2][0]
+            if error_msg is not None:
+                error_msg = error_msg.split("]")[-1]
         except (ValueError, IndexError, TypeError):
             error_code = TEMScriptingError.E_NOT_OK.name
             error_msg = str(com_error)

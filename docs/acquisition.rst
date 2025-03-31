@@ -14,7 +14,7 @@ List of tested cameras:
  * K2
  * K3
 
-All methods described below return a 16-bit unsigned integer (equivalent to MRC mode 6) :meth:`~pytemscript.modules.Image` object.
+All methods described below return a **16-bit unsigned integer** (equivalent to MRC mode 6) :meth:`~pytemscript.modules.Image` object.
 If movies are being acquired asynchronously, their format can be different.
 
 Standard scripting

@@ -6,6 +6,7 @@ import os.path
 from pathlib import Path
 import numpy as np
 from collections import OrderedDict
+from fractions import Fraction
 import PIL.Image as PilImage
 import PIL.TiffImagePlugin as PilTiff
 
@@ -135,7 +136,7 @@ class Image:
     :param str timestamp: acquisition timestamp in "%Y:%m:%d %H:%M:%S" format
     """
     def __init__(self,
-                 data: np.ndarray,  # int16
+                 data: np.ndarray,  # uint16
                  name: str,
                  metadata: Dict) -> None:
         self.data = data
@@ -182,8 +183,8 @@ class Image:
             dpcm_width = 1 / (float(pixel_width) * 100)
             dpcm_height = 1 / (float(pixel_height) * 100)
 
-            tiff_tags[PilTiff.X_RESOLUTION] = int(dpcm_width)
-            tiff_tags[PilTiff.Y_RESOLUTION] = int(dpcm_height)
+            tiff_tags[PilTiff.X_RESOLUTION] = Fraction(int(dpcm_width), 1)
+            tiff_tags[PilTiff.Y_RESOLUTION] = Fraction(int(dpcm_height), 1)
 
         # Bit Depth & Color Interpretation
         bit_depth = metadata.get("bit_depth", 16)
@@ -201,7 +202,7 @@ class Image:
 
         :param fn: Filepath
         :type fn: Path or str
-        :param bool thumbnail: Create a 512px-wide thumbnail, height is adjusted to keep the aspect ratio. Only for non-MRC formats
+        :param bool thumbnail: Create a 512px-wide 8-bit thumbnail, height is adjusted to keep the aspect ratio. Only for non-MRC formats
         :param bool overwrite: Overwrite existing file
         """
         fn = os.path.abspath(fn)
@@ -219,11 +220,12 @@ class Image:
                 raise FileExistsError("File %s already exists, use overwrite flag" % fn)
 
             logging.getLogger("PIL").setLevel(logging.INFO)
-            pil_image = PilImage.fromarray(self.data.copy(), mode='I;16')
+            data = self.data.copy()
 
             if thumbnail:
-                # create a thumbnail
-                width, height = self.data.shape
+                # create an 8-bit thumbnail
+                pil_image = PilImage.fromarray(data, mode='L')
+                height, width = data.shape
                 if width < height:
                     width = max(round(width * 512 / height), 1)
                     thumbnail_size = (width, 512)
@@ -232,6 +234,8 @@ class Image:
                     thumbnail_size = (512, height)
 
                 pil_image.thumbnail(size=thumbnail_size, resample=PilImage.Resampling.LANCZOS)
+            else:
+                pil_image = PilImage.fromarray(data, mode='I;16')
 
             # create tiff tags
             if ext in [".tif", ".tiff"] and not thumbnail:
