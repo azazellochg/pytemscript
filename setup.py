@@ -4,12 +4,13 @@ from setuptools import setup, find_packages
 from codecs import open
 from os import path
 import sys
-from pytemscript import __version__
 
 here = path.abspath(path.dirname(__file__))
 # Long description
 with open(path.join(here, "README.rst"), "r", encoding="utf-8") as fp:
     long_description = fp.read()
+
+__version__ = '3.0b5'
 
 # Python 3.4 doesn't support certain keywords in setup
 if sys.version_info < (3, 5):
@@ -28,11 +29,6 @@ if sys.version_info < (3, 5):
               'Intended Audience :: Developers',
               'Operating System :: OS Independent',
               'Programming Language :: Python :: 3.4',
-              'Programming Language :: Python :: 3.8',
-              'Programming Language :: Python :: 3.9',
-              'Programming Language :: Python :: 3.10',
-              'Programming Language :: Python :: 3.11',
-              'Programming Language :: Python :: 3.12',
               'Topic :: Scientific/Engineering',
               'Topic :: Software Development :: Libraries',
               'License :: OSI Approved :: GNU General Public License v3 (GPLv3)'
@@ -48,8 +44,7 @@ if sys.version_info < (3, 5):
               "typing"
           ],
           extras_require={
-              "dev": ["matplotlib", "mypy"],
-              "utapi": ["grpcio", "grpcio-tools", "protobuf"]
+              "dev": ["matplotlib", "mypy<=0.620"]
           },
           entry_points={'console_scripts': [
               'pytemscript-server = pytemscript.server.run:main',
@@ -93,7 +88,7 @@ else:
           keywords='TEM python',
           install_requires=[requirements],
           extras_require={
-              "extra": ["matplotlib", "mypy"],
+              "dev": ["matplotlib", "mypy"],
               "utapi": ["grpcio", "grpcio-tools", "protobuf"]
           },
           entry_points={'console_scripts': [
