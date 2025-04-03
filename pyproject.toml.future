@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pytemscript"
-version = "3.0b5"
+version = "3.0"
 authors = [
 {name = "Grigory Sharov", email = "gsharov@mrc-lmb.cam.ac.uk"},
 {name = "Tore Niermann", email = "tore.niermann@tu-berlin.de"}

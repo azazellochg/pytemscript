@@ -151,6 +151,10 @@ class Stage:
         """
         self._change_position(relative=relative, **kwargs)
 
+    def reset_holder(self) -> None:
+        """ Reset holder to zero position for all axis. """
+        self.go_to(x=0, y=0, z=0, a=0)
+
     @property
     @lru_cache(maxsize=1)
     def limits(self) -> Dict:
