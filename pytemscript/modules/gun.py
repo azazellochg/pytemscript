@@ -107,6 +107,18 @@ class Gun:
         self.__client.call(method="set", body=body)
 
     @property
+    def voltage_offset_range(self) -> Tuple[float, float]:
+        """ Returns the high voltage offset range. """
+        if self.__has_gun1:
+            body = RequestBody(attr=self.__id,
+                               obj_cls=GunObj,
+                               obj_method="get_hv_offset_range",
+                               validator=tuple)
+            return self.__client.call(method="exec_special", body=body)
+        else:
+            raise NotImplementedError(ERR_MSG_GUN1)
+
+    @property
     def voltage_offset(self) -> float:
         """ High voltage offset. (read/write) """
         if self.__has_gun1:
@@ -121,6 +133,11 @@ class Gun:
     @voltage_offset.setter
     def voltage_offset(self, offset: float) -> None:
         if self.__has_gun1:
+            hv_min, hv_max = self.voltage_offset_range
+            if not (hv_min <= float(offset) <= hv_max):
+                raise ValueError("Value is outside of allowed "
+                                 "range: %0.3f - %0.3f" % (hv_min, hv_max))
+
             body = RequestBody(attr=self.__id,
                                obj_cls=GunObj,
                                obj_method="set_hv_offset",
@@ -194,18 +211,6 @@ class Gun:
         """ The maximum possible value of the HT on this microscope. Units: kVolts. """
         body = RequestBody(attr=self.__id + ".HTMaxValue", validator=float)
         return self.__client.call(method="get", body=body) * 1e-3
-
-    @property
-    def voltage_offset_range(self) -> Tuple[float, float]:
-        """ Returns the high voltage offset range. """
-        if self.__has_gun1:
-            body = RequestBody(attr=self.__id,
-                               obj_cls=GunObj,
-                               obj_method="get_hv_offset_range",
-                               validator=tuple)
-            return self.__client.call(method="exec_special", body=body)
-        else:
-            raise NotImplementedError(ERR_MSG_GUN1)
 
     @property
     def beam_current(self) -> float:

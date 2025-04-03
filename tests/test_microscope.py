@@ -350,8 +350,7 @@ def test_gun(microscope: Microscope,
 
     try:
         print("\tHVOffset:", gun.voltage_offset)
-        gun.voltage_offset += 0.1
-        gun.voltage_offset -= 0.1
+        gun.voltage_offset = 0.0
         print("\tHVOffsetRange:", gun.voltage_offset_range)
     except NotImplementedError:
         pass

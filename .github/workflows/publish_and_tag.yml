@@ -31,8 +31,3 @@ jobs:
       run: python -m build --no-isolation
     - name: Publish package distributions to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
-    - name: Get version and tag
-      run: |
-        export PACKAGE_VERSION=$(python -c "import $FOLDER_WITH_VERSION; print('VERSION', 'v'+$FOLDER_WITH_VERSION.__version__)" | grep VERSION | sed "s/VERSION //g")
-        git tag $PACKAGE_VERSION
-        git push origin $PACKAGE_VERSION
