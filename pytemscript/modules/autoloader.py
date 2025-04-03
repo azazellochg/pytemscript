@@ -32,6 +32,7 @@ class Autoloader:
         return self.__client.call(method="get", body=body)
 
     @property
+    @lru_cache(maxsize=1)
     def number_of_slots(self) -> int:
         """ The number of slots in a cassette. """
         if self.is_available:
