@@ -109,7 +109,9 @@ class AcquisitionObj(SpecialObj):
 
         return tem_cameras
 
-    def acquire(self, cameraName: Union[str, List], **kwargs) -> Union[Image, List[Image]]:
+    def acquire(self,
+                cameraName: Union[str, List],
+                **kwargs) -> Union[Image, List[Image]]:
         """ Perform actual acquisition. Camera settings should be set beforehand.
 
         :param cameraName: Camera name(s)
@@ -418,10 +420,11 @@ class Acquisition:
 
             if camera_dict is None:
                 raise KeyError("No camera with name %s. If using standard scripting the "
-                               "camera must be selected in the microscope user interface" % cameraName)
+                               "camera must be selected in the microscope user interface" % c)
 
             if binning not in camera_dict["binnings"]:
-                raise ValueError("Unsupported binning value: %d" % binning)
+                raise ValueError("Unsupported binning value: %d for camera %s" % (
+                    binning, c))
 
         return camera_dict
 
@@ -640,25 +643,25 @@ class Acquisition:
 
     def acquire_stem_images(self,
                             detectors: List[str],
-                            size: AcqImageSize,
+                            size: AcqImageSize = AcqImageSize.FULL,
                             dwell_time: float = 1e-5,
                             binning: int = 1,
                             **kwargs) -> List[Image]:
         """ Simultaneous acquisition of multiple STEM images.
 
-        :param list detectors: List of STEM detector names
+        :param List[str] detectors: List of STEM detector names
         :param AcqImageSize size: Image size
         :param float dwell_time: Dwell time in seconds. The frame time equals the dwell time times the number of pixels plus some overhead (typically 20%, used for the line flyback)
         :param int binning: Binning factor. Technically speaking these are "pixel skipping" values, since in STEM we do not combine pixels as a CCD does.
-        :keyword list brightness: list of Brightness settings for each detector
-        :keyword list contrast: list of Contrast settings for each detector
+        :keyword List[float] brightness: list of Brightness settings for each detector
+        :keyword List[float] contrast: list of Contrast settings for each detector
         :returns: list of Image objects
         :rtype: List[Image]
         """
-        if "brightness" in kwargs:
-            assert len(kwargs["brightness"]) == len(detectors)
-        if "contrast" in kwargs:
-            assert len(kwargs["contrast"]) == len(detectors)
+        if "brightness" in kwargs and len(kwargs["brightness"]) != len(detectors):
+            raise ValueError("Number of detectors does not match brightness list")
+        if "contrast" in kwargs and len(kwargs["contrast"]) != len(detectors):
+            raise ValueError("Number of detectors does not match contrast list")
 
         _ = self.__find_camera(detectors, self.stem_detectors, binning)
 
@@ -674,7 +677,7 @@ class Acquisition:
 
         self.__check_prerequisites()
         body = RequestBody(attr="tem.Acquisition",
-                           validator=Image,
+                           validator=List,
                            obj_cls=AcquisitionObj,
                            obj_method="acquire",
                            cameraName=detectors,
@@ -683,7 +686,6 @@ class Acquisition:
         logging.info("STEM images acquired on %s", detectors)
 
         return images
-
 
     def acquire_film(self,
                      film_text: str,
