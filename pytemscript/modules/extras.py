@@ -267,12 +267,13 @@ class StageObj(SpecialObj):
             axes: int = 0,
             speed: Optional[float] = None,
             method: str = "MoveTo",
+            piezo: bool = False,
             **kwargs) -> None:
         """ Execute stage move to a new position. """
         if method not in ["MoveTo", "GoTo", "GoToWithSpeed"]:
             raise NotImplementedError("Method %s is not implemented" % method)
 
-        pos = self.com_object.Position
+        pos = self.com_object.CurrentPosition if piezo else self.com_object.Position
         for key, value in kwargs.items():
             setattr(pos, key.upper(), float(value))
 
@@ -281,13 +282,22 @@ class StageObj(SpecialObj):
         else:
             getattr(self.com_object, method)(pos, axes)
 
+    def start_jog(self, axes: int = 0, **kwargs) -> None:
+        """ Start jogging with specified velocities. """
+        speed = self.com_object.CurrentJogVelocity
+
+        for key, value in kwargs.items():
+            setattr(speed, key.upper(), float(value))
+
+        getattr(self.com_object, "StartJog")(speed, axes)
+
     def get(self, a=False, b=False) -> Dict:
         """ The current position of the stage/piezo stage (x,y,z in um).
         Set a and b to True if you want to retrieve them as well.
         x,y,z are in um and a,b in deg
 
         If retrieving velocity, return the speed of the piezo stage instead.
-        x,y,z are in um/s and a,b in deg/s
+        x,y,z are in um/s
         """
         pos = OrderedDict((key, getattr(self.com_object, key.upper()) * 1e6) for key in 'xyz')
         if a:
@@ -307,6 +317,20 @@ class StageObj(SpecialObj):
                 'min': data.MinPos,
                 'max': data.MaxPos,
                 'unit': MeasurementUnitType(data.UnitType).name
+            }
+
+        return limits
+
+    def limits_piezo(self) -> Dict:
+        """ Returns a dict with stage move limits for piezo stage. """
+        limits = OrderedDict()
+        axes = self.com_object.AvailableAxes
+        avail_axes = [member.name for member in StageAxes if axes & member.value]
+        min_pos, max_pos = self.com_object.GetPositionRange
+        for axis in avail_axes:
+            limits[axis] = {
+                'min': getattr(min_pos, axis.upper()),
+                'max': getattr(max_pos, axis.upper())
             }
 
         return limits

@@ -10,7 +10,7 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, "README.rst"), "r", encoding="utf-8") as fp:
     long_description = fp.read()
 
-__version__ = '3.0'
+__version__ = '3.1'
 
 # Python 3.4 doesn't support certain keywords in setup
 if sys.version_info < (3, 5):

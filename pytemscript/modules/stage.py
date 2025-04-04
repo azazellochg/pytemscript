@@ -60,7 +60,6 @@ class Stage:
         new_coords = dict()
         for axis in 'xyz':
             if kwargs.get(axis) is not None:
-
                 new_coords.update({axis: kwargs[axis] * 1e-6})
         for axis in 'ab':
             if kwargs.get(axis) is not None:
