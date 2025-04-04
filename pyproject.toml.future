@@ -12,7 +12,7 @@ authors = [
 description = "TEM Scripting adapter for FEI/TFS microscopes"
 readme = {file = "README.rst", content-type = "text/x-rst"}
 requires-python = ">=3.8"
-keywords = ["TEM python"]
+keywords = ["TEM", "python"]
 classifiers=[
               'Development Status :: 4 - Beta',
               'Intended Audience :: Science/Research',
