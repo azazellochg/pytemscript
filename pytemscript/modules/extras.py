@@ -324,8 +324,10 @@ class StageObj(SpecialObj):
     def limits_piezo(self) -> Dict:
         """ Returns a dict with stage move limits for piezo stage. """
         limits = OrderedDict()
+        axes = self.com_object.AvailableAxes
+        avail_axes = [member.name for member in StageAxes if axes & member.value]
         min_pos, max_pos = self.com_object.GetPositionRange
-        for axis in 'xyz':
+        for axis in avail_axes:
             limits[axis] = {
                 'min': getattr(min_pos, axis.upper()),
                 'max': getattr(max_pos, axis.upper())

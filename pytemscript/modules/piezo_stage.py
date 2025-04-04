@@ -1,5 +1,5 @@
 from functools import lru_cache
-from typing import Dict, Tuple
+from typing import Dict
 
 from ..utils.misc import RequestBody
 from ..utils.enums import StageAxes
@@ -32,15 +32,6 @@ class PiezoStage:
                                validator=dict,
                                obj_cls=StageObj, obj_method="get")
             return self.__client.call(method="exec_special", body=body)
-
-    @property
-    def position_range(self) -> Tuple[float, float]:
-        """ Return min and max positions. """
-        if not self.__has_pstage:
-            raise NotImplementedError(self.__err_msg)
-        else:
-            body = RequestBody(attr=self.__id + ".GetPositionRange()")
-            return self.__client.call(method="exec", body=body)
 
     @property
     def velocity(self) -> Dict:
@@ -78,7 +69,7 @@ class PiezoStage:
         if not self.__has_pstage:
             raise NotImplementedError(self.__err_msg)
         else:
-
+            self.__check_limits(**kwargs)
             # convert units to meters and radians
             new_coords = dict()
             for axis in 'xyz':
@@ -106,6 +97,7 @@ class PiezoStage:
         if not self.__has_pstage:
             raise NotImplementedError(self.__err_msg)
         else:
+            self.__check_limits(**kwargs)
             # convert units to meters
             new_speed = dict()
             for axis in 'xyz':
@@ -155,3 +147,11 @@ class PiezoStage:
             body = RequestBody(attr=self.__id, validator=dict,
                                obj_cls=StageObj, obj_method="limits_piezo")
             return self.__client.call(method="exec_special", body=body)
+
+    def __check_limits(self, **kwargs) -> None:
+        """ Check if input axes are available. """
+        available_axes = self.limits.keys()
+        input_axes = kwargs.keys()
+        missing_axes = set(input_axes - available_axes)
+        if missing_axes:
+            raise ValueError("Available piezo axes are: %s" % available_axes)
